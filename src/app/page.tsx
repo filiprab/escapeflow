@@ -78,6 +78,7 @@ export default function Home() {
             onAttackSelect={handleAttackSelect}
             currentPrivilege={currentPrivilege}
             onPrivilegeEscalation={handlePrivilegeEscalation}
+            attackChain={attackChain}
           />
         </div>
 

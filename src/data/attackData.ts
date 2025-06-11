@@ -126,7 +126,7 @@ export const targetComponents: TargetComponent[] = [
   {
     id: 'renderer-component',
     name: 'Renderer Process',
-    description: 'Target the Chromium renderer process to escape to browser process',
+    description: 'Target the Chromium renderer process to escape to browser process or GPU process',
     sourcePrivilege: 'Renderer Process',
     targetPrivilege: 'Browser Process',
     techniques: [
@@ -149,23 +149,104 @@ export const targetComponents: TargetComponent[] = [
           'https://chromium.googlesource.com/chromium/src/+/main/docs/security/mojo.md',
           'https://www.chromium.org/Home/chromium-security/site-isolation/'
         ]
-      },
+      }
+    ]
+  },
+
+  // GPU Process Component
+  {
+    id: 'gpu-component',
+    name: 'GPU Process',
+    description: 'Target the GPU process to escalate privileges and access system resources',
+    sourcePrivilege: 'Renderer Process',
+    targetPrivilege: 'GPU Process',
+    techniques: [
       {
-        id: 'renderer-gpu',
-        name: 'GPU Process Exploitation',
-        description: 'Exploit GPU process to gain elevated privileges',
-        detailedDescription: 'The GPU process handles graphics operations and has elevated privileges. Vulnerabilities in GPU drivers or the GPU process itself can be exploited from the renderer to gain additional privileges.',
-        cves: ['CVE-2023-5997', 'CVE-2022-4262', 'CVE-2021-37975'],
+        id: 'gpu-driver',
+        name: 'GPU Driver Exploitation',
+        description: 'Exploit vulnerabilities in GPU drivers',
+        detailedDescription: 'GPU drivers run with elevated privileges and have direct hardware access. Vulnerabilities in graphics drivers can be exploited to gain system-level privileges and bypass security mechanisms.',
+        cves: ['CVE-2023-5997', 'CVE-2022-4262', 'CVE-2021-37975', 'CVE-2023-4863'],
         pocs: [
+          'https://github.com/google/security-research/tree/master/pocs/cpus/zenbleed',
           'https://github.com/chromium/chromium/blob/main/docs/gpu/README.md'
         ],
         mitigations: [
           'GPU process sandboxing',
           'Driver validation',
-          'Command buffer validation'
+          'Command buffer validation',
+          'Hardware-assisted isolation'
         ],
         references: [
-          'https://chromium.googlesource.com/chromium/src/+/main/docs/design/gpu_sandboxing.md'
+          'https://chromium.googlesource.com/chromium/src/+/main/docs/design/gpu_sandboxing.md',
+          'https://developer.nvidia.com/blog/improving-security-nvidia-gpu-driver/'
+        ]
+      },
+      {
+        id: 'gpu-command-buffer',
+        name: 'Command Buffer Manipulation',
+        description: 'Manipulate GPU command buffers to gain control',
+        detailedDescription: 'The GPU process validates and processes command buffers from the renderer. Malformed command buffers can trigger vulnerabilities in the GPU process, leading to memory corruption and code execution.',
+        cves: ['CVE-2023-6345', 'CVE-2022-3723', 'CVE-2021-37976'],
+        pocs: [
+          'https://github.com/v8/v8/blob/main/test/mjsunit/regress/regress-crbug-1351138.js'
+        ],
+        mitigations: [
+          'Command buffer validation',
+          'Memory protection',
+          'Process isolation',
+          'Hardware bounds checking'
+        ],
+        references: [
+          'https://www.chromium.org/developers/design-documents/gpu-command-buffer/',
+          'https://source.chromium.org/chromium/chromium/src/+/main:gpu/command_buffer/'
+        ]
+      }
+    ]
+  },
+
+  // GPU to Browser Escalation Component
+  {
+    id: 'gpu-to-browser-component',
+    name: 'Browser Process',
+    description: 'Escalate from GPU process to browser process',
+    sourcePrivilege: 'GPU Process',
+    targetPrivilege: 'Browser Process',
+    techniques: [
+      {
+        id: 'gpu-browser-ipc',
+        name: 'GPU-Browser IPC Exploitation',
+        description: 'Exploit IPC communication between GPU and browser processes',
+        detailedDescription: 'The GPU process communicates with the browser process through IPC channels. Vulnerabilities in this communication can be exploited to gain browser process privileges.',
+        cves: ['CVE-2023-7024', 'CVE-2022-4135', 'CVE-2021-38003'],
+        pocs: [
+          'https://github.com/5j9/CVE-2023-7024'
+        ],
+        mitigations: [
+          'IPC message validation',
+          'Process isolation',
+          'Capability-based security'
+        ],
+        references: [
+          'https://chromium.googlesource.com/chromium/src/+/main/docs/security/mojo.md'
+        ]
+      },
+      {
+        id: 'gpu-shared-memory',
+        name: 'Shared Memory Exploitation',
+        description: 'Exploit shared memory regions between GPU and browser',
+        detailedDescription: 'GPU and browser processes share memory regions for efficient communication. Vulnerabilities in shared memory handling can lead to memory corruption and privilege escalation.',
+        cves: ['CVE-2023-6345', 'CVE-2022-3723'],
+        pocs: [
+          'https://github.com/mistymntncop/CVE-2022-4135'
+        ],
+        mitigations: [
+          'Memory protection',
+          'Bounds checking',
+          'Process isolation'
+        ],
+        references: [
+          'https://www.chromium.org/developers/design-documents/gpu-command-buffer/'
         ]
       }
     ]
@@ -237,11 +318,11 @@ export const getAvailableComponents = (currentPrivilege: string): TargetComponen
       return targetComponents.filter(component => 
         component.sourcePrivilege === 'Renderer Process'
       );
-    case 'Browser Process':
-      return targetComponents.filter(component => 
-        component.sourcePrivilege === 'Browser Process'
-      );
     case 'GPU Process':
+      return targetComponents.filter(component => 
+        component.sourcePrivilege === 'GPU Process'
+      );
+    case 'Browser Process':
       return targetComponents.filter(component => 
         component.sourcePrivilege === 'Browser Process'
       );
