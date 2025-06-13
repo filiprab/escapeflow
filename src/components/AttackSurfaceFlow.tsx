@@ -13,7 +13,6 @@ import {
   MiniMap,
   Background,
   BackgroundVariant,
-  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import AttackVectorNode from './AttackVectorNode';
@@ -41,48 +40,6 @@ export default function AttackSurfaceFlow({
   const initialNodes: Node[] = useMemo(() => {
     const availableComponents = getAvailableComponents(currentPrivilege);
     
-    // If we've reached root and have an attack chain, show the attack chain visualization
-    if (availableComponents.length === 0 && 
-        (currentPrivilege === 'System/Root' || currentPrivilege === 'Kernel/Root') && 
-        attackChain.length > 0) {
-      
-      // Generate attack chain nodes
-      const allPrivileges: string[] = [];
-      
-      // Collect all unique privilege levels in order
-      if (attackChain[0]) {
-        allPrivileges.push(attackChain[0].sourcePrivilege);
-      }
-      
-      attackChain.forEach(attack => {
-        if (!allPrivileges.includes(attack.targetPrivilege)) {
-          allPrivileges.push(attack.targetPrivilege);
-        }
-      });
-
-      return allPrivileges.map((privilege, index) => ({
-        id: `chain-node-${index}`,
-        data: { 
-          label: privilege 
-        },
-        position: { 
-          x: 400, 
-          y: 100 + index * 120 
-        },
-        style: {
-          background: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)',
-          border: '2px solid #06b6d4',
-          borderRadius: '12px',
-          padding: '16px',
-          color: 'white',
-          fontWeight: 'bold',
-          minWidth: '180px',
-          textAlign: 'center',
-          boxShadow: '0 4px 6px -1px rgba(6, 182, 212, 0.2)',
-        },
-      }));
-    }
-    
     // Otherwise, show available attack components
     return availableComponents.map((component, index) => ({
       id: component.id,
@@ -106,45 +63,10 @@ export default function AttackSurfaceFlow({
         isAvailable: true,
       },
     }));
-  }, [currentPrivilege, onAttackSelect, onPrivilegeEscalation, attackChain]);
+  }, [currentPrivilege, onAttackSelect, onPrivilegeEscalation]);
 
   // Generate edges showing attack paths
-  const initialEdges: Edge[] = useMemo(() => {
-    const availableComponents = getAvailableComponents(currentPrivilege);
-    
-    // If we're showing the attack chain, generate edges between chain nodes
-    if (availableComponents.length === 0 && 
-        (currentPrivilege === 'System/Root' || currentPrivilege === 'Kernel/Root') && 
-        attackChain.length > 0) {
-      
-      return attackChain.map((attack, index) => ({
-        id: `chain-edge-${index}`,
-        source: `chain-node-${index}`,
-        target: `chain-node-${index + 1}`,
-        label: attack.name.split(': ')[1] || attack.name,
-        style: {
-          stroke: '#ef4444',
-          strokeWidth: 3,
-        },
-        labelStyle: {
-          fill: 'white',
-          fontWeight: 'bold',
-          fontSize: '12px',
-        },
-        labelBgStyle: {
-          fill: '#1f2937',
-          fillOpacity: 0.9,
-        },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: '#ef4444',
-        },
-      }));
-    }
-    
-    // No edges for regular attack components view
-    return [];
-  }, [currentPrivilege, attackChain]);
+  const initialEdges: Edge[] = useMemo(() => [], []);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -169,7 +91,54 @@ export default function AttackSurfaceFlow({
   return (
     <div className="w-full h-full relative">
       {availableComponents.length === 0 && 
-       !((currentPrivilege === 'System/Root' || currentPrivilege === 'Kernel/Root') && attackChain.length > 0) ? (
+       (currentPrivilege === 'System/Root' || currentPrivilege === 'Kernel/Root') && 
+       attackChain.length > 0 ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center max-w-2xl">
+            <div className="mb-8">
+              <h2 className="text-4xl font-bold text-white mb-4">
+                Attack Chain Complete!
+              </h2>
+              <p className="text-xl text-gray-300 mb-2">
+                Congratulations! You&apos;ve successfully escalated to <span className="text-red-400 font-bold">{currentPrivilege}</span> privileges.
+              </p>
+              <p className="text-gray-400">
+                Your attack chain consists of {attackChain.length} step{attackChain.length !== 1 ? 's' : ''} across multiple privilege levels.
+              </p>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-xl p-6 mb-8 border border-gray-700">
+              <h3 className="text-lg font-semibold text-white mb-4">What would you like to do next?</h3>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => {
+                    // This will be handled by the parent component
+                    const event = new CustomEvent('showChain');
+                    window.dispatchEvent(event);
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 text-sm flex items-center gap-2"
+                >
+                  📊 View Attack Chain Visualization
+                </button>
+                <button
+                  onClick={() => {
+                    // This will be handled by the parent component
+                    const event = new CustomEvent('resetSimulation');
+                    window.dispatchEvent(event);
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-200 text-sm flex items-center gap-2"
+                >
+                  🔄 Start New Attack Simulation
+                </button>
+              </div>
+            </div>
+
+            <div className="text-sm text-gray-500">
+              <p>💡 Tip: The attack chain visualization shows your complete escalation path with detailed technique information.</p>
+            </div>
+          </div>
+        </div>
+      ) : availableComponents.length === 0 ? (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-white mb-4">
@@ -181,30 +150,31 @@ export default function AttackSurfaceFlow({
           </div>
         </div>
       ) : (
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          fitView
-          attributionPosition="top-right"
-          className="bg-gray-900"
-        >
-          <Controls className="bg-gray-800 border-gray-600" />
-          <MiniMap 
-            className="bg-gray-800 border-gray-600" 
-            nodeColor="#374151"
-            maskColor="rgba(0, 0, 0, 0.2)"
-          />
-          <Background 
-            variant={BackgroundVariant.Dots} 
-            gap={12} 
-            size={1} 
-            color="#374151"
-          />
-        </ReactFlow>
+        <>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            attributionPosition="top-right"
+            className="bg-gray-900"
+          >
+            <Controls className="bg-gray-800 border-gray-600" />
+            <MiniMap 
+              className="bg-gray-800 border-gray-600" 
+              nodeColor="#374151"
+              maskColor="rgba(0, 0, 0, 0.2)"
+            />
+            <Background 
+              variant={BackgroundVariant.Dots} 
+              gap={12} 
+              size={1} 
+              color="#374151"
+            />
+          </ReactFlow>
+        </>
       )}
     </div>
   );

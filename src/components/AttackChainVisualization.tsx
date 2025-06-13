@@ -160,6 +160,85 @@ export default function AttackChainVisualization({ attackChain, onClose }: Attac
     URL.revokeObjectURL(url);
   }, [attackChain]);
 
+  // Export to PlantUML
+  const downloadPlantUML = useCallback(() => {
+    const lines = ['@startuml', 'title Attack Chain Visualization', ''];
+    
+    // Add nodes as activities
+    const allPrivileges: string[] = [];
+    if (attackChain[0]) {
+      allPrivileges.push(attackChain[0].sourcePrivilege);
+    }
+    attackChain.forEach(attack => {
+      if (!allPrivileges.includes(attack.targetPrivilege)) {
+        allPrivileges.push(attack.targetPrivilege);
+      }
+    });
+
+    lines.push('start');
+    allPrivileges.forEach((privilege, index) => {
+      if (index === 0) {
+        lines.push(`:${privilege};`);
+      } else {
+        const attack = attackChain[index - 1];
+        const technique = attack ? (attack.name.split(': ')[1] || attack.name) : 'Unknown';
+        lines.push(`note right : ${technique}`);
+        lines.push(`:${privilege};`);
+      }
+    });
+    lines.push('stop');
+    
+    lines.push('', '@enduml');
+    
+    const content = lines.join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = 'attack-chain.puml';
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [attackChain]);
+
+  // Export to Mermaid
+  const downloadMermaid = useCallback(() => {
+    const lines = ['graph TD'];
+    
+    // Generate node IDs and labels
+    const allPrivileges: string[] = [];
+    if (attackChain[0]) {
+      allPrivileges.push(attackChain[0].sourcePrivilege);
+    }
+    attackChain.forEach(attack => {
+      if (!allPrivileges.includes(attack.targetPrivilege)) {
+        allPrivileges.push(attack.targetPrivilege);
+      }
+    });
+
+    // Add nodes
+    allPrivileges.forEach((privilege, index) => {
+      const nodeId = `node${index}`;
+      lines.push(`    ${nodeId}["${privilege}"]`);
+    });
+
+    // Add edges with attack techniques as labels
+    attackChain.forEach((attack, index) => {
+      const sourceId = `node${index}`;
+      const targetId = `node${index + 1}`;
+      const technique = attack.name.split(': ')[1] || attack.name;
+      lines.push(`    ${sourceId} -->|"${technique}"| ${targetId}`);
+    });
+
+    const content = lines.join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = 'attack-chain.mmd';
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [attackChain]);
+
   if (attackChain.length === 0) {
     return null;
   }
@@ -190,6 +269,18 @@ export default function AttackChainVisualization({ attackChain, onClose }: Attac
               Export JSON
             </button>
             <button
+              onClick={downloadPlantUML}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Export PlantUML
+            </button>
+            <button
+              onClick={downloadMermaid}
+              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Export Mermaid
+            </button>
+            <button
               onClick={onClose}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
             >
@@ -204,7 +295,6 @@ export default function AttackChainVisualization({ attackChain, onClose }: Attac
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
-            fitView
             className="bg-gray-900"
             nodesDraggable={true}
             nodesConnectable={false}

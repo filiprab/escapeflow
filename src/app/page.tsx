@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import AttackSurfaceFlow from '../components/AttackSurfaceFlow';
 import AttackDetails from '../components/AttackDetails';
 import AttackChainVisualization from '../components/AttackChainVisualization';
@@ -37,6 +37,28 @@ export default function Home() {
     setShowChainVisualization(false);
   }, []);
 
+  // Listen for custom events from the completion screen
+  useEffect(() => {
+    const handleShowChainEvent = () => {
+      handleShowChain();
+    };
+
+    const handleResetEvent = () => {
+      handleReset();
+    };
+
+    window.addEventListener('showChain', handleShowChainEvent);
+    window.addEventListener('resetSimulation', handleResetEvent);
+
+    return () => {
+      window.removeEventListener('showChain', handleShowChainEvent);
+      window.removeEventListener('resetSimulation', handleResetEvent);
+    };
+  }, [handleShowChain, handleReset]);
+
+  // Check if attack chain is complete
+  const isAttackChainComplete = (currentPrivilege === 'System/Root' || currentPrivilege === 'Kernel/Root') && attackChain.length > 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       {/* Header */}
@@ -51,22 +73,24 @@ export default function Home() {
               {currentPrivilege}
             </span>
           </p>
-          <div className="flex gap-2">
-            {attackChain.length > 0 && (
+          {!isAttackChainComplete && (
+            <div className="flex gap-2">
+              {attackChain.length > 0 && (
+                <button
+                  onClick={handleShowChain}
+                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 text-sm"
+                >
+                  View Chain ({attackChain.length})
+                </button>
+              )}
               <button
-                onClick={handleShowChain}
-                className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 text-sm"
+                onClick={handleReset}
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-200 text-sm"
               >
-                View Chain ({attackChain.length})
+                Reset Simulation
               </button>
-            )}
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-200 text-sm"
-            >
-              Reset Simulation
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       </header>
 
