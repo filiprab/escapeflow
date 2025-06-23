@@ -47,10 +47,10 @@ export const targetComponents: TargetComponent[] = [
         name: 'Type Confusion',
         description: 'Exploit V8 type confusion vulnerabilities to escape sandbox',
         detailedDescription: 'Type confusion bugs in V8 occur when the engine incorrectly assumes the type of a JavaScript object, allowing attackers to access memory outside the intended boundaries and escape the heap sandbox.',
-        cves: ['CVE-2023-4427', 'CVE-2022-1364'],
+        cves: ['CVE-1234-1234', 'CVE-1234-1234'],
         pocs: [
-          'https://github.com/mmx9/CVE-2023-4427',
-          'https://github.com/Theori-Inc/CVE-2022-1364'
+          'https://example.com',
+          'https://example.com'
         ],
         mitigations: [
           'V8 heap sandbox (partial mitigation)',
@@ -58,8 +58,8 @@ export const targetComponents: TargetComponent[] = [
           'Type confusion mitigations'
         ],
         references: [
-          'https://v8.dev/blog/sandbox',
-          'https://googleprojectzero.blogspot.com/2023/01/the-more-you-know-more-you-know-you.html'
+          'https://example.com',
+          'https://example.com'
         ]
       },
       {
@@ -67,9 +67,9 @@ export const targetComponents: TargetComponent[] = [
         name: 'Use-After-Free',
         description: 'Exploit use-after-free vulnerabilities in V8 heap management',
         detailedDescription: 'Use-after-free vulnerabilities in V8 occur when memory is accessed after being freed, allowing attackers to manipulate freed memory and gain arbitrary read/write capabilities.',
-        cves: ['CVE-2023-3079', 'CVE-2021-37973'],
+        cves: ['CVE-1234-1234', 'CVE-1234-12343'],
         pocs: [
-          'https://github.com/mistymntncop/CVE-2023-3079'
+          'https://example.com'
         ],
         mitigations: [
           'AddressSanitizer (ASAN) in debug builds',
@@ -77,7 +77,7 @@ export const targetComponents: TargetComponent[] = [
           'Delayed free mechanisms'
         ],
         references: [
-          'https://v8.dev/blog/sandbox'
+          'https://example.com'
         ]
       },
       {
@@ -85,10 +85,10 @@ export const targetComponents: TargetComponent[] = [
         name: 'JIT Compiler Exploitation',
         description: 'Exploit vulnerabilities in V8 JIT compiler',
         detailedDescription: 'The V8 Just-In-Time (JIT) compiler optimizes JavaScript execution but introduces complexity that can lead to vulnerabilities. JIT spraying and code generation bugs can be exploited to gain code execution.',
-        cves: ['CVE-2023-3420', 'CVE-2022-1096', 'CVE-2021-30632'],
+        cves: ['CVE-1234-1234', 'CVE-1234-1234'],
         pocs: [
-          'https://github.com/mistymntncop/CVE-2023-3420',
-          'https://github.com/r4j0x00/exploits/tree/master/chrome-0day'
+          'https://example.com',
+          'https://example.com'
         ],
         mitigations: [
           'JIT hardening',
@@ -96,8 +96,8 @@ export const targetComponents: TargetComponent[] = [
           'W^X enforcement'
         ],
         references: [
-          'https://v8.dev/blog/jitless',
-          'https://doar-e.github.io/blog/2019/01/28/introduction-to-spidermonkey-exploitation/'
+          'https://example.com',
+          'https://example.com'
         ]
       },
       {
@@ -105,9 +105,9 @@ export const targetComponents: TargetComponent[] = [
         name: 'WebAssembly Exploitation',
         description: 'Exploit WebAssembly runtime vulnerabilities',
         detailedDescription: 'WebAssembly provides a sandboxed execution environment, but vulnerabilities in the WebAssembly runtime or JIT compiler can be exploited to escape the sandbox.',
-        cves: ['CVE-2023-4761', 'CVE-2022-2856'],
+        cves: ['CVE-1234-1234', 'CVE-1234-1234'],
         pocs: [
-          'https://github.com/WebAssembly/spec/issues/1533'
+          'https://example.com'
         ],
         mitigations: [
           'WebAssembly bounds checking',
@@ -115,8 +115,8 @@ export const targetComponents: TargetComponent[] = [
           'Type safety verification'
         ],
         references: [
-          'https://webassembly.org/docs/security/',
-          'https://github.com/WebAssembly/design/blob/main/Security.md'
+          'https://example.com',
+          'https://example.com'
         ]
       }
     ]
@@ -135,10 +135,10 @@ export const targetComponents: TargetComponent[] = [
         name: 'IPC Manipulation',
         description: 'Exploit IPC message handling vulnerabilities',
         detailedDescription: 'The renderer process communicates with the browser process through IPC (Inter-Process Communication). Malformed or crafted IPC messages can be used to trigger vulnerabilities in the browser process, leading to sandbox escape.',
-        cves: ['CVE-2023-7024', 'CVE-2023-6345', 'CVE-2022-4135', 'CVE-2021-38003'],
+        cves: ['CVE-1234-1234', 'CVE-1234-1234'],
         pocs: [
-          'https://github.com/5j9/CVE-2023-7024',
-          'https://github.com/mistymntncop/CVE-2022-4135'
+          'https://example.com',
+          'https://example.com'
         ],
         mitigations: [
           'Strict IPC message validation',
@@ -146,8 +146,8 @@ export const targetComponents: TargetComponent[] = [
           'Process sandboxing'
         ],
         references: [
-          'https://chromium.googlesource.com/chromium/src/+/main/docs/security/mojo.md',
-          'https://www.chromium.org/Home/chromium-security/site-isolation/'
+          'https://example.com',
+          'https://example.com'
         ]
       }
     ]
@@ -166,10 +166,10 @@ export const targetComponents: TargetComponent[] = [
         name: 'GPU Driver Exploitation',
         description: 'Exploit vulnerabilities in GPU drivers',
         detailedDescription: 'GPU drivers run with elevated privileges and have direct hardware access. Vulnerabilities in graphics drivers can be exploited to gain system-level privileges and bypass security mechanisms.',
-        cves: ['CVE-2023-5997', 'CVE-2022-4262', 'CVE-2021-37975', 'CVE-2023-4863'],
+        cves: ['CVE-1234-1234', 'CVE-1234-1234'],
         pocs: [
-          'https://github.com/google/security-research/tree/master/pocs/cpus/zenbleed',
-          'https://github.com/chromium/chromium/blob/main/docs/gpu/README.md'
+          'https://example.com',
+          'https://example.com'
         ],
         mitigations: [
           'GPU process sandboxing',
@@ -178,8 +178,8 @@ export const targetComponents: TargetComponent[] = [
           'Hardware-assisted isolation'
         ],
         references: [
-          'https://chromium.googlesource.com/chromium/src/+/main/docs/design/gpu_sandboxing.md',
-          'https://developer.nvidia.com/blog/improving-security-nvidia-gpu-driver/'
+          'https://example.com',
+          'https://example.com'
         ]
       },
       {
@@ -187,9 +187,9 @@ export const targetComponents: TargetComponent[] = [
         name: 'Command Buffer Manipulation',
         description: 'Manipulate GPU command buffers to gain control',
         detailedDescription: 'The GPU process validates and processes command buffers from the renderer. Malformed command buffers can trigger vulnerabilities in the GPU process, leading to memory corruption and code execution.',
-        cves: ['CVE-2023-6345', 'CVE-2022-3723', 'CVE-2021-37976'],
+        cves: ['CVE-1234-1234', 'CVE-1234-1234'],
         pocs: [
-          'https://github.com/v8/v8/blob/main/test/mjsunit/regress/regress-crbug-1351138.js'
+          'https://example.com'
         ],
         mitigations: [
           'Command buffer validation',
@@ -198,8 +198,8 @@ export const targetComponents: TargetComponent[] = [
           'Hardware bounds checking'
         ],
         references: [
-          'https://www.chromium.org/developers/design-documents/gpu-command-buffer/',
-          'https://source.chromium.org/chromium/chromium/src/+/main:gpu/command_buffer/'
+          'https://example.com',
+          'https://example.com'
         ]
       }
     ]
@@ -218,9 +218,9 @@ export const targetComponents: TargetComponent[] = [
         name: 'GPU-Browser IPC Exploitation',
         description: 'Exploit IPC communication between GPU and browser processes',
         detailedDescription: 'The GPU process communicates with the browser process through IPC channels. Vulnerabilities in this communication can be exploited to gain browser process privileges.',
-        cves: ['CVE-2023-7024', 'CVE-2022-4135', 'CVE-2021-38003'],
+        cves: ['CVE-1234-1234', 'CVE-1234-1234'],
         pocs: [
-          'https://github.com/5j9/CVE-2023-7024'
+          'https://example.com'
         ],
         mitigations: [
           'IPC message validation',
@@ -228,7 +228,7 @@ export const targetComponents: TargetComponent[] = [
           'Capability-based security'
         ],
         references: [
-          'https://chromium.googlesource.com/chromium/src/+/main/docs/security/mojo.md'
+          'https://example.com'
         ]
       },
       {
@@ -236,9 +236,9 @@ export const targetComponents: TargetComponent[] = [
         name: 'Shared Memory Exploitation',
         description: 'Exploit shared memory regions between GPU and browser',
         detailedDescription: 'GPU and browser processes share memory regions for efficient communication. Vulnerabilities in shared memory handling can lead to memory corruption and privilege escalation.',
-        cves: ['CVE-2023-6345', 'CVE-2022-3723'],
+        cves: ['CVE-1234-1234', 'CVE-1234-1234'],
         pocs: [
-          'https://github.com/mistymntncop/CVE-2022-4135'
+          'https://example.com'
         ],
         mitigations: [
           'Memory protection',
@@ -246,7 +246,7 @@ export const targetComponents: TargetComponent[] = [
           'Process isolation'
         ],
         references: [
-          'https://www.chromium.org/developers/design-documents/gpu-command-buffer/'
+          'https://example.com'
         ]
       }
     ]
@@ -265,10 +265,10 @@ export const targetComponents: TargetComponent[] = [
         name: 'System Privilege Escalation',
         description: 'Exploit system-level vulnerabilities for privilege escalation',
         detailedDescription: 'Once code execution is achieved in the browser process, attackers can exploit system-level vulnerabilities or misconfigurations to gain root privileges on the Android device.',
-        cves: ['CVE-2023-21492', 'CVE-2022-20452', 'CVE-2021-39793'],
+        cves: ['CVE-1234-12342', 'CVE-1234-12342'],
         pocs: [
-          'https://github.com/ABC-01001/CVE-2023-21492-POC',
-          'https://github.com/Bonfee/CVE-2022-20452'
+          'https://example.com',
+          'https://example.com'
         ],
         mitigations: [
           'SELinux policies',
@@ -277,8 +277,8 @@ export const targetComponents: TargetComponent[] = [
           'Control Flow Integrity'
         ],
         references: [
-          'https://source.android.com/security/selinux',
-          'https://source.android.com/security/app-sandbox'
+          'https://example.com',
+          'https://example.com'
         ]
       },
       {
@@ -286,10 +286,10 @@ export const targetComponents: TargetComponent[] = [
         name: 'Kernel Exploitation',
         description: 'Exploit Android kernel vulnerabilities',
         detailedDescription: 'Android kernel vulnerabilities can be exploited to gain root privileges. Common attack vectors include use-after-free bugs in drivers, race conditions, and memory corruption vulnerabilities.',
-        cves: ['CVE-2023-40283', 'CVE-2022-20421', 'CVE-2021-22600', 'CVE-2020-0041'],
+        cves: ['CVE-1234-1234', 'CVE-1234-1234'],
         pocs: [
-          'https://github.com/chompie1337/CVE-2023-40283_exploits',
-          'https://github.com/google/security-research/tree/master/pocs/linux/cve-2021-22600'
+          'https://example.com',
+          'https://example.com'
         ],
         mitigations: [
           'Kernel ASLR',
@@ -299,8 +299,8 @@ export const targetComponents: TargetComponent[] = [
           'Kernel Guard'
         ],
         references: [
-          'https://source.android.com/security/kernel-security',
-          'https://googleprojectzero.blogspot.com/2019/04/virtually-unlimited-memory-escaping.html'
+          'https://example.com',
+          'https://example.com'
         ]
       }
     ]

@@ -43,13 +43,13 @@ export default function AttackDetails({ attack }: AttackDetailsProps) {
             {attack.cves.map((cve, index) => (
               <a
                 key={index}
-                href={`https://cve.mitre.org/cgi-bin/cvename.cgi?name=${cve}`}
+                href={`https://nvd.nist.gov/vuln/detail/${cve}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block bg-gray-700 hover:bg-gray-600 px-4 py-3 rounded-lg transition-colors border border-gray-600 hover:border-red-500"
               >
                 <span className="font-mono text-red-400 font-semibold">{cve}</span>
-                <span className="text-gray-400 text-sm ml-2">→ MITRE CVE Database</span>
+                <span className="text-gray-400 text-sm ml-2">→ NVD CVE Database</span>
               </a>
             ))}
           </div>
