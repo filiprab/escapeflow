@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import AttackSurfaceFlow from '../components/AttackSurfaceFlow';
 import AttackDetails from '../components/AttackDetails';
 import AttackChainVisualization from '../components/AttackChainVisualization';
+import TreeView from '../components/TreeView';
 import type { AttackVector } from '../data/attackData';
 
 export default function Home() {
@@ -11,6 +12,7 @@ export default function Home() {
   const [currentPrivilege, setCurrentPrivilege] = useState<string>('initial');
   const [attackChain, setAttackChain] = useState<AttackVector[]>([]);
   const [showChainVisualization, setShowChainVisualization] = useState<boolean>(false);
+  const [showTree, setShowTree] = useState<boolean>(false);
 
   const handleAttackSelect = useCallback((attack: AttackVector) => {
     setSelectedAttack(attack);
@@ -27,6 +29,7 @@ export default function Home() {
     setSelectedAttack(null);
     setAttackChain([]);
     setShowChainVisualization(false);
+    setShowTree(false);
   }, []);
 
   const handleShowChain = useCallback(() => {
@@ -35,6 +38,14 @@ export default function Home() {
 
   const handleCloseChain = useCallback(() => {
     setShowChainVisualization(false);
+  }, []);
+
+  const handleShowTree = useCallback(() => {
+    setShowTree(true);
+  }, []);
+
+  const handleCloseTree = useCallback(() => {
+    setShowTree(false);
   }, []);
 
   // Listen for custom events from the completion screen
@@ -75,6 +86,12 @@ export default function Home() {
           </p>
           {!isAttackChainComplete && (
             <div className="flex gap-2">
+              <button
+                onClick={handleShowTree}
+                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-200 text-sm"
+              >
+                View Full Tree
+              </button>
               {attackChain.length > 0 && (
                 <button
                   onClick={handleShowChain}
@@ -119,6 +136,14 @@ export default function Home() {
         <AttackChainVisualization
           attackChain={attackChain}
           onClose={handleCloseChain}
+        />
+      )}
+
+      {/* Comprehensive Tree View Modal */}
+      {showTree && (
+        <TreeView
+          onAttackSelect={handleAttackSelect}
+          onClose={handleCloseTree}
         />
       )}
     </div>
