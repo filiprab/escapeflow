@@ -1,12 +1,21 @@
 'use client';
 
-import type { AttackVector } from '../data/attackData';
+import type { AttackVector, TargetComponent, ExploitationTechnique } from '../data/attackData';
+import { targetComponents } from '../data/attackData';
 
 interface AttackDetailsProps {
   attack: AttackVector | null;
 }
 
 export default function AttackDetails({ attack }: AttackDetailsProps) {
+  // Helper function to get the technique data from attack vector
+  const getTechniqueData = (attack: AttackVector): ExploitationTechnique | null => {
+    const component = targetComponents.find(comp => comp.id === attack.componentId);
+    if (!component) return null;
+    
+    return component.techniques.find(tech => tech.id === attack.techniqueId) || null;
+  };
+
   if (!attack) {
     return (
       <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 h-full">
@@ -15,6 +24,8 @@ export default function AttackDetails({ attack }: AttackDetailsProps) {
       </div>
     );
   }
+
+  const techniqueData = getTechniqueData(attack);
 
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 h-full overflow-y-auto">
@@ -35,6 +46,23 @@ export default function AttackDetails({ attack }: AttackDetailsProps) {
           </span>
         </div>
       </div>
+
+      {techniqueData?.contextSpecificImpact && techniqueData.contextSpecificImpact.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-orange-400 mb-3">What This Means For The Attacker</h3>
+          <p className="text-gray-400 text-sm mb-3">
+            Impact when exploiting this technique in the target component:
+          </p>
+          <ul className="space-y-2">
+            {techniqueData.contextSpecificImpact.map((impact, index) => (
+              <li key={index} className="flex items-start gap-3">
+                <span className="text-orange-400 mt-1">⚡</span>
+                <span className="text-gray-300 text-sm">{impact}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {attack.cves && attack.cves.length > 0 && (
         <div className="mb-6">

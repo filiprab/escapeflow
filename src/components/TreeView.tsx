@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import {
   ReactFlow,
   Node,
@@ -14,7 +14,7 @@ import {
 import 'reactflow/dist/style.css';
 import dagre from 'dagre';
 import { targetComponents, createAttackVector } from '../data/attackData';
-import type { AttackVector } from '../data/attackData';
+import type { AttackVector, PrivilegeInfo } from '../data/attackData';
 
 interface TreeViewProps {
   onAttackSelect: (attack: AttackVector) => void;
@@ -68,6 +68,22 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
 };
 
 export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
+  const [selectedPrivilege, setSelectedPrivilege] = useState<string | null>(null);
+  const [selectedTechnique, setSelectedTechnique] = useState<{technique: any, component: any} | null>(null);
+
+  // Helper function to get privilege information
+  const getPrivilegeInfo = (privilegeLevel: string): PrivilegeInfo | null => {
+    for (const component of targetComponents) {
+      if (component.sourcePrivilegeInfo?.level === privilegeLevel) {
+        return component.sourcePrivilegeInfo;
+      }
+      if (component.targetPrivilegeInfo?.level === privilegeLevel) {
+        return component.targetPrivilegeInfo;
+      }
+    }
+    return null;
+  };
+
 
   // Generate all nodes and edges dynamically
   const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(() => {
@@ -106,6 +122,7 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
           minWidth: '170px',
           textAlign: 'center',
           boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)',
+          cursor: 'pointer',
         },
       });
     });
@@ -141,10 +158,45 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
       component.techniques.forEach((technique, techIndex) => {
         const techniqueId = `technique-${compIndex}-${techIndex}`;
         
+        // Create custom technique node content with badges
+        const techniqueLabel = (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ marginBottom: '4px' }}>{technique.name}</div>
+            <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {technique.cves.length > 0 && (
+                <span style={{
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  fontSize: '9px',
+                  fontWeight: 'bold',
+                  padding: '2px 6px',
+                  borderRadius: '10px',
+                  lineHeight: '1'
+                }}>
+                  CVE {technique.cves.length}
+                </span>
+              )}
+              {technique.pocs.length > 0 && (
+                <span style={{
+                  backgroundColor: '#f97316',
+                  color: 'white',
+                  fontSize: '9px',
+                  fontWeight: 'bold',
+                  padding: '2px 6px',
+                  borderRadius: '10px',
+                  lineHeight: '1'
+                }}>
+                  PoC {technique.pocs.length}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+
         nodes.push({
           id: techniqueId,
           data: { 
-            label: technique.name,
+            label: techniqueLabel,
             type: 'technique',
             technique: technique,
             component: component
@@ -154,11 +206,11 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
             background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
             border: '2px solid #f87171',
             borderRadius: '8px',
-            padding: '6px 10px',
+            padding: '8px 12px',
             color: 'white',
             fontWeight: '500',
             fontSize: '11px',
-            minWidth: '120px',
+            minWidth: '140px',
             textAlign: 'center',
             boxShadow: '0 4px 6px -1px rgba(248, 113, 113, 0.2)',
             cursor: 'pointer',
@@ -229,10 +281,14 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
 
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     if (node.data.type === 'technique') {
-      const attackVector = createAttackVector(node.data.component, node.data.technique);
-      onAttackSelect(attackVector);
+      setSelectedTechnique({
+        technique: node.data.technique,
+        component: node.data.component
+      });
+    } else if (node.data.type === 'privilege') {
+      setSelectedPrivilege(node.data.label);
     }
-  }, [onAttackSelect]);
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -260,7 +316,7 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
         <div className="flex gap-4 p-4 border-b border-gray-700 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-gradient-to-r from-blue-600 to-blue-700 rounded border border-blue-400"></div>
-            <span className="text-gray-300">Privilege Levels</span>
+            <span className="text-gray-300">Privilege Levels (clickable)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-gradient-to-r from-green-600 to-green-700 rounded border border-green-400"></div>
@@ -269,6 +325,14 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-gradient-to-r from-red-600 to-red-700 rounded border border-red-400"></div>
             <span className="text-gray-300">Attack Techniques (clickable)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+            <span className="text-gray-300">CVE Count</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+            <span className="text-gray-300">PoC Count</span>
           </div>
         </div>
 
@@ -309,6 +373,213 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
           </ReactFlow>
         </div>
       </div>
+      
+      {/* Privilege Level Popup Modal */}
+      {selectedPrivilege && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center">
+          <div className="bg-gray-800 rounded-xl border border-gray-600 max-w-2xl w-[90vw] max-h-[80vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-600">
+              <h3 className="text-xl font-bold text-white">{selectedPrivilege} - Privilege Level Details</h3>
+              <button
+                onClick={() => setSelectedPrivilege(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="p-6">
+              {(() => {
+                const privInfo = getPrivilegeInfo(selectedPrivilege);
+                if (!privInfo) {
+                  return (
+                    <div className="text-gray-400 text-center py-8">
+                      No detailed information available for this privilege level.
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="text-lg font-semibold text-green-400 uppercase tracking-wide mb-3">Capabilities</h4>
+                      <ul className="text-gray-300 space-y-2">
+                        {privInfo.capabilities.map((cap, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <span className="text-green-400 mr-3 mt-1">✓</span>
+                            <span>{cap}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-lg font-semibold text-red-400 uppercase tracking-wide mb-3">Restrictions</h4>
+                      <ul className="text-gray-300 space-y-2">
+                        {privInfo.restrictions.map((rest, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <span className="text-red-400 mr-3 mt-1">✗</span>
+                            <span>{rest}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-lg font-semibold text-blue-400 uppercase tracking-wide mb-3">Command Examples</h4>
+                      <div className="bg-gray-900/60 rounded-lg p-4 font-mono text-sm text-gray-300 space-y-2">
+                        {privInfo.examples.map((example, idx) => (
+                          <div key={idx} className="text-gray-300">
+                            <span className="text-blue-400">$</span> {example}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Attack Technique Popup Modal */}
+      {selectedTechnique && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center">
+          <div className="bg-gray-800 rounded-xl border border-gray-600 max-w-4xl w-[95vw] max-h-[85vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-600">
+              <div>
+                <h3 className="text-xl font-bold text-white">{selectedTechnique.technique.name}</h3>
+                <p className="text-gray-400 mt-1">Attack Technique in {selectedTechnique.component.name}</p>
+              </div>
+              <button
+                onClick={() => setSelectedTechnique(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Description */}
+              <div>
+                <h4 className="text-lg font-semibold text-blue-400 uppercase tracking-wide mb-3">Description</h4>
+                <p className="text-gray-300 leading-relaxed">{selectedTechnique.technique.detailedDescription}</p>
+              </div>
+              
+              {/* Context-Specific Impact */}
+              <div>
+                <h4 className="text-lg font-semibold text-orange-400 uppercase tracking-wide mb-3">
+                  What This Means For The Attacker
+                </h4>
+                <p className="text-gray-400 text-sm mb-3">
+                  Impact when exploiting {selectedTechnique.technique.name} in {selectedTechnique.component.name}:
+                </p>
+                <ul className="text-gray-300 space-y-2">
+                  {(selectedTechnique.technique.contextSpecificImpact || ['Context-specific impact information not available for this combination.']).map((impact, idx) => (
+                    <li key={idx} className="flex items-start">
+                      <span className="text-orange-400 mr-3 mt-1">⚡</span>
+                      <span>{impact}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              {/* CVEs and PoCs */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-red-400 uppercase tracking-wide mb-3">
+                    CVEs ({selectedTechnique.technique.cves.length})
+                  </h4>
+                  {selectedTechnique.technique.cves.length > 0 ? (
+                    <ul className="text-gray-300 space-y-1">
+                      {selectedTechnique.technique.cves.map((cve, idx) => (
+                        <li key={idx} className="font-mono text-sm bg-gray-700/50 px-3 py-1 rounded">
+                          {cve}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-400 text-sm">No CVEs listed for this technique.</p>
+                  )}
+                </div>
+                
+                <div>
+                  <h4 className="text-lg font-semibold text-orange-400 uppercase tracking-wide mb-3">
+                    Proof of Concepts ({selectedTechnique.technique.pocs.length})
+                  </h4>
+                  {selectedTechnique.technique.pocs.length > 0 ? (
+                    <ul className="text-gray-300 space-y-1">
+                      {selectedTechnique.technique.pocs.map((poc, idx) => (
+                        <li key={idx} className="text-sm">
+                          <a href={poc} target="_blank" rel="noopener noreferrer" 
+                             className="text-blue-400 hover:text-blue-300 underline break-all">
+                            {poc}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-400 text-sm">No PoCs listed for this technique.</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Mitigations */}
+              <div>
+                <h4 className="text-lg font-semibold text-green-400 uppercase tracking-wide mb-3">Mitigations</h4>
+                <ul className="text-gray-300 space-y-2">
+                  {selectedTechnique.technique.mitigations.map((mitigation, idx) => (
+                    <li key={idx} className="flex items-start">
+                      <span className="text-green-400 mr-3 mt-1">🛡️</span>
+                      <span>{mitigation}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              {/* References */}
+              {selectedTechnique.technique.references.length > 0 && (
+                <div>
+                  <h4 className="text-lg font-semibold text-purple-400 uppercase tracking-wide mb-3">References</h4>
+                  <ul className="text-gray-300 space-y-1">
+                    {selectedTechnique.technique.references.map((ref, idx) => (
+                      <li key={idx} className="text-sm">
+                        <a href={ref} target="_blank" rel="noopener noreferrer" 
+                           className="text-blue-400 hover:text-blue-300 underline break-all">
+                          {ref}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Action Button */}
+              <div className="pt-4 border-t border-gray-600">
+                <button
+                  onClick={() => {
+                    const attackVector = createAttackVector(selectedTechnique.component, selectedTechnique.technique);
+                    onAttackSelect(attackVector);
+                    setSelectedTechnique(null);
+                  }}
+                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 uppercase tracking-wider"
+                >
+                  Execute This Attack Vector
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

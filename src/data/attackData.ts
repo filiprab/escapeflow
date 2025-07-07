@@ -7,6 +7,14 @@ export interface ExploitationTechnique {
   pocs: string[];
   mitigations: string[];
   references: string[];
+  contextSpecificImpact?: string[];
+}
+
+export interface PrivilegeInfo {
+  level: string;
+  capabilities: string[];
+  restrictions: string[];
+  examples: string[];
 }
 
 export interface TargetComponent {
@@ -15,6 +23,8 @@ export interface TargetComponent {
   description: string;
   sourcePrivilege: string;
   targetPrivilege: string;
+  sourcePrivilegeInfo: PrivilegeInfo;
+  targetPrivilegeInfo: PrivilegeInfo;
   techniques: ExploitationTechnique[];
 }
 
@@ -41,6 +51,47 @@ export const targetComponents: TargetComponent[] = [
     description: 'Target the V8 JavaScript engine\'s heap sandbox isolation',
     sourcePrivilege: 'V8 Heap Sandbox',
     targetPrivilege: 'Renderer Process',
+    sourcePrivilegeInfo: {
+      level: 'V8 Heap Sandbox',
+      capabilities: [
+        'Execute JavaScript code',
+        'Access V8 heap memory',
+        'Trigger JIT compilation',
+        'WebAssembly execution'
+      ],
+      restrictions: [
+        'Limited to V8 heap memory',
+        'No direct system calls',
+        'No access to renderer process memory',
+        'Isolated from other origins'
+      ],
+      examples: [
+        'typeof window === "object" // true',
+        'navigator.userAgent // access allowed',
+        'new ArrayBuffer(1024) // heap allocation'
+      ]
+    },
+    targetPrivilegeInfo: {
+      level: 'Renderer Process',
+      capabilities: [
+        'Access renderer process memory',
+        'DOM manipulation',
+        'Network requests',
+        'File system access (limited)',
+        'Run system commands (sandboxed)'
+      ],
+      restrictions: [
+        'Sandboxed environment',
+        'No direct kernel access',
+        'Limited file system access',
+        'No raw socket access'
+      ],
+      examples: [
+        'uname -a // Linux hostname 6.6.87.2 #1 SMP...',
+        'ps aux // shows sandboxed processes',
+        'cat /proc/version // kernel version info'
+      ]
+    },
     techniques: [
       {
         id: 'v8-type-confusion',
@@ -60,6 +111,13 @@ export const targetComponents: TargetComponent[] = [
         references: [
           'https://example.com',
           'https://example.com'
+        ],
+        contextSpecificImpact: [
+          'Bypass V8 heap sandbox isolation',
+          'Gain arbitrary read/write in renderer process memory',
+          'Access sensitive renderer data like cookies, passwords, browsing history',
+          'Manipulate DOM and inject malicious scripts',
+          'Prepare for further IPC exploitation to escape renderer sandbox'
         ]
       },
       {
@@ -78,6 +136,13 @@ export const targetComponents: TargetComponent[] = [
         ],
         references: [
           'https://example.com'
+        ],
+        contextSpecificImpact: [
+          'Control freed memory allocation and reuse',
+          'Achieve reliable code execution within renderer process',
+          'Bypass ASLR through memory layout manipulation',
+          'Access cross-origin data in compromised renderer',
+          'Set up heap grooming for consistent exploitation'
         ]
       },
       {
@@ -98,6 +163,13 @@ export const targetComponents: TargetComponent[] = [
         references: [
           'https://example.com',
           'https://example.com'
+        ],
+        contextSpecificImpact: [
+          'Generate and execute malicious native code',
+          'Bypass W^X (Write XOR Execute) protections',
+          'Achieve fastest and most reliable code execution',
+          'Access JIT code cache for persistent backdoors',
+          'Manipulate optimized code paths for stealth'
         ]
       },
       {
@@ -117,6 +189,13 @@ export const targetComponents: TargetComponent[] = [
         references: [
           'https://example.com',
           'https://example.com'
+        ],
+        contextSpecificImpact: [
+          'Escape WebAssembly sandbox restrictions',
+          'Access linear memory outside bounds',
+          'Execute arbitrary code through WASM runtime corruption',
+          'Bypass WASM security validations',
+          'Leverage WASM JIT compiler vulnerabilities'
         ]
       }
     ]
@@ -129,6 +208,48 @@ export const targetComponents: TargetComponent[] = [
     description: 'Target the Chromium renderer process to escape to browser process or GPU process',
     sourcePrivilege: 'Renderer Process',
     targetPrivilege: 'Browser Process',
+    sourcePrivilegeInfo: {
+      level: 'Renderer Process',
+      capabilities: [
+        'Access renderer process memory',
+        'DOM manipulation',
+        'Network requests',
+        'File system access (limited)',
+        'Run system commands (sandboxed)'
+      ],
+      restrictions: [
+        'Sandboxed environment',
+        'No direct kernel access',
+        'Limited file system access',
+        'No raw socket access'
+      ],
+      examples: [
+        'uname -a // Linux hostname 6.6.87.2 #1 SMP...',
+        'ps aux // shows sandboxed processes',
+        'cat /proc/version // kernel version info'
+      ]
+    },
+    targetPrivilegeInfo: {
+      level: 'Browser Process',
+      capabilities: [
+        'Access all browser memory',
+        'Manage all tabs and processes',
+        'Full file system access',
+        'Network configuration',
+        'System API access'
+      ],
+      restrictions: [
+        'User-level permissions only',
+        'No direct kernel access',
+        'SELinux/AppArmor restrictions',
+        'Android app sandbox'
+      ],
+      examples: [
+        'ls -la /data/data/ // app data access',
+        'netstat -tulpn // network connections',
+        'cat /proc/self/maps // memory mappings'
+      ]
+    },
     techniques: [
       {
         id: 'renderer-ipc',
@@ -148,6 +269,13 @@ export const targetComponents: TargetComponent[] = [
         references: [
           'https://example.com',
           'https://example.com'
+        ],
+        contextSpecificImpact: [
+          'Send malformed IPC messages to browser process',
+          'Trigger vulnerabilities in browser process message handlers',
+          'Bypass message validation and sanitization',
+          'Access privileged browser process APIs',
+          'Escalate from sandboxed renderer to full browser privileges'
         ]
       }
     ]
@@ -160,6 +288,48 @@ export const targetComponents: TargetComponent[] = [
     description: 'Target the GPU process to escalate privileges and access system resources',
     sourcePrivilege: 'Renderer Process',
     targetPrivilege: 'GPU Process',
+    sourcePrivilegeInfo: {
+      level: 'Renderer Process',
+      capabilities: [
+        'Access renderer process memory',
+        'DOM manipulation',
+        'Network requests',
+        'File system access (limited)',
+        'Run system commands (sandboxed)'
+      ],
+      restrictions: [
+        'Sandboxed environment',
+        'No direct kernel access',
+        'Limited file system access',
+        'No raw socket access'
+      ],
+      examples: [
+        'uname -a // Linux hostname 6.6.87.2 #1 SMP...',
+        'ps aux // shows sandboxed processes',
+        'cat /proc/version // kernel version info'
+      ]
+    },
+    targetPrivilegeInfo: {
+      level: 'GPU Process',
+      capabilities: [
+        'Hardware GPU access',
+        'Graphics driver interaction',
+        'GPU memory management',
+        'Direct hardware commands',
+        'Elevated system access'
+      ],
+      restrictions: [
+        'Limited to GPU operations',
+        'Restricted system calls',
+        'No direct kernel access',
+        'Hardware-specific limitations'
+      ],
+      examples: [
+        'lspci | grep VGA // GPU hardware info',
+        'cat /proc/driver/nvidia/version // driver version',
+        'nvidia-smi // GPU status and memory'
+      ]
+    },
     techniques: [
       {
         id: 'gpu-driver',
@@ -180,6 +350,13 @@ export const targetComponents: TargetComponent[] = [
         references: [
           'https://example.com',
           'https://example.com'
+        ],
+        contextSpecificImpact: [
+          'Execute code in GPU driver context with elevated privileges',
+          'Access graphics hardware directly bypassing OS restrictions',
+          'Manipulate GPU memory mappings for DMA attacks',
+          'Persist in graphics driver for system-wide access',
+          'Use GPU as covert channel for data exfiltration'
         ]
       },
       {
@@ -200,6 +377,13 @@ export const targetComponents: TargetComponent[] = [
         references: [
           'https://example.com',
           'https://example.com'
+        ],
+        contextSpecificImpact: [
+          'Corrupt GPU process memory through malformed commands',
+          'Access other processes\' GPU memory allocations',
+          'Trigger GPU driver vulnerabilities through command injection',
+          'Cause GPU process crashes for denial of service',
+          'Leak sensitive graphics data from other applications'
         ]
       }
     ]
@@ -212,6 +396,48 @@ export const targetComponents: TargetComponent[] = [
     description: 'Escalate from GPU process to browser process',
     sourcePrivilege: 'GPU Process',
     targetPrivilege: 'Browser Process',
+    sourcePrivilegeInfo: {
+      level: 'GPU Process',
+      capabilities: [
+        'Hardware GPU access',
+        'Graphics driver interaction',
+        'GPU memory management',
+        'Direct hardware commands',
+        'Elevated system access'
+      ],
+      restrictions: [
+        'Limited to GPU operations',
+        'Restricted system calls',
+        'No direct kernel access',
+        'Hardware-specific limitations'
+      ],
+      examples: [
+        'lspci | grep VGA // GPU hardware info',
+        'cat /proc/driver/nvidia/version // driver version',
+        'nvidia-smi // GPU status and memory'
+      ]
+    },
+    targetPrivilegeInfo: {
+      level: 'Browser Process',
+      capabilities: [
+        'Access all browser memory',
+        'Manage all tabs and processes',
+        'Full file system access',
+        'Network configuration',
+        'System API access'
+      ],
+      restrictions: [
+        'User-level permissions only',
+        'No direct kernel access',
+        'SELinux/AppArmor restrictions',
+        'Android app sandbox'
+      ],
+      examples: [
+        'ls -la /data/data/ // app data access',
+        'netstat -tulpn // network connections',
+        'cat /proc/self/maps // memory mappings'
+      ]
+    },
     techniques: [
       {
         id: 'gpu-browser-ipc',
@@ -229,6 +455,13 @@ export const targetComponents: TargetComponent[] = [
         ],
         references: [
           'https://example.com'
+        ],
+        contextSpecificImpact: [
+          'Leverage GPU process privileges to attack browser process',
+          'Send elevated privilege IPC messages to browser',
+          'Access browser process memory from GPU context',
+          'Bypass GPU process sandboxing restrictions',
+          'Combine GPU driver access with browser process control'
         ]
       },
       {
@@ -247,6 +480,13 @@ export const targetComponents: TargetComponent[] = [
         ],
         references: [
           'https://example.com'
+        ],
+        contextSpecificImpact: [
+          'Corrupt shared memory regions between GPU and browser',
+          'Access browser process data through shared mappings',
+          'Manipulate graphics data visible to browser process',
+          'Trigger race conditions in shared memory access',
+          'Leak browser process secrets through GPU memory'
         ]
       }
     ]
@@ -259,6 +499,49 @@ export const targetComponents: TargetComponent[] = [
     description: 'Target the browser process to escalate to system privileges',
     sourcePrivilege: 'Browser Process',
     targetPrivilege: 'System/Root',
+    sourcePrivilegeInfo: {
+      level: 'Browser Process',
+      capabilities: [
+        'Access all browser memory',
+        'Manage all tabs and processes',
+        'Full file system access',
+        'Network configuration',
+        'System API access'
+      ],
+      restrictions: [
+        'User-level permissions only',
+        'No direct kernel access',
+        'SELinux/AppArmor restrictions',
+        'Android app sandbox'
+      ],
+      examples: [
+        'ls -la /data/data/ // app data access',
+        'netstat -tulpn // network connections',
+        'cat /proc/self/maps // memory mappings'
+      ]
+    },
+    targetPrivilegeInfo: {
+      level: 'System/Root',
+      capabilities: [
+        'Full system access',
+        'Kernel module loading',
+        'Hardware access',
+        'All file system access',
+        'System configuration',
+        'Root command execution'
+      ],
+      restrictions: [
+        'Hardware limitations only',
+        'Secure boot restrictions',
+        'Hardware security modules'
+      ],
+      examples: [
+        'id // uid=0(root) gid=0(root) groups=0(root)',
+        'cat /proc/kallsyms // kernel symbol table',
+        'dmesg // kernel log messages',
+        'mount -o remount,rw / // remount root filesystem'
+      ]
+    },
     techniques: [
       {
         id: 'browser-system',
@@ -279,6 +562,13 @@ export const targetComponents: TargetComponent[] = [
         references: [
           'https://example.com',
           'https://example.com'
+        ],
+        contextSpecificImpact: [
+          'Escape from browser process to system level',
+          'Access all user data and system resources',
+          'Install persistent malware and rootkits',
+          'Access other applications and system services',
+          'Prepare for kernel-level exploitation'
         ]
       },
       {
@@ -301,6 +591,13 @@ export const targetComponents: TargetComponent[] = [
         references: [
           'https://example.com',
           'https://example.com'
+        ],
+        contextSpecificImpact: [
+          'Gain root/administrator privileges on the system',
+          'Access kernel memory and system call table',
+          'Disable security mechanisms like SMEP/SMAP',
+          'Install kernel-level rootkits and backdoors',
+          'Complete system compromise with highest privileges'
         ]
       }
     ]
