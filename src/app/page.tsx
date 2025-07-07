@@ -3,15 +3,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import AttackSurfaceFlow from '../components/AttackSurfaceFlow';
 import AttackDetails from '../components/AttackDetails';
-import AttackChainVisualization from '../components/AttackChainVisualization';
+import AttackChainPanel from '../components/AttackChainPanel';
 import TreeView from '../components/TreeView';
+import LayoutWrapper from '../components/LayoutWrapper';
 import type { AttackVector } from '../data/attackData';
 
 export default function Home() {
   const [selectedAttack, setSelectedAttack] = useState<AttackVector | null>(null);
   const [currentPrivilege, setCurrentPrivilege] = useState<string>('initial');
   const [attackChain, setAttackChain] = useState<AttackVector[]>([]);
-  const [showChainVisualization, setShowChainVisualization] = useState<boolean>(false);
+  const [showChainPanel, setShowChainPanel] = useState<boolean>(true);
   const [showTree, setShowTree] = useState<boolean>(false);
 
   const handleAttackSelect = useCallback((attack: AttackVector) => {
@@ -28,16 +29,12 @@ export default function Home() {
     setCurrentPrivilege('initial');
     setSelectedAttack(null);
     setAttackChain([]);
-    setShowChainVisualization(false);
+    setShowChainPanel(false);
     setShowTree(false);
   }, []);
 
-  const handleShowChain = useCallback(() => {
-    setShowChainVisualization(true);
-  }, []);
-
-  const handleCloseChain = useCallback(() => {
-    setShowChainVisualization(false);
+  const handleToggleChainPanel = useCallback(() => {
+    setShowChainPanel(prev => !prev);
   }, []);
 
   const handleShowTree = useCallback(() => {
@@ -51,7 +48,7 @@ export default function Home() {
   // Listen for custom events from the completion screen
   useEffect(() => {
     const handleShowChainEvent = () => {
-      handleShowChain();
+      setShowChainPanel(true);
     };
 
     const handleResetEvent = () => {
@@ -65,54 +62,32 @@ export default function Home() {
       window.removeEventListener('showChain', handleShowChainEvent);
       window.removeEventListener('resetSimulation', handleResetEvent);
     };
-  }, [handleShowChain, handleReset]);
+  }, [handleReset]);
 
   // Check if attack chain is complete
   const isAttackChainComplete = (currentPrivilege === 'System/Root' || currentPrivilege === 'Kernel/Root') && attackChain.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
-      {/* Header */}
-      <header className="bg-black/50 backdrop-blur-lg border-b border-gray-700 p-4 text-center">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-red-400 to-cyan-400 bg-clip-text text-transparent">
-          Chromium Android Sandbox Escape - Attack Surface Visualization
-        </h1>
-        <div className="flex items-center justify-center gap-4 mt-2">
-          <p className="text-gray-300">
-            Current Privilege Level:{' '}
-            <span className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-sm font-semibold text-white">
-              {currentPrivilege}
-            </span>
-          </p>
-          {!isAttackChainComplete && (
-            <div className="flex gap-2">
-              <button
-                onClick={handleShowTree}
-                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-200 text-sm"
-              >
-                View Full Tree
-              </button>
-              {attackChain.length > 0 && (
-                <button
-                  onClick={handleShowChain}
-                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 text-sm"
-                >
-                  View Chain ({attackChain.length})
-                </button>
-              )}
-              <button
-                onClick={handleReset}
-                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-200 text-sm"
-              >
-                Reset Simulation
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
+    <LayoutWrapper
+      currentPrivilege={currentPrivilege}
+      isAttackChainComplete={isAttackChainComplete}
+      onShowTree={handleShowTree}
+      onReset={handleReset}
+    >
+      <div className="relative h-[calc(100vh-88px)]">
+        {/* Attack Chain Panel */}
+        <AttackChainPanel
+          attackChain={attackChain}
+          isOpen={showChainPanel}
+          onToggle={handleToggleChainPanel}
+        />
 
-      {/* Main Content */}
-      <div className="flex h-[calc(100vh-120px)]">
+        {/* Main Content */}
+        <div 
+          className={`flex h-full transition-all duration-300 ${
+            showChainPanel ? 'ml-80' : 'ml-0'
+          }`}
+        >
         {/* Flow Container */}
         <div className="flex-1 bg-gray-900/50 border-r border-gray-700">
           <AttackSurfaceFlow
@@ -123,29 +98,22 @@ export default function Home() {
           />
         </div>
 
-        {/* Details Panel */}
-        {selectedAttack && (
-          <div className="w-96 bg-gray-800/95 backdrop-blur-lg border-l border-gray-700 overflow-y-auto">
-            <AttackDetails attack={selectedAttack} />
-          </div>
+          {/* Details Panel */}
+          {selectedAttack && (
+            <div className="w-96 bg-gray-800/95 backdrop-blur-lg border-l border-gray-700 overflow-y-auto">
+              <AttackDetails attack={selectedAttack} />
+            </div>
+          )}
+        </div>
+
+        {/* Comprehensive Tree View Modal */}
+        {showTree && (
+          <TreeView
+            onAttackSelect={handleAttackSelect}
+            onClose={handleCloseTree}
+          />
         )}
       </div>
-
-      {/* Attack Chain Visualization Modal */}
-      {showChainVisualization && (
-        <AttackChainVisualization
-          attackChain={attackChain}
-          onClose={handleCloseChain}
-        />
-      )}
-
-      {/* Comprehensive Tree View Modal */}
-      {showTree && (
-        <TreeView
-          onAttackSelect={handleAttackSelect}
-          onClose={handleCloseTree}
-        />
-      )}
-    </div>
+    </LayoutWrapper>
   );
 }

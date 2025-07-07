@@ -1,6 +1,6 @@
 'use client';
 
-import type { AttackVector, TargetComponent, ExploitationTechnique } from '../data/attackData';
+import type { AttackVector, ExploitationTechnique } from '../data/attackData';
 import { targetComponents } from '../data/attackData';
 
 interface AttackDetailsProps {

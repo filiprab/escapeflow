@@ -13,8 +13,8 @@ import {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import dagre from 'dagre';
-import { targetComponents, createAttackVector } from '../data/attackData';
-import type { AttackVector, PrivilegeInfo } from '../data/attackData';
+import { targetComponents } from '../data/attackData';
+import type { AttackVector, PrivilegeInfo, ExploitationTechnique, TargetComponent } from '../data/attackData';
 
 interface TreeViewProps {
   onAttackSelect: (attack: AttackVector) => void;
@@ -67,9 +67,9 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
   return { nodes, edges };
 };
 
-export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
+export default function TreeView({ onClose }: TreeViewProps) {
   const [selectedPrivilege, setSelectedPrivilege] = useState<string | null>(null);
-  const [selectedTechnique, setSelectedTechnique] = useState<{technique: any, component: any} | null>(null);
+  const [selectedTechnique, setSelectedTechnique] = useState<{technique: ExploitationTechnique, component: TargetComponent} | null>(null);
 
   // Helper function to get privilege information
   const getPrivilegeInfo = (privilegeLevel: string): PrivilegeInfo | null => {
@@ -484,7 +484,7 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
                   Impact when exploiting {selectedTechnique.technique.name} in {selectedTechnique.component.name}:
                 </p>
                 <ul className="text-gray-300 space-y-2">
-                  {(selectedTechnique.technique.contextSpecificImpact || ['Context-specific impact information not available for this combination.']).map((impact, idx) => (
+                  {(selectedTechnique.technique.contextSpecificImpact || ['Context-specific impact information not available for this combination.']).map((impact: string, idx: number) => (
                     <li key={idx} className="flex items-start">
                       <span className="text-orange-400 mr-3 mt-1">⚡</span>
                       <span>{impact}</span>
@@ -501,7 +501,7 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
                   </h4>
                   {selectedTechnique.technique.cves.length > 0 ? (
                     <ul className="text-gray-300 space-y-1">
-                      {selectedTechnique.technique.cves.map((cve, idx) => (
+                      {selectedTechnique.technique.cves.map((cve: string, idx: number) => (
                         <li key={idx} className="font-mono text-sm bg-gray-700/50 px-3 py-1 rounded">
                           {cve}
                         </li>
@@ -518,7 +518,7 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
                   </h4>
                   {selectedTechnique.technique.pocs.length > 0 ? (
                     <ul className="text-gray-300 space-y-1">
-                      {selectedTechnique.technique.pocs.map((poc, idx) => (
+                      {selectedTechnique.technique.pocs.map((poc: string, idx: number) => (
                         <li key={idx} className="text-sm">
                           <a href={poc} target="_blank" rel="noopener noreferrer" 
                              className="text-blue-400 hover:text-blue-300 underline break-all">
@@ -537,7 +537,7 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
               <div>
                 <h4 className="text-lg font-semibold text-green-400 uppercase tracking-wide mb-3">Mitigations</h4>
                 <ul className="text-gray-300 space-y-2">
-                  {selectedTechnique.technique.mitigations.map((mitigation, idx) => (
+                  {selectedTechnique.technique.mitigations.map((mitigation: string, idx: number) => (
                     <li key={idx} className="flex items-start">
                       <span className="text-green-400 mr-3 mt-1">🛡️</span>
                       <span>{mitigation}</span>
@@ -551,7 +551,7 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
                 <div>
                   <h4 className="text-lg font-semibold text-purple-400 uppercase tracking-wide mb-3">References</h4>
                   <ul className="text-gray-300 space-y-1">
-                    {selectedTechnique.technique.references.map((ref, idx) => (
+                    {selectedTechnique.technique.references.map((ref: string, idx: number) => (
                       <li key={idx} className="text-sm">
                         <a href={ref} target="_blank" rel="noopener noreferrer" 
                            className="text-blue-400 hover:text-blue-300 underline break-all">
@@ -563,19 +563,6 @@ export default function TreeView({ onAttackSelect, onClose }: TreeViewProps) {
                 </div>
               )}
               
-              {/* Action Button */}
-              <div className="pt-4 border-t border-gray-600">
-                <button
-                  onClick={() => {
-                    const attackVector = createAttackVector(selectedTechnique.component, selectedTechnique.technique);
-                    onAttackSelect(attackVector);
-                    setSelectedTechnique(null);
-                  }}
-                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 uppercase tracking-wider"
-                >
-                  Execute This Attack Vector
-                </button>
-              </div>
             </div>
           </div>
         </div>

@@ -109,17 +109,7 @@ export default function AttackSurfaceFlow({
 
             <div className="bg-gray-800/50 rounded-xl p-6 mb-8 border border-gray-700">
               <h3 className="text-lg font-semibold text-white mb-4">What would you like to do next?</h3>
-              <div className="flex gap-4 justify-center">
-                <button
-                  onClick={() => {
-                    // This will be handled by the parent component
-                    const event = new CustomEvent('showChain');
-                    window.dispatchEvent(event);
-                  }}
-                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 text-sm flex items-center gap-2"
-                >
-                  📊 View Attack Chain Visualization
-                </button>
+              <div className="flex justify-center">
                 <button
                   onClick={() => {
                     // This will be handled by the parent component
@@ -133,8 +123,18 @@ export default function AttackSurfaceFlow({
               </div>
             </div>
 
-            <div className="text-sm text-gray-500">
-              <p>💡 Tip: The attack chain visualization shows your complete escalation path with detailed technique information.</p>
+            <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-600">
+              <h4 className="text-sm font-semibold text-white mb-2">🎯 Attack Summary</h4>
+              <div className="text-sm text-gray-300 space-y-1">
+                <p>✓ Successfully compromised {attackChain.length} privilege level{attackChain.length !== 1 ? 's' : ''}</p>
+                <p>✓ Used {attackChain.length} different attack technique{attackChain.length !== 1 ? 's' : ''}</p>
+                <p>✓ Achieved <span className="text-red-400 font-semibold">{currentPrivilege}</span> access</p>
+              </div>
+              <div className="mt-3 pt-3 border-t border-gray-600">
+                <p className="text-xs text-gray-400">
+                  💡 Your complete attack path is visible in the left panel with detailed technique information and export options.
+                </p>
+              </div>
             </div>
           </div>
         </div>
