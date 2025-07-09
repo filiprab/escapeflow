@@ -15,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Attack Surface Visualization",
-  description: "Interactive browser sandbox escape attack surface visualization tool",
+  title: "EscapeFlow",
+  description: "Interactive browser security attack surface visualization tool for security researchers",
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

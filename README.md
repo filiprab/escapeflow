@@ -1,13 +1,16 @@
-# Browser Security Attack Surface Visualization
+<div align="center">
+  <img src="assets/banner.svg" alt="EscapeFlow Banner" width="800"/>
+</div>
 
-This web application was created as part of my Bachelor thesis about browser sandbox escapes. It is an interactive web application designed for security researchers that visualizes attack surfaces and privilege escalation paths in modern browsers. This tool demonstrates various exploitation techniques across different privilege levels, from browser engine sandbox escapes to kernel-level privilege escalation.
+
+**This web application was created as part of my Bachelor thesis about browser sandbox escapes. It is an interactive web application designed for security researchers that visualizes attack surfaces and privilege escalation paths in modern browsers. This tool demonstrates various exploitation techniques across different privilege levels, from browser engine sandbox escapes to kernel-level privilege escalation.**
 
 Currently focused on Android Chromium with plans to expand to multi-platform browser security research.
 
 ## Features
 
 - **Interactive Attack Flow**: Visualize attack surfaces with draggable React Flow components
-- **Multi-Level Privilege Escalation**: Simulate attacks across V8 Sandbox, Renderer Process, GPU Process, Browser Process, and System/Root levels
+- **Multi-Level Privilege Escalation**: Simulate attacks across JavaScript Engine, Renderer Process, GPU Process, Browser Process, and System/Root levels
 - **Real CVE Data**: Attack vectors based on actual CVEs with proof-of-concept links
 - **Attack Chain Visualization**: Complete visual representation of successful attack paths with sliding panel
 - **Tree View**: Comprehensive tree visualization modal showing all attack progression paths
@@ -61,12 +64,12 @@ npm start
 
 1. **Build the Docker image:**
    ```bash
-   docker build -t chromium-attack-surface .
+   docker build -t escapeflow .
    ```
 
 2. **Run the container:**
    ```bash
-   docker run -p 3000:3000 chromium-attack-surface
+   docker run -p 3000:3000 escapeflow
    ```
 
 3. **Access the application:**
