@@ -18,11 +18,11 @@ export default function AttackChainPanel({ attackChain, isOpen, onToggle }: Atta
         onClick={onToggle}
         className={`absolute top-1/2 left-0 z-20 transform -translate-y-1/2 transition-all duration-300 ${
           isOpen ? 'translate-x-80' : 'translate-x-0'
-        } bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-r-lg p-3 text-white shadow-lg`}
+        } bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-r-lg text-white shadow-lg p-2`}
         title={isOpen ? 'Close Attack Chain' : 'Open Attack Chain'}
       >
         <svg 
-          className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
+          className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''} w-4 h-4`} 
           fill="none" 
           stroke="currentColor" 
           viewBox="0 0 24 24"

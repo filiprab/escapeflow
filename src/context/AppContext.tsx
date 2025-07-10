@@ -10,6 +10,7 @@ export interface AppContextType {
   attackChain: AttackVector[];
   showChainPanel: boolean;
   showTree: boolean;
+  showPrivilegePanel: boolean;
   isAttackChainComplete: boolean;
   
   // Actions
@@ -18,10 +19,12 @@ export interface AppContextType {
   setAttackChain: (chain: AttackVector[]) => void;
   setShowChainPanel: (show: boolean) => void;
   setShowTree: (show: boolean) => void;
+  setShowPrivilegePanel: (show: boolean) => void;
   handleAttackSelect: (attack: AttackVector) => void;
   handlePrivilegeEscalation: (newPrivilege: string, attack: AttackVector) => void;
   handleReset: () => void;
   handleToggleChainPanel: () => void;
+  handleTogglePrivilegePanel: () => void;
   handleShowTree: () => void;
   handleCloseTree: () => void;
 }

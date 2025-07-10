@@ -1,8 +1,9 @@
 'use client';
 
 import AttackSurfaceFlow from '../components/AttackSurfaceFlow';
-import AttackDetails from '../components/AttackDetails';
 import AttackChainPanel from '../components/AttackChainPanel';
+import PrivilegePanel from '../components/PrivilegePanel';
+import AttackDetailsPanel from '../components/AttackDetailsPanel';
 import TreeView from '../components/TreeView';
 import { useAppContext } from '@/context/AppContext';
 
@@ -13,9 +14,11 @@ export default function Home() {
     attackChain,
     showChainPanel,
     showTree,
+    showPrivilegePanel,
     handleAttackSelect,
     handlePrivilegeEscalation,
     handleToggleChainPanel,
+    handleTogglePrivilegePanel,
     handleCloseTree,
   } = useAppContext();
 
@@ -28,14 +31,31 @@ export default function Home() {
         onToggle={handleToggleChainPanel}
       />
 
+      {/* Privilege Panel */}
+      <PrivilegePanel
+        currentPrivilege={currentPrivilege}
+        isOpen={showPrivilegePanel}
+        onToggle={handleTogglePrivilegePanel}
+        attackChainPanelOpen={showChainPanel}
+      />
+
+      {/* Attack Details Panel */}
+      <AttackDetailsPanel
+        selectedAttack={selectedAttack}
+        attackChainPanelOpen={showChainPanel}
+        privilegePanelOpen={showPrivilegePanel}
+      />
+
       {/* Main Content */}
       <div 
-        className={`flex h-full transition-all duration-300 ${
+        className={`flex transition-all duration-300 ${
           showChainPanel ? 'ml-80' : 'ml-0'
-        }`}
+        } ${
+          showPrivilegePanel ? 'h-[calc(100%-16rem)]' : 'h-full'
+        } mr-96`}
       >
         {/* Flow Container */}
-        <div className="flex-1 bg-gray-900/50 border-r border-gray-700">
+        <div className="flex-1 bg-gray-900/50">
           <AttackSurfaceFlow
             onAttackSelect={handleAttackSelect}
             currentPrivilege={currentPrivilege}
@@ -43,13 +63,6 @@ export default function Home() {
             attackChain={attackChain}
           />
         </div>
-
-        {/* Details Panel */}
-        {selectedAttack && (
-          <div className="w-96 bg-gray-800/95 backdrop-blur-lg border-l border-gray-700 overflow-y-auto">
-            <AttackDetails attack={selectedAttack} />
-          </div>
-        )}
       </div>
 
       {/* Comprehensive Tree View Modal */}

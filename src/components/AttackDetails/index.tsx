@@ -31,7 +31,7 @@ export default function AttackDetails({ attack }: AttackDetailsProps) {
   const techniqueData = getTechniqueData(attack);
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 h-full overflow-y-auto">
+    <div className="space-y-6">
       <AttackHeader attack={attack} />
       
       <PrivilegeEscalationSection attack={attack} />

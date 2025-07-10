@@ -7,7 +7,7 @@ import { HeaderTitle } from './HeaderTitle';
 import { HeaderControls } from './HeaderControls';
 
 export default function Header() {
-  const { currentPrivilege, isAttackChainComplete, handleShowTree, handleReset } = useAppContext();
+  const { isAttackChainComplete, handleShowTree, handleReset } = useAppContext();
   
   const [selectedOS, setSelectedOS] = useState<string>('android');
   const [selectedBrowser, setSelectedBrowser] = useState<string>('chromium');
@@ -70,7 +70,6 @@ export default function Header() {
         />
         
         <HeaderControls
-          currentPrivilege={currentPrivilege}
           isAttackChainComplete={isAttackChainComplete}
           onShowTree={handleShowTree}
           onReset={handleReset}

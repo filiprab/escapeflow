@@ -1,24 +1,16 @@
 interface HeaderControlsProps {
-  currentPrivilege: string;
   isAttackChainComplete: boolean;
   onShowTree: () => void;
   onReset: () => void;
 }
 
 export function HeaderControls({ 
-  currentPrivilege, 
   isAttackChainComplete, 
   onShowTree, 
   onReset 
 }: HeaderControlsProps) {
   return (
     <div className="flex items-center gap-4">
-      <div className="text-gray-300">
-        <span className="text-sm font-medium">Privilege:</span>{' '}
-        <span className="px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-sm font-bold text-white shadow-lg">
-          {currentPrivilege}
-        </span>
-      </div>
       {!isAttackChainComplete && (
         <div className="flex gap-3">
           <button

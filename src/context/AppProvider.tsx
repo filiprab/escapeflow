@@ -10,10 +10,11 @@ interface AppProviderProps {
 
 export function AppProvider({ children }: AppProviderProps) {
   const [selectedAttack, setSelectedAttack] = useState<AttackVector | null>(null);
-  const [currentPrivilege, setCurrentPrivilege] = useState<string>('initial');
+  const [currentPrivilege, setCurrentPrivilege] = useState<string>('V8 Heap Sandbox');
   const [attackChain, setAttackChain] = useState<AttackVector[]>([]);
   const [showChainPanel, setShowChainPanel] = useState<boolean>(true);
   const [showTree, setShowTree] = useState<boolean>(false);
+  const [showPrivilegePanel, setShowPrivilegePanel] = useState<boolean>(true);
 
   const handleAttackSelect = useCallback((attack: AttackVector) => {
     setSelectedAttack(attack);
@@ -26,7 +27,7 @@ export function AppProvider({ children }: AppProviderProps) {
   }, []);
 
   const handleReset = useCallback(() => {
-    setCurrentPrivilege('initial');
+    setCurrentPrivilege('V8 Heap Sandbox');
     setSelectedAttack(null);
     setAttackChain([]);
     setShowChainPanel(false);
@@ -35,6 +36,10 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const handleToggleChainPanel = useCallback(() => {
     setShowChainPanel(prev => !prev);
+  }, []);
+
+  const handleTogglePrivilegePanel = useCallback(() => {
+    setShowPrivilegePanel(prev => !prev);
   }, []);
 
   const handleShowTree = useCallback(() => {
@@ -74,6 +79,7 @@ export function AppProvider({ children }: AppProviderProps) {
     attackChain,
     showChainPanel,
     showTree,
+    showPrivilegePanel,
     isAttackChainComplete,
     
     // Actions
@@ -82,10 +88,12 @@ export function AppProvider({ children }: AppProviderProps) {
     setAttackChain,
     setShowChainPanel,
     setShowTree,
+    setShowPrivilegePanel,
     handleAttackSelect,
     handlePrivilegeEscalation,
     handleReset,
     handleToggleChainPanel,
+    handleTogglePrivilegePanel,
     handleShowTree,
     handleCloseTree,
   };

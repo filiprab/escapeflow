@@ -8,7 +8,6 @@ import {
   useNodesState,
   useEdgesState,
   Controls,
-  MiniMap,
   Background,
   BackgroundVariant,
 } from 'reactflow';
@@ -55,11 +54,6 @@ export function ReactFlowWrapper({ initialNodes, initialEdges }: ReactFlowWrappe
       className="bg-gray-900"
     >
       <Controls className="bg-gray-800 border-gray-600" />
-      <MiniMap 
-        className="bg-gray-800 border-gray-600" 
-        nodeColor="#374151"
-        maskColor="rgba(0, 0, 0, 0.2)"
-      />
       <Background 
         variant={BackgroundVariant.Dots} 
         gap={12} 
