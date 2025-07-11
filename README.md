@@ -156,17 +156,6 @@ All attack techniques are based on documented vulnerabilities:
 - **Firefox**: Gecko engine vulnerabilities across platforms
 - **Edge**: Chromium-based Edge specific vectors
 
-#### Enhanced Data & Features
-- **Real CVE Integration**: Replace placeholder data with actual CVE database
-- **Historical Attack Timeline**: Show evolution of attack techniques
-- **Mitigation Effectiveness**: Rate and track security improvements
-- **Interactive Tutorials**: Guided learning paths for security concepts
-
-#### Export & Integration
-- **MITRE ATT&CK Mapping**: Connect attacks to MITRE framework
-- **STIX/TAXII Integration**: Threat intelligence format support
-- **Research Paper Export**: LaTeX and academic format support
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

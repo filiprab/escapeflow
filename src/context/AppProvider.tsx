@@ -4,17 +4,75 @@ import { useState, useCallback, useEffect, ReactNode } from 'react';
 import { AppContext, AppContextType } from './AppContext';
 import type { AttackVector } from '@/data/attackData';
 
+const STORAGE_KEY = 'escapeflow-app-state';
+
 interface AppProviderProps {
   children: ReactNode;
 }
 
+interface PersistedState {
+  currentPrivilege: string;
+  attackChain: AttackVector[];
+  showChainPanel: boolean;
+  showTree: boolean;
+  showPrivilegePanel: boolean;
+}
+
+const loadPersistedState = (): Partial<PersistedState> => {
+  if (typeof window === 'undefined') return {};
+  
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.warn('Failed to load persisted state:', error);
+  }
+  return {};
+};
+
+const savePersistedState = (state: PersistedState) => {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (error) {
+    console.warn('Failed to save persisted state:', error);
+  }
+};
+
 export function AppProvider({ children }: AppProviderProps) {
+  const [isHydrated, setIsHydrated] = useState(false);
   const [selectedAttack, setSelectedAttack] = useState<AttackVector | null>(null);
   const [currentPrivilege, setCurrentPrivilege] = useState<string>('V8 Heap Sandbox');
   const [attackChain, setAttackChain] = useState<AttackVector[]>([]);
   const [showChainPanel, setShowChainPanel] = useState<boolean>(true);
   const [showTree, setShowTree] = useState<boolean>(false);
   const [showPrivilegePanel, setShowPrivilegePanel] = useState<boolean>(true);
+
+  // Hydrate from localStorage after component mounts
+  useEffect(() => {
+    const persistedState = loadPersistedState();
+    
+    if (persistedState.currentPrivilege !== undefined) {
+      setCurrentPrivilege(persistedState.currentPrivilege);
+    }
+    if (persistedState.attackChain !== undefined) {
+      setAttackChain(persistedState.attackChain);
+    }
+    if (persistedState.showChainPanel !== undefined) {
+      setShowChainPanel(persistedState.showChainPanel);
+    }
+    if (persistedState.showTree !== undefined) {
+      setShowTree(persistedState.showTree);
+    }
+    if (persistedState.showPrivilegePanel !== undefined) {
+      setShowPrivilegePanel(persistedState.showPrivilegePanel);
+    }
+    
+    setIsHydrated(true);
+  }, []);
 
   const handleAttackSelect = useCallback((attack: AttackVector) => {
     setSelectedAttack(attack);
@@ -30,8 +88,13 @@ export function AppProvider({ children }: AppProviderProps) {
     setCurrentPrivilege('V8 Heap Sandbox');
     setSelectedAttack(null);
     setAttackChain([]);
-    setShowChainPanel(false);
+    setShowChainPanel(true);
     setShowTree(false);
+    
+    // Clear persisted state
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   }, []);
 
   const handleToggleChainPanel = useCallback(() => {
@@ -68,6 +131,20 @@ export function AppProvider({ children }: AppProviderProps) {
       window.removeEventListener('resetSimulation', handleResetEvent);
     };
   }, [handleReset]);
+
+  // Persist state whenever it changes (only after hydration)
+  useEffect(() => {
+    if (!isHydrated) return;
+    
+    const stateToSave: PersistedState = {
+      currentPrivilege,
+      attackChain,
+      showChainPanel,
+      showTree,
+      showPrivilegePanel,
+    };
+    savePersistedState(stateToSave);
+  }, [isHydrated, currentPrivilege, attackChain, showChainPanel, showTree, showPrivilegePanel]);
 
   // Check if attack chain is complete
   const isAttackChainComplete = (currentPrivilege === 'System/Root' || currentPrivilege === 'Kernel/Root') && attackChain.length > 0;

@@ -5,14 +5,10 @@ import AttackDetails from '../AttackDetails';
 
 interface AttackDetailsPanelProps {
   selectedAttack: AttackVector | null;
-  attackChainPanelOpen: boolean;
-  privilegePanelOpen: boolean;
 }
 
 export default function AttackDetailsPanel({ 
-  selectedAttack, 
-  attackChainPanelOpen, 
-  privilegePanelOpen 
+  selectedAttack
 }: AttackDetailsPanelProps) {
   return (
     <div
@@ -22,7 +18,6 @@ export default function AttackDetailsPanel({
         {/* Header */}
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
             <h2 className="text-lg font-bold text-white">Attack Details</h2>
           </div>
           <p className="text-sm text-gray-400">

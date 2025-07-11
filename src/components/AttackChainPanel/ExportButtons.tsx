@@ -1,5 +1,5 @@
 import type { AttackVector } from '@/data/attackData';
-import { downloadImage, downloadJSON, downloadPlantUML, downloadMermaid } from './exportUtils';
+import { downloadImage, downloadJSON, downloadPlantUML, downloadMermaid, downloadLaTeX } from './exportUtils';
 
 interface ExportButtonsProps {
   attackChain: AttackVector[];
@@ -39,6 +39,13 @@ export function ExportButtons({ attackChain }: ExportButtonsProps) {
           title="Export as Mermaid diagram"
         >
           Mermaid
+        </button>
+        <button
+          onClick={() => downloadLaTeX(attackChain)}
+          className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors"
+          title="Export as LaTeX document"
+        >
+          LaTeX
         </button>
       </div>
     </div>

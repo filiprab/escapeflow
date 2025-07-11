@@ -42,8 +42,6 @@ export default function Home() {
       {/* Attack Details Panel */}
       <AttackDetailsPanel
         selectedAttack={selectedAttack}
-        attackChainPanelOpen={showChainPanel}
-        privilegePanelOpen={showPrivilegePanel}
       />
 
       {/* Main Content */}
