@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cve {
+  id                String               @id @default(cuid())
+  cveId             String               @unique @map("cve_id")
+  dataType          String               @map("data_type")
+  dataVersion       String               @map("data_version")
+  state             String
+  assignerOrgId     String               @map("assigner_org_id")
+  assignerShortName String               @map("assigner_short_name")
+  dateReserved      DateTime             @map("date_reserved")
+  datePublished     DateTime             @map("date_published")
+  dateUpdated       DateTime             @map("date_updated")
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+  affectedProducts  CveAffectedProduct[]
+  descriptions      CveDescription[]
+  labels            CveLabel?
+  metrics           CveMetric[]
+  problemTypes      CveProblemType[]
+  references        CveReference[]
+  techniqueLinks    TechniqueCveLink[]
+
+  @@index([datePublished])
+  @@index([dateUpdated])
+  @@index([state])
+  @@map("cves")
+}
+
+model CveDescription {
+  id          String @id @default(cuid())
+  cveId       String @map("cve_id")
+  lang        String
+  description String
+  cve         Cve    @relation(fields: [cveId], references: [cveId], onDelete: Cascade)
+
+  @@map("cve_descriptions")
+}
+
+model CveReference {
+  id    String @id @default(cuid())
+  cveId String @map("cve_id")
+  url   String @db.VarChar(2048)
+  cve   Cve    @relation(fields: [cveId], references: [cveId], onDelete: Cascade)
+
+  @@map("cve_references")
+}
+
+model CveAffectedProduct {
+  id       String       @id @default(cuid())
+  cveId    String       @map("cve_id")
+  vendor   String
+  product  String
+  cve      Cve          @relation(fields: [cveId], references: [cveId], onDelete: Cascade)
+  versions CveVersion[]
+
+  @@map("cve_affected_products")
+}
+
+model CveVersion {
+  id                String             @id @default(cuid())
+  affectedProductId String             @map("affected_product_id")
+  version           String
+  status            String
+  lessThan          String?            @map("less_than")
+  versionType       String             @map("version_type")
+  affectedProduct   CveAffectedProduct @relation(fields: [affectedProductId], references: [id], onDelete: Cascade)
+
+  @@map("cve_versions")
+}
+
+model CveLabel {
+  id               String   @id @default(cuid())
+  cveId            String   @unique @map("cve_id")
+  operatingSystems String[] @map("operating_systems")
+  components       String[]
+  cve              Cve      @relation(fields: [cveId], references: [cveId], onDelete: Cascade)
+
+  @@map("cve_labels")
+}
+
+model CveMetric {
+  id                    String  @id @default(cuid())
+  cveId                 String  @map("cve_id")
+  cvssVersion           String? @map("cvss_version")
+  baseScore             Float?  @map("base_score")
+  baseSeverity          String? @map("base_severity")
+  vectorString          String? @map("vector_string")
+  attackVector          String? @map("attack_vector")
+  attackComplexity      String? @map("attack_complexity")
+  privilegesRequired    String? @map("privileges_required")
+  userInteraction       String? @map("user_interaction")
+  scope                 String?
+  confidentialityImpact String? @map("confidentiality_impact")
+  integrityImpact       String? @map("integrity_impact")
+  availabilityImpact    String? @map("availability_impact")
+  metricsJson           Json?   @map("metrics_json")
+  cve                   Cve     @relation(fields: [cveId], references: [cveId], onDelete: Cascade)
+
+  @@index([baseScore])
+  @@index([baseSeverity])
+  @@map("cve_metrics")
+}
+
+model CveProblemType {
+  id          String  @id @default(cuid())
+  cveId       String  @map("cve_id")
+  lang        String
+  description String
+  type        String?
+  cweId       String? @map("cwe_id")
+  cve         Cve     @relation(fields: [cveId], references: [cveId], onDelete: Cascade)
+
+  @@map("cve_problem_types")
+}
+
+model TargetComponent {
+  id                  String                  @id @default(cuid())
+  name                String
+  description         String
+  sourcePrivilege     String                  @map("source_privilege")
+  targetPrivilege     String                  @map("target_privilege")
+  sourcePrivilegeInfo Json                    @map("source_privilege_info")
+  targetPrivilegeInfo Json                    @map("target_privilege_info")
+  createdAt           DateTime                @default(now()) @map("created_at")
+  updatedAt           DateTime                @updatedAt @map("updated_at")
+  techniques          ExploitationTechnique[]
+
+  @@map("target_components")
+}
+
+model ExploitationTechnique {
+  id                    String             @id @default(cuid())
+  name                  String
+  description           String
+  detailedDescription   String             @map("detailed_description")
+  pocs                  String[]
+  mitigations           String[]
+  references            String[]
+  contextSpecificImpact String[]           @map("context_specific_impact")
+  targetComponentId     String             @map("target_component_id")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+  targetComponent       TargetComponent    @relation(fields: [targetComponentId], references: [id], onDelete: Cascade)
+  cveLinks              TechniqueCveLink[]
+
+  @@map("exploitation_techniques")
+}
+
+model TechniqueCveLink {
+  id          String                @id @default(cuid())
+  techniqueId String                @map("technique_id")
+  cveId       String                @map("cve_id")
+  cve         Cve                   @relation(fields: [cveId], references: [cveId], onDelete: Cascade)
+  technique   ExploitationTechnique @relation(fields: [techniqueId], references: [id], onDelete: Cascade)
+
+  @@unique([techniqueId, cveId])
+  @@map("technique_cve_links")
+}

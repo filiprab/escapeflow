@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface LinkCardProps {
   href: string;
@@ -28,7 +29,10 @@ export function LinkCard({ href, title, description, hoverColor }: LinkCardProps
       className={`block bg-gray-700 hover:bg-gray-600 px-4 py-3 rounded-lg transition-colors border border-gray-600 ${hoverColorClasses[hoverColor]}`}
     >
       <span className={`font-semibold ${titleColorClasses[hoverColor]}`}>{title}</span>
-      <span className="text-gray-400 text-sm ml-2">→ {description}</span>
+      <span className="flex items-center text-gray-400 text-sm ml-2">
+        <ArrowRightIcon className="w-3 h-3 mr-1" />
+        {description}
+      </span>
     </Link>
   );
 }

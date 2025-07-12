@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface BrowserDropdownProps {
   selectedBrowser: string;
@@ -32,9 +33,7 @@ export function BrowserDropdown({ selectedBrowser, showBrowserDropdown, onToggle
              selectedBrowser === 'gecko' ? 'Gecko' : 'Browser'}
           </span>
         </div>
-        <svg className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${showBrowserDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${showBrowserDropdown ? 'rotate-180' : ''}`} />
       </button>
       
       {showBrowserDropdown && (

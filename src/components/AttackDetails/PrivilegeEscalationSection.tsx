@@ -1,4 +1,5 @@
 import type { AttackVector } from '@/data/attackData';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface PrivilegeEscalationSectionProps {
   attack: AttackVector;
@@ -12,7 +13,7 @@ export function PrivilegeEscalationSection({ attack }: PrivilegeEscalationSectio
         <span className="bg-gray-700 px-3 py-2 rounded-lg font-medium text-gray-200">
           {attack.sourcePrivilege}
         </span>
-        <span className="text-red-400 font-bold text-xl">→</span>
+        <ArrowRightIcon className="w-5 h-5 text-red-400" />
         <span className="bg-red-600 px-3 py-2 rounded-lg font-medium text-white">
           {attack.targetPrivilege}
         </span>

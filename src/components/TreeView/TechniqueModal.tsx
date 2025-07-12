@@ -1,5 +1,6 @@
 import type { ExploitationTechnique, TargetComponent } from '@/data/attackData';
 import Link from 'next/link';
+import { XMarkIcon, BoltIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 
 interface TechniqueModalProps {
   selectedTechnique: {
@@ -23,9 +24,7 @@ export function TechniqueModal({ selectedTechnique, onClose }: TechniqueModalPro
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
         
@@ -48,7 +47,7 @@ export function TechniqueModal({ selectedTechnique, onClose }: TechniqueModalPro
             <ul className="text-gray-300 space-y-2">
               {(selectedTechnique.technique.contextSpecificImpact || ['Context-specific impact information not available for this combination.']).map((impact: string, idx: number) => (
                 <li key={idx} className="flex items-start">
-                  <span className="text-orange-400 mr-3 mt-1">⚡</span>
+                  <BoltIcon className="w-4 h-4 text-orange-400 mr-3 mt-1" />
                   <span>{impact}</span>
                 </li>
               ))}
@@ -101,7 +100,7 @@ export function TechniqueModal({ selectedTechnique, onClose }: TechniqueModalPro
             <ul className="text-gray-300 space-y-2">
               {selectedTechnique.technique.mitigations.map((mitigation: string, idx: number) => (
                 <li key={idx} className="flex items-start">
-                  <span className="text-green-400 mr-3 mt-1">🛡️</span>
+                  <ShieldCheckIcon className="w-4 h-4 text-green-400 mr-3 mt-1" />
                   <span>{mitigation}</span>
                 </li>
               ))}

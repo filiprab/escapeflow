@@ -1,5 +1,6 @@
 import type { AttackVector } from '@/data/attackData';
 import { downloadImage, downloadJSON, downloadPlantUML, downloadMermaid, downloadLaTeX } from './exportUtils';
+import { PhotoIcon, DocumentTextIcon, ChartBarIcon, PresentationChartLineIcon, DocumentIcon } from '@heroicons/react/24/outline';
 
 interface ExportButtonsProps {
   attackChain: AttackVector[];
@@ -14,38 +15,43 @@ export function ExportButtons({ attackChain }: ExportButtonsProps) {
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={downloadImage}
-          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
+          className="flex items-center justify-center space-x-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
           title="Export as PNG image"
         >
-          PNG
+          <PhotoIcon className="w-3 h-3" />
+          <span>PNG</span>
         </button>
         <button
           onClick={() => downloadJSON(attackChain)}
-          className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium transition-colors"
+          className="flex items-center justify-center space-x-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium transition-colors"
           title="Export as JSON data"
         >
-          JSON
+          <DocumentTextIcon className="w-3 h-3" />
+          <span>JSON</span>
         </button>
         <button
           onClick={() => downloadPlantUML(attackChain)}
-          className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-medium transition-colors"
+          className="flex items-center justify-center space-x-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-medium transition-colors"
           title="Export as PlantUML diagram"
         >
-          PlantUML
+          <ChartBarIcon className="w-3 h-3" />
+          <span>PlantUML</span>
         </button>
         <button
           onClick={() => downloadMermaid(attackChain)}
-          className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded text-xs font-medium transition-colors"
+          className="flex items-center justify-center space-x-1 px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded text-xs font-medium transition-colors"
           title="Export as Mermaid diagram"
         >
-          Mermaid
+          <PresentationChartLineIcon className="w-3 h-3" />
+          <span>Mermaid</span>
         </button>
         <button
           onClick={() => downloadLaTeX(attackChain)}
-          className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors"
+          className="flex items-center justify-center space-x-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors"
           title="Export as LaTeX document"
         >
-          LaTeX
+          <DocumentIcon className="w-3 h-3" />
+          <span>LaTeX</span>
         </button>
       </div>
     </div>

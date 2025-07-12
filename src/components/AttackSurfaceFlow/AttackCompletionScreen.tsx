@@ -1,4 +1,5 @@
 import type { AttackVector } from '@/data/attackData';
+import { ArrowPathIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 
 interface AttackCompletionScreenProps {
   currentPrivilege: string;
@@ -31,12 +32,15 @@ export function AttackCompletionScreen({ currentPrivilege, attackChain }: Attack
             onClick={handleResetSimulation}
             className="px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-200 flex items-center gap-3 mx-auto"
           >
-            <span className="text-lg">🔄</span>
+            <ArrowPathIcon className="w-5 h-5" />
             Start New Attack Simulation
           </button>
 
           <div className="text-sm text-gray-400 border-t border-gray-700 pt-6">
-            <p>💡 View your complete attack path in the left panel</p>
+            <p className="flex items-center justify-center gap-2">
+              <LightBulbIcon className="w-4 h-4" />
+              View your complete attack path in the left panel
+            </p>
           </div>
         </div>
       </div>
