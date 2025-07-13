@@ -33,7 +33,7 @@ export default function Home() {
               Browse and filter 2,366 Chromium CVEs with detailed metadata, CVSS scores, and categorization by OS and components.
             </p>
             <Link 
-              href="/database"
+              href="/catalog"
               className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
             >
               Browse CVEs

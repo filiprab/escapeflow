@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 
-# Install dependencies (including dev dependencies for development)
+# Install dependencies (including dev dependencies for seeding)
 RUN npm ci
 
 # Generate Prisma client
@@ -67,12 +67,13 @@ COPY --from=deps /app/prisma ./prisma
 COPY package.json ./
 COPY scripts ./scripts
 COPY src/data ./src/data
+COPY prisma/seed.ts ./prisma/
 
 # Ensure scripts are executable
-RUN chmod +x scripts/init-db.sh
+RUN chmod +x /app/scripts/init-db.sh
 
 # Default init command
-CMD ["./scripts/init-db.sh"]
+CMD ["/app/scripts/init-db.sh"]
 
 # Production runner stage
 FROM base AS runner

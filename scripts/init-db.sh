@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 echo "Starting database initialization..."
@@ -12,13 +12,13 @@ done
 
 # Check if database is already initialized
 echo "Checking if database is already initialized..."
-TABLES_COUNT=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null || echo "0")
+TABLES_COUNT=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null || echo "0")
 
 if [ "$TABLES_COUNT" -gt 0 ]; then
   echo "Database already has $TABLES_COUNT tables, checking if seeding is needed..."
   
   # Check if CVE data exists
-  CVE_COUNT=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM cves;" 2>/dev/null || echo "0")
+  CVE_COUNT=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT COUNT(*) FROM cves;" 2>/dev/null || echo "0")
   
   if [ "$CVE_COUNT" -gt 0 ]; then
     echo "Database already initialized with $CVE_COUNT CVEs. Skipping initialization."
@@ -49,8 +49,8 @@ echo "[+] Database initialization completed successfully!"
 
 # Verify the setup
 echo "Verifying database setup..."
-FINAL_CVE_COUNT=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM cves;" || echo "0")
-FINAL_TABLES_COUNT=$(psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" || echo "0")
+FINAL_CVE_COUNT=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT COUNT(*) FROM cves;" || echo "0")
+FINAL_TABLES_COUNT=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" || echo "0")
 
 echo "Final status:"
 echo "   - Tables: $FINAL_TABLES_COUNT"

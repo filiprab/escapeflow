@@ -1,5 +1,6 @@
 import { prisma } from './client';
 import type { CVEFilter } from '@/data/cveTypes';
+import type { Prisma } from '@prisma/client';
 
 export interface CVESearchParams extends CVEFilter {
   page?: number;
@@ -22,7 +23,7 @@ export async function getCVEs(params: CVESearchParams) {
   const skip = (page - 1) * limit;
   
   // Build where clause
-  const where: any = {};
+  const where: Prisma.CveWhereInput = {};
 
   // Search in CVE ID and descriptions
   if (search) {
@@ -49,23 +50,21 @@ export async function getCVEs(params: CVESearchParams) {
   // Filter by operating systems and components
   if (operatingSystems.length > 0 || components.length > 0) {
     where.labels = {
-      some: {
-        ...(operatingSystems.length > 0 && {
-          operatingSystems: {
-            hasSome: operatingSystems,
-          },
-        }),
-        ...(components.length > 0 && {
-          components: {
-            hasSome: components,
-          },
-        }),
-      },
+      ...(operatingSystems.length > 0 && {
+        operatingSystems: {
+          hasSome: operatingSystems,
+        },
+      }),
+      ...(components.length > 0 && {
+        components: {
+          hasSome: components,
+        },
+      }),
     };
   }
 
   // Build orderBy clause
-  let orderBy: any = {};
+  let orderBy: Prisma.CveOrderByWithRelationInput = {};
   if (sortBy === 'baseScore') {
     orderBy = {
       metrics: {
@@ -165,19 +164,19 @@ export async function getAllComponents() {
 
   return Array.from(componentSet).sort();
 }
-
-export async function createCVE(data: any) {
+/*
+export async function createCVE(data: Prisma.CveCreateInput) {
   // Implementation for creating new CVEs
   // This would include validation and proper data transformation
   throw new Error('CVE creation not yet implemented');
 }
 
-export async function updateCVE(cveId: string, data: any) {
+export async function updateCVE(cveId: string, data: Prisma.CveUpdateInput) {
   // Implementation for updating CVEs
   // This would include validation and proper data transformation
   throw new Error('CVE update not yet implemented');
 }
-
+*/
 export async function deleteCVE(cveId: string) {
   return prisma.cve.delete({
     where: { cveId },

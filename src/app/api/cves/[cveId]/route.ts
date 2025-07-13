@@ -3,10 +3,11 @@ import { getCVEById, deleteCVE } from '@/lib/database/cve';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { cveId: string } }
+  { params }: { params: Promise<{ cveId: string }> }
 ) {
   try {
-    const cve = await getCVEById(params.cveId);
+    const { cveId } = await params;
+    const cve = await getCVEById(cveId);
     
     if (!cve) {
       return NextResponse.json(
@@ -27,10 +28,11 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { cveId: string } }
+  { params }: { params: Promise<{ cveId: string }> }
 ) {
   try {
-    await deleteCVE(params.cveId);
+    const { cveId } = await params;
+    await deleteCVE(cveId);
     
     return NextResponse.json({ success: true });
   } catch (error) {

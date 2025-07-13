@@ -1,56 +1,53 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { CVEDatabase, CVERecord, CVEFilter } from '@/data/cveTypes';
-import cveData from '@/data/chromium_cve_details.json';
+import { useState, useEffect } from 'react';
+import { CVEFilter } from '@/data/cveTypes';
+import { getCVEs, getFilterOptions, CVEApiResponse, CVEApiError, FilterOptions } from '@/lib/api/cve';
+import { CVEListItem } from '@/types/cve';
 import Link from 'next/link';
 
-export default function DatabasePage() {
+export default function CatalogPage() {
   const [filter, setFilter] = useState<CVEFilter>({
     operatingSystems: [],
     components: [],
     search: ''
   });
+  const [cveData, setCveData] = useState<CVEApiResponse | null>(null);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ operatingSystems: [], components: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const limit = 20;
 
-  const database = cveData as CVEDatabase;
-  const cveList = Object.entries(database.cve_details);
-
-  const allOperatingSystems = useMemo(() => {
-    const osSet = new Set<string>();
-    cveList.forEach(([, cve]) => {
-      cve.labels.operating_systems.forEach(os => osSet.add(os));
-    });
-    return Array.from(osSet).sort();
-  }, [cveList]);
-
-  const allComponents = useMemo(() => {
-    const componentSet = new Set<string>();
-    cveList.forEach(([, cve]) => {
-      cve.labels.components.forEach(component => componentSet.add(component));
-    });
-    return Array.from(componentSet).sort();
-  }, [cveList]);
-
-  const filteredCVEs = useMemo(() => {
-    return cveList.filter(([cveId, cve]) => {
-      if (filter.search && !cveId.toLowerCase().includes(filter.search.toLowerCase()) && 
-          !cve.containers.cna.descriptions[0]?.value.toLowerCase().includes(filter.search.toLowerCase())) {
-        return false;
+  // Fetch CVE data and filter options
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const [cveResponse, filterResponse] = await Promise.all([
+          getCVEs({ ...filter, page, limit }),
+          getFilterOptions()
+        ]);
+        
+        setCveData(cveResponse);
+        setFilterOptions(filterResponse);
+      } catch (err) {
+        console.error('Failed to fetch data:', err);
+        setError(err instanceof CVEApiError ? err.message : 'Failed to load CVE data');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      if (filter.operatingSystems.length > 0 && 
-          !filter.operatingSystems.some(os => cve.labels.operating_systems.includes(os))) {
-        return false;
-      }
+    fetchData();
+  }, [filter, page]);
 
-      if (filter.components.length > 0 && 
-          !filter.components.some(component => cve.labels.components.includes(component))) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [cveList, filter]);
+  // Reset page when filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [filter.search, filter.operatingSystems, filter.components]);
 
   const toggleOSFilter = (os: string) => {
     setFilter(prev => ({
@@ -70,23 +67,53 @@ export default function DatabasePage() {
     }));
   };
 
-  const getSeverityColor = (cve: CVERecord) => {
-    const adp = cve.containers.adp?.[0];
-    const cvss = adp?.metrics?.find(m => m.cvssV3_1)?.cvssV3_1;
-    if (!cvss) return 'bg-gray-600';
+  const getSeverityColor = (cve: CVEListItem) => {
+    const metric = cve.metrics?.[0];
+    if (!metric?.baseScore) return 'bg-gray-600';
     
-    const score = cvss.baseScore;
+    const score = metric.baseScore;
     if (score >= 9.0) return 'bg-red-600';
     if (score >= 7.0) return 'bg-orange-600';
     if (score >= 4.0) return 'bg-yellow-600';
     return 'bg-green-600';
   };
 
-  const getSeverityScore = (cve: CVERecord) => {
-    const adp = cve.containers.adp?.[0];
-    const cvss = adp?.metrics?.find(m => m.cvssV3_1)?.cvssV3_1;
-    return cvss?.baseScore || 'N/A';
+  const getSeverityScore = (cve: CVEListItem) => {
+    const metric = cve.metrics?.[0];
+    return metric?.baseScore || 'N/A';
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading CVE database...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">Error loading CVE data:</p>
+          <p className="text-gray-300">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!cveData) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6">
@@ -96,10 +123,7 @@ export default function DatabasePage() {
             CVE Database
           </h1>
           <p className="text-gray-300 mb-4">
-            Browse and filter {database.total_cves} Chromium CVEs
-          </p>
-          <p className="text-sm text-gray-400">
-            Last updated: {database.fetched_at}
+            Browse and filter {cveData.total} Chromium CVEs
           </p>
         </div>
 
@@ -122,7 +146,7 @@ export default function DatabasePage() {
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-gray-700">
               <h3 className="text-lg font-semibold mb-3">Operating Systems</h3>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {allOperatingSystems.map(os => (
+                {filterOptions.operatingSystems.map(os => (
                   <label key={os} className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -140,7 +164,7 @@ export default function DatabasePage() {
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-gray-700">
               <h3 className="text-lg font-semibold mb-3">Components</h3>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {allComponents.map(component => (
+                {filterOptions.components.map(component => (
                   <label key={component} className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -157,46 +181,64 @@ export default function DatabasePage() {
 
           {/* CVE List */}
           <div className="lg:col-span-3">
-            <div className="mb-4 text-sm text-gray-400">
-              Showing {filteredCVEs.length} of {database.total_cves} CVEs
+            <div className="mb-4 flex justify-between items-center">
+              <div className="text-sm text-gray-400">
+                Showing {cveData.cves.length} of {cveData.total} CVEs (Page {cveData.page} of {cveData.totalPages})
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.min(cveData.totalPages, p + 1))}
+                  disabled={page >= cveData.totalPages}
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm"
+                >
+                  Next
+                </button>
+              </div>
             </div>
             
             <div className="space-y-4">
-              {filteredCVEs.map(([cveId, cve]) => (
-                <Link key={cveId} href={`/database/${cveId}`}>
+              {cveData.cves.map((cve) => (
+                <Link key={cve.cveId} href={`/database/${cve.cveId}`}>
                   <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-3">
-                        <h3 className="text-lg font-semibold text-blue-400">{cveId}</h3>
+                        <h3 className="text-lg font-semibold text-blue-400">{cve.cveId}</h3>
                         <div className={`px-2 py-1 rounded text-xs font-medium text-white ${getSeverityColor(cve)}`}>
                           {getSeverityScore(cve)}
                         </div>
                       </div>
                       <div className="text-sm text-gray-400">
-                        {new Date(cve.cveMetadata.datePublished).toLocaleDateString()}
+                        {new Date(cve.datePublished).toLocaleDateString()}
                       </div>
                     </div>
                     
                     <p className="text-gray-300 mb-4 leading-relaxed">
-                      {cve.containers.cna.descriptions[0]?.value || 'No description available'}
+                      {cve.descriptions[0]?.description || 'No description available'}
                     </p>
                     
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {cve.labels.operating_systems.map(os => (
+                      {cve.labels?.[0]?.operatingSystems?.map((os) => (
                         <span key={os} className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded text-xs">
                           {os}
                         </span>
                       ))}
-                      {cve.labels.components.map(component => (
+                      {cve.labels?.[0]?.components?.map((component) => (
                         <span key={component} className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded text-xs">
                           {component}
                         </span>
                       ))}
                     </div>
                     
-                    {cve.containers.cna.references.length > 0 && (
+                    {cve.references && cve.references.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {cve.containers.cna.references.slice(0, 2).map((ref, index) => (
+                        {cve.references.slice(0, 2).map((ref, index) => (
                           <span
                             key={index}
                             className="text-xs text-blue-400"
@@ -211,7 +253,7 @@ export default function DatabasePage() {
               ))}
             </div>
             
-            {filteredCVEs.length === 0 && (
+            {cveData.cves.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-400">No CVEs found matching the current filters.</p>
               </div>
