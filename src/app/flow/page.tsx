@@ -1,10 +1,10 @@
 'use client';
 
-import AttackSurfaceFlow from '../../components/AttackSurfaceFlow';
-import AttackChainPanel from '../../components/AttackChainPanel';
-import PrivilegePanel from '../../components/PrivilegePanel';
-import AttackDetailsPanel from '../../components/AttackDetailsPanel';
-import TreeView from '../../components/TreeView';
+import AttackSurfaceFlow from '@/components/flow/AttackSurfaceFlow';
+import AttackChainPanel from '@/components/flow/AttackChainPanel';
+import PrivilegePanel from '@/components/flow/PrivilegePanel';
+import AttackDetailsPanel from '@/components/flow/AttackDetailsPanel';
+import TreeView from '@/components/flow/TreeView';
 import { useAppContext } from '@/context/AppContext';
 
 export default function FlowPage() {

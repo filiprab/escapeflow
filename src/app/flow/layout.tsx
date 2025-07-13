@@ -1,5 +1,5 @@
 import { AppProvider } from "@/context/AppProvider";
-import Header from "@/components/Header";
+import Header from "@/components/flow/Header";
 
 export default function FlowLayout({
   children,
