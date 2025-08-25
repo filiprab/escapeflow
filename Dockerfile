@@ -73,7 +73,7 @@ COPY prisma/seed.ts ./prisma/
 RUN chmod +x /app/scripts/init-db.sh
 
 # Default init command
-CMD ["/app/scripts/init-db.sh"]
+CMD ["sh", "/app/scripts/init-db.sh"]
 
 # Production runner stage
 FROM base AS runner

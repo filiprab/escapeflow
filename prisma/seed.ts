@@ -103,33 +103,62 @@ async function main() {
         });
       }
 
-      // Create metrics (CVSS data)
-      if (cveRecord.containers.adp?.length > 0) {
+      // Create metrics (CVSS data) - prioritize CNA over ADP
+      let metricsToProcess: any[] = [];
+      
+      if (cveRecord.containers.cna.metrics?.length > 0) {
+        // CNA is authoritative - use only CNA metrics
+        metricsToProcess = cveRecord.containers.cna.metrics;
+      } else if (cveRecord.containers.adp?.length > 0) {
+        // Fall back to ADP only if no CNA metrics exist
         for (const adp of cveRecord.containers.adp) {
           if (adp.metrics?.length > 0) {
-            for (const metric of adp.metrics) {
-              if (metric.cvssV3_1) {
-                await prisma.cveMetric.create({
-                  data: {
-                    cveId: cve.cveId,
-                    cvssVersion: metric.cvssV3_1.version,
-                    baseScore: metric.cvssV3_1.baseScore,
-                    baseSeverity: metric.cvssV3_1.baseSeverity,
-                    vectorString: metric.cvssV3_1.vectorString,
-                    attackVector: metric.cvssV3_1.attackVector,
-                    attackComplexity: metric.cvssV3_1.attackComplexity,
-                    privilegesRequired: metric.cvssV3_1.privilegesRequired,
-                    userInteraction: metric.cvssV3_1.userInteraction,
-                    scope: metric.cvssV3_1.scope,
-                    confidentialityImpact: metric.cvssV3_1.confidentialityImpact,
-                    integrityImpact: metric.cvssV3_1.integrityImpact,
-                    availabilityImpact: metric.cvssV3_1.availabilityImpact,
-                    metricsJson: metric,
-                  },
-                });
-              }
-            }
+            metricsToProcess.push(...adp.metrics);
           }
+        }
+      }
+      
+      // Process metrics - support both CVSS v3.1 and v4.0
+      for (const metric of metricsToProcess) {
+        if (metric.cvssV3_1) {
+          await prisma.cveMetric.create({
+            data: {
+              cveId: cve.cveId,
+              cvssVersion: metric.cvssV3_1.version,
+              baseScore: metric.cvssV3_1.baseScore,
+              baseSeverity: metric.cvssV3_1.baseSeverity,
+              vectorString: metric.cvssV3_1.vectorString,
+              attackVector: metric.cvssV3_1.attackVector,
+              attackComplexity: metric.cvssV3_1.attackComplexity,
+              privilegesRequired: metric.cvssV3_1.privilegesRequired,
+              userInteraction: metric.cvssV3_1.userInteraction,
+              scope: metric.cvssV3_1.scope,
+              confidentialityImpact: metric.cvssV3_1.confidentialityImpact,
+              integrityImpact: metric.cvssV3_1.integrityImpact,
+              availabilityImpact: metric.cvssV3_1.availabilityImpact,
+              metricsJson: metric,
+            },
+          });
+        } else if (metric.cvssV4_0) {
+          await prisma.cveMetric.create({
+            data: {
+              cveId: cve.cveId,
+              cvssVersion: metric.cvssV4_0.version,
+              baseScore: metric.cvssV4_0.baseScore,
+              baseSeverity: metric.cvssV4_0.baseSeverity,
+              vectorString: metric.cvssV4_0.vectorString,
+              // Map v4.0 fields to v3.1 compatible fields where possible
+              attackVector: metric.cvssV4_0.attackVector || null,
+              attackComplexity: metric.cvssV4_0.attackComplexity || null,
+              privilegesRequired: metric.cvssV4_0.privilegesRequired || null,
+              userInteraction: metric.cvssV4_0.userInteraction || null,
+              scope: metric.cvssV4_0.scope || null,
+              confidentialityImpact: metric.cvssV4_0.vulnerabilityConfidentialityImpact || null,
+              integrityImpact: metric.cvssV4_0.vulnerabilityIntegrityImpact || null,
+              availabilityImpact: metric.cvssV4_0.vulnerabilityAvailabilityImpact || null,
+              metricsJson: metric,
+            },
+          });
         }
       }
 
