@@ -16,29 +16,6 @@ RUN npm ci
 # Generate Prisma client
 RUN npx prisma generate
 
-# Development stage
-FROM base AS development
-WORKDIR /app
-
-# Install dependencies needed for Prisma and PostgreSQL
-RUN apk add --no-cache libc6-compat openssl
-
-# Copy node_modules from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/prisma ./prisma
-
-# Copy application code
-COPY . .
-
-# Generate Prisma client again in case of schema changes
-RUN npx prisma generate
-
-EXPOSE 3000
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-# Default development command
-CMD ["npm", "run", "dev"]
 
 # Production builder stage
 FROM base AS builder
@@ -69,8 +46,15 @@ COPY scripts ./scripts
 COPY src/data ./src/data
 COPY prisma/seed.ts ./prisma/
 
+# Add non-root user before running init script
+RUN addgroup --system --gid 1001 dbuser
+RUN adduser --system --uid 1001 dbuser
+
 # Ensure scripts are executable
 RUN chmod +x /app/scripts/init-db.sh
+
+# Set the user to dbuser before running the init script
+USER dbuser
 
 # Default init command
 CMD ["sh", "/app/scripts/init-db.sh"]
