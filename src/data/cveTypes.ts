@@ -62,8 +62,24 @@ export interface CVSSMetrics {
   confidentialityImpact: string;
 }
 
+export interface CVSSV4Metrics {
+  version: string;
+  baseScore: number;
+  baseSeverity: string;
+  vectorString: string;
+  attackVector?: string;
+  attackComplexity?: string;
+  privilegesRequired?: string;
+  userInteraction?: string;
+  scope?: string;
+  vulnerabilityConfidentialityImpact?: string;
+  vulnerabilityIntegrityImpact?: string;
+  vulnerabilityAvailabilityImpact?: string;
+}
+
 export interface CVEMetric {
   cvssV3_1?: CVSSMetrics;
+  cvssV4_0?: CVSSV4Metrics;
   other?: {
     type: string;
     content: unknown;
@@ -71,11 +87,12 @@ export interface CVEMetric {
 }
 
 export interface CVECNA {
-  affected: CVEAffected[];
-  descriptions: CVEDescription[];
-  problemTypes: CVEProblemType[];
+  affected?: CVEAffected[];
+  descriptions?: CVEDescription[];
+  problemTypes?: CVEProblemType[];
   providerMetadata: CVEProviderMetadata;
-  references: CVEReference[];
+  references?: CVEReference[];
+  metrics?: CVEMetric[];
 }
 
 export interface CVEADP {
@@ -115,3 +132,5 @@ export interface CVEFilter {
   components: string[];
   search: string;
 }
+
+export type MetricToProcess = CVEMetric;

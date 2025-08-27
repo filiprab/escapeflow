@@ -38,17 +38,17 @@ WORKDIR /app
 # Install dependencies needed for database operations
 RUN apk add --no-cache libc6-compat openssl postgresql-client
 
-# Copy dependencies and Prisma files
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/prisma ./prisma
-COPY package.json ./
-COPY scripts ./scripts
-COPY src/data ./src/data
-COPY prisma/seed.ts ./prisma/
-
-# Add non-root user before running init script
+# Add non-root user first
 RUN addgroup --system --gid 1001 dbuser
 RUN adduser --system --uid 1001 dbuser
+
+# Copy dependencies and Prisma files with proper ownership
+COPY --from=deps --chown=dbuser:dbuser /app/node_modules ./node_modules
+COPY --from=deps --chown=dbuser:dbuser /app/prisma ./prisma
+COPY --chown=dbuser:dbuser package.json ./
+COPY --chown=dbuser:dbuser scripts ./scripts
+COPY --chown=dbuser:dbuser src/data ./src/data
+COPY --chown=dbuser:dbuser prisma/seed.ts ./prisma/
 
 # Ensure scripts are executable
 RUN chmod +x /app/scripts/init-db.sh

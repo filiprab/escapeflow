@@ -1,25 +1,27 @@
 import { PrismaClient } from '@prisma/client';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import type { 
+  CVEDatabase,
+  CVEDescription,
+  CVEReference,
+  CVEVersion,
+  CVEProblemTypeDescription,
+  MetricToProcess
+} from '../src/data/cveTypes';
 
 const prisma = new PrismaClient();
 
-interface CVEData {
-  total_cves: number;
-  fetched_at: string;
-  labeled_at: string;
-  cve_details: Record<string, any>;
-}
 
 async function main() {
-  console.log('🌱 Starting database seed...');
+  console.log('Starting database seed...');
 
   // Read the existing CVE data
   const cveDataPath = join(process.cwd(), 'src', 'data', 'chromium_cve_details.json');
   const cveDataRaw = readFileSync(cveDataPath, 'utf8');
-  const cveData: CVEData = JSON.parse(cveDataRaw);
+  const cveData: CVEDatabase = JSON.parse(cveDataRaw);
 
-  console.log(`📊 Processing ${cveData.total_cves} CVEs...`);
+  console.log(`Processing ${cveData.total_cves} CVEs...`);
 
   let processedCount = 0;
   const cveEntries = Object.entries(cveData.cve_details);
@@ -47,9 +49,9 @@ async function main() {
       });
 
       // Create descriptions
-      if (cveRecord.containers.cna.descriptions?.length > 0) {
+      if (cveRecord.containers.cna.descriptions && cveRecord.containers.cna.descriptions.length > 0) {
         await prisma.cveDescription.createMany({
-          data: cveRecord.containers.cna.descriptions.map((desc: any) => ({
+          data: cveRecord.containers.cna.descriptions.map((desc: CVEDescription) => ({
             cveId: cve.cveId,
             lang: desc.lang,
             description: desc.value,
@@ -58,9 +60,9 @@ async function main() {
       }
 
       // Create references
-      if (cveRecord.containers.cna.references?.length > 0) {
+      if (cveRecord.containers.cna.references && cveRecord.containers.cna.references.length > 0) {
         await prisma.cveReference.createMany({
-          data: cveRecord.containers.cna.references.map((ref: any) => ({
+          data: cveRecord.containers.cna.references.map((ref: CVEReference) => ({
             cveId: cve.cveId,
             url: ref.url,
           })),
@@ -68,7 +70,7 @@ async function main() {
       }
 
       // Create affected products and versions
-      if (cveRecord.containers.cna.affected?.length > 0) {
+      if (cveRecord.containers.cna.affected && cveRecord.containers.cna.affected.length > 0) {
         for (const affected of cveRecord.containers.cna.affected) {
           const affectedProduct = await prisma.cveAffectedProduct.create({
             data: {
@@ -78,14 +80,14 @@ async function main() {
             },
           });
 
-          if (affected.versions?.length > 0) {
+          if (affected.versions && affected.versions.length > 0) {
             await prisma.cveVersion.createMany({
-              data: affected.versions.map((version: any) => ({
+              data: affected.versions.map((version: CVEVersion) => ({
                 affectedProductId: affectedProduct.id,
                 version: version.version,
                 status: version.status,
                 lessThan: version.lessThan || null,
-                versionType: version.versionType,
+                versionType: version.versionType || 'unknown',
               })),
             });
           }
@@ -104,15 +106,15 @@ async function main() {
       }
 
       // Create metrics (CVSS data) - prioritize CNA over ADP
-      let metricsToProcess: any[] = [];
+      let metricsToProcess: MetricToProcess[] = [];
       
-      if (cveRecord.containers.cna.metrics?.length > 0) {
+      if (cveRecord.containers.cna.metrics && cveRecord.containers.cna.metrics.length > 0) {
         // CNA is authoritative - use only CNA metrics
         metricsToProcess = cveRecord.containers.cna.metrics;
-      } else if (cveRecord.containers.adp?.length > 0) {
+      } else if (cveRecord.containers.adp && cveRecord.containers.adp.length > 0) {
         // Fall back to ADP only if no CNA metrics exist
         for (const adp of cveRecord.containers.adp) {
-          if (adp.metrics?.length > 0) {
+          if (adp.metrics && adp.metrics.length > 0) {
             metricsToProcess.push(...adp.metrics);
           }
         }
@@ -136,7 +138,7 @@ async function main() {
               confidentialityImpact: metric.cvssV3_1.confidentialityImpact,
               integrityImpact: metric.cvssV3_1.integrityImpact,
               availabilityImpact: metric.cvssV3_1.availabilityImpact,
-              metricsJson: metric,
+              metricsJson: metric as any,
             },
           });
         } else if (metric.cvssV4_0) {
@@ -156,18 +158,18 @@ async function main() {
               confidentialityImpact: metric.cvssV4_0.vulnerabilityConfidentialityImpact || null,
               integrityImpact: metric.cvssV4_0.vulnerabilityIntegrityImpact || null,
               availabilityImpact: metric.cvssV4_0.vulnerabilityAvailabilityImpact || null,
-              metricsJson: metric,
+              metricsJson: metric as any,
             },
           });
         }
       }
 
       // Create problem types
-      if (cveRecord.containers.cna.problemTypes?.length > 0) {
+      if (cveRecord.containers.cna.problemTypes && cveRecord.containers.cna.problemTypes.length > 0) {
         for (const problemType of cveRecord.containers.cna.problemTypes) {
-          if (problemType.descriptions?.length > 0) {
+          if (problemType.descriptions && problemType.descriptions.length > 0) {
             await prisma.cveProblemType.createMany({
-              data: problemType.descriptions.map((desc: any) => ({
+              data: problemType.descriptions.map((desc: CVEProblemTypeDescription) => ({
                 cveId: cve.cveId,
                 lang: desc.lang,
                 description: desc.description,
@@ -181,29 +183,29 @@ async function main() {
 
       processedCount++;
       if (processedCount % 100 === 0) {
-        console.log(`✅ Processed ${processedCount}/${cveData.total_cves} CVEs...`);
+        console.log(`Processed ${processedCount}/${cveData.total_cves} CVEs...`);
       }
     } catch (error) {
-      console.error(`❌ Error processing CVE ${cveId}:`, error);
+      console.error(`Error processing CVE ${cveId}:`, error);
       // Continue with next CVE
     }
   }
 
-  console.log(`🎉 Successfully seeded ${processedCount} CVEs!`);
+  console.log(`Successfully seeded ${processedCount} CVEs!`);
 
   // Now seed attack surface data from attackData.ts
-  console.log('🗡️  Seeding attack surface data...');
+  console.log('Seeding attack surface data...');
   
   // Import and seed attack data here if needed
   // For now, we'll just note that this is where it would go
-  console.log('📝 Attack surface data seeding can be added later');
+  console.log('Attack surface data seeding can be added later');
 
-  console.log('✨ Database seeding completed!');
+  console.log('Database seeding completed!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seed:', e);
+    console.error('Error during seed:', e);
     process.exit(1);
   })
   .finally(async () => {
