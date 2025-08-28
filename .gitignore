@@ -42,6 +42,7 @@ next-env.d.ts
 
 # Claude Code files
 CLAUDE.md
+.claude/
 
 /src/generated/prisma
 

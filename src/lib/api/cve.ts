@@ -1,10 +1,9 @@
-import { CVEFilter } from '@/data/cveTypes';
-import { CVERecord, CVEListItem } from '@/types/cve';
+import { CVEFilter, CVERecord, CVEListItem } from '@/types/cve';
 
 export interface CVESearchParams extends CVEFilter {
   page?: number;
   limit?: number;
-  sortBy?: 'datePublished' | 'dateUpdated' | 'baseScore';
+  sortBy?: 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId';
   sortOrder?: 'asc' | 'desc';
 }
 

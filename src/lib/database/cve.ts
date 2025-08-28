@@ -1,11 +1,11 @@
 import { prisma } from './client';
-import type { CVEFilter } from '@/data/cveTypes';
+import type { CVEFilter } from '@/types/cve';
 import type { Prisma } from '@prisma/client';
 
 export interface CVESearchParams extends CVEFilter {
   page?: number;
   limit?: number;
-  sortBy?: 'datePublished' | 'dateUpdated' | 'baseScore';
+  sortBy?: 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId';
   sortOrder?: 'asc' | 'desc';
 }
 

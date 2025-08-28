@@ -13,7 +13,7 @@ export default function ClassificationSection({ cve }: ClassificationSectionProp
         <div>
           <h3 className="text-sm font-medium text-gray-400 mb-2">Operating Systems</h3>
           <div className="flex flex-wrap gap-2">
-            {cve.labels?.[0]?.operatingSystems?.map((os) => (
+            {cve.labels?.operatingSystems?.map((os) => (
               <span key={os} className="px-3 py-1 bg-blue-600/20 text-blue-300 rounded-full text-sm">
                 {os}
               </span>
@@ -24,7 +24,7 @@ export default function ClassificationSection({ cve }: ClassificationSectionProp
         <div>
           <h3 className="text-sm font-medium text-gray-400 mb-2">Components</h3>
           <div className="flex flex-wrap gap-2">
-            {cve.labels?.[0]?.components?.map((component) => (
+            {cve.labels?.components?.map((component) => (
               <span key={component} className="px-3 py-1 bg-purple-600/20 text-purple-300 rounded-full text-sm">
                 {component}
               </span>

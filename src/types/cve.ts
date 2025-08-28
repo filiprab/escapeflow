@@ -1,4 +1,7 @@
-// Database CVE types based on Prisma schema
+// =============================================================================
+// DATABASE TYPES - Based on Prisma schema (Primary types used by components)
+// =============================================================================
+
 export interface CVEDescription {
   id: string;
   cveId: string;
@@ -77,7 +80,7 @@ export interface CVERecord {
   updatedAt: string;
   descriptions: CVEDescription[];
   references: CVEReference[];
-  labels: CVELabel[];
+  labels: CVELabel | null;
   metrics: CVEMetric[];
   problemTypes: CVEProblemType[];
   affectedProducts: CVEAffectedProduct[];
@@ -91,7 +94,152 @@ export interface CVEListItem {
   dateUpdated: string;
   state: string;
   descriptions: CVEDescription[];
-  labels: CVELabel[];
+  labels: CVELabel | null;
   metrics: CVEMetric[];
   references: CVEReference[];
 }
+
+// =============================================================================
+// FILTER AND API TYPES - Used for search and filtering functionality
+// =============================================================================
+
+export interface CVEFilter {
+  operatingSystems: string[];
+  components: string[];
+  search: string;
+}
+
+// =============================================================================
+// EXTERNAL API TYPES - Raw CVE data from external sources (NVD, etc.)
+// =============================================================================
+
+export interface CVEMetadata {
+  cveId: string;
+  assignerOrgId: string;
+  state: string;
+  assignerShortName: string;
+  dateReserved: string;
+  datePublished: string;
+  dateUpdated: string;
+}
+
+export interface CVEVersionRaw {
+  version: string;
+  status: string;
+  lessThan: string;
+  versionType: string;
+}
+
+export interface CVEAffectedRaw {
+  vendor: string;
+  product: string;
+  versions: CVEVersionRaw[];
+}
+
+export interface CVEDescriptionRaw {
+  lang: string;
+  value: string;
+}
+
+export interface CVEProblemTypeDescriptionRaw {
+  lang: string;
+  description: string;
+  type?: string;
+  cweId?: string;
+}
+
+export interface CVEProblemTypeRaw {
+  descriptions: CVEProblemTypeDescriptionRaw[];
+}
+
+export interface CVEReferenceRaw {
+  url: string;
+}
+
+export interface CVEProviderMetadata {
+  orgId: string;
+  shortName: string;
+  dateUpdated: string;
+}
+
+export interface CVSSMetrics {
+  scope: string;
+  version: string;
+  baseScore: number;
+  attackVector: string;
+  baseSeverity: string;
+  vectorString: string;
+  integrityImpact: string;
+  userInteraction: string;
+  attackComplexity: string;
+  availabilityImpact: string;
+  privilegesRequired: string;
+  confidentialityImpact: string;
+}
+
+export interface CVSSV4Metrics {
+  version: string;
+  baseScore: number;
+  baseSeverity: string;
+  vectorString: string;
+  attackVector?: string;
+  attackComplexity?: string;
+  privilegesRequired?: string;
+  userInteraction?: string;
+  scope?: string;
+  vulnerabilityConfidentialityImpact?: string;
+  vulnerabilityIntegrityImpact?: string;
+  vulnerabilityAvailabilityImpact?: string;
+}
+
+export interface CVEMetricRaw {
+  cvssV3_1?: CVSSMetrics;
+  cvssV4_0?: CVSSV4Metrics;
+  other?: {
+    type: string;
+    content: unknown;
+  };
+}
+
+export interface CVECNA {
+  affected?: CVEAffectedRaw[];
+  descriptions?: CVEDescriptionRaw[];
+  problemTypes?: CVEProblemTypeRaw[];
+  providerMetadata: CVEProviderMetadata;
+  references?: CVEReferenceRaw[];
+  metrics?: CVEMetricRaw[];
+}
+
+export interface CVEADP {
+  problemTypes?: CVEProblemTypeRaw[];
+  metrics?: CVEMetricRaw[];
+  title?: string;
+  providerMetadata?: CVEProviderMetadata;
+}
+
+export interface CVEContainers {
+  cna: CVECNA;
+  adp?: CVEADP[];
+}
+
+export interface CVELabelsRaw {
+  operating_systems: string[];
+  components: string[];
+}
+
+export interface CVERecordRaw {
+  dataType: string;
+  dataVersion: string;
+  cveMetadata: CVEMetadata;
+  containers: CVEContainers;
+  labels: CVELabelsRaw;
+}
+
+export interface CVEDatabase {
+  total_cves: number;
+  fetched_at: string;
+  labeled_at: string;
+  cve_details: Record<string, CVERecordRaw>;
+}
+
+export type MetricToProcess = CVEMetricRaw;

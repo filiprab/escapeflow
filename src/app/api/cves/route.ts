@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       components: searchParams.getAll('component'),
       page: parseInt(searchParams.get('page') || '1'),
       limit: parseInt(searchParams.get('limit') || '20'),
-      sortBy: (searchParams.get('sortBy') as 'datePublished' | 'dateUpdated' | 'baseScore') || 'datePublished',
+      sortBy: (searchParams.get('sortBy') as 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId') || 'datePublished',
       sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
     };
 

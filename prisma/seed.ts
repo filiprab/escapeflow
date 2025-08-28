@@ -3,12 +3,12 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { 
   CVEDatabase,
-  CVEDescription,
-  CVEReference,
-  CVEVersion,
-  CVEProblemTypeDescription,
+  CVEDescriptionRaw as CVEDescription,
+  CVEReferenceRaw as CVEReference,
+  CVEVersionRaw as CVEVersion,
+  CVEProblemTypeDescriptionRaw as CVEProblemTypeDescription,
   MetricToProcess
-} from '../src/data/cveTypes';
+} from '../src/types/cve';
 
 const prisma = new PrismaClient();
 
