@@ -47,7 +47,7 @@ COPY --from=deps --chown=dbuser:dbuser /app/node_modules ./node_modules
 COPY --from=deps --chown=dbuser:dbuser /app/prisma ./prisma
 COPY --chown=dbuser:dbuser package.json ./
 COPY --chown=dbuser:dbuser scripts ./scripts
-COPY --chown=dbuser:dbuser src/data ./src/data
+COPY --chown=dbuser:dbuser src ./src
 COPY --chown=dbuser:dbuser prisma/seed.ts ./prisma/
 
 # Ensure scripts are executable

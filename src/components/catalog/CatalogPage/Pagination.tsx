@@ -15,21 +15,21 @@ export default function Pagination({
 }: PaginationProps) {
   return (
     <div className="mb-4 flex justify-between items-center">
-      <div className="text-sm text-gray-400">
+      <div className="text-sm text-gray-600">
         Showing {currentCount} of {totalCVEs.toLocaleString()} CVEs (Page {currentPage} of {totalPages})
       </div>
       <div className="flex space-x-2">
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage <= 1}
-          className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm"
+          className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 rounded text-sm shadow-sm transition-colors"
         >
           Previous
         </button>
         <button
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage >= totalPages}
-          className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm"
+          className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 rounded text-sm shadow-sm transition-colors"
         >
           Next
         </button>

@@ -9,6 +9,7 @@ import type {
   CVEProblemTypeDescriptionRaw as CVEProblemTypeDescription,
   MetricToProcess
 } from '../src/types/cve';
+import { parseCVSSVector } from '../src/lib/cvss-parser';
 
 const prisma = new PrismaClient();
 
@@ -123,6 +124,9 @@ async function main() {
       // Process metrics - support both CVSS v3.1 and v4.0
       for (const metric of metricsToProcess) {
         if (metric.cvssV3_1) {
+          // Parse individual components from vector string if not provided
+          const parsedMetrics = parseCVSSVector(metric.cvssV3_1.vectorString);
+          
           await prisma.cveMetric.create({
             data: {
               cveId: cve.cveId,
@@ -130,14 +134,15 @@ async function main() {
               baseScore: metric.cvssV3_1.baseScore,
               baseSeverity: metric.cvssV3_1.baseSeverity,
               vectorString: metric.cvssV3_1.vectorString,
-              attackVector: metric.cvssV3_1.attackVector,
-              attackComplexity: metric.cvssV3_1.attackComplexity,
-              privilegesRequired: metric.cvssV3_1.privilegesRequired,
-              userInteraction: metric.cvssV3_1.userInteraction,
-              scope: metric.cvssV3_1.scope,
-              confidentialityImpact: metric.cvssV3_1.confidentialityImpact,
-              integrityImpact: metric.cvssV3_1.integrityImpact,
-              availabilityImpact: metric.cvssV3_1.availabilityImpact,
+              // Use parsed values if individual fields aren't provided in the raw data
+              attackVector: metric.cvssV3_1.attackVector || parsedMetrics?.attackVector || null,
+              attackComplexity: metric.cvssV3_1.attackComplexity || parsedMetrics?.attackComplexity || null,
+              privilegesRequired: metric.cvssV3_1.privilegesRequired || parsedMetrics?.privilegesRequired || null,
+              userInteraction: metric.cvssV3_1.userInteraction || parsedMetrics?.userInteraction || null,
+              scope: metric.cvssV3_1.scope || parsedMetrics?.scope || null,
+              confidentialityImpact: metric.cvssV3_1.confidentialityImpact || parsedMetrics?.confidentialityImpact || null,
+              integrityImpact: metric.cvssV3_1.integrityImpact || parsedMetrics?.integrityImpact || null,
+              availabilityImpact: metric.cvssV3_1.availabilityImpact || parsedMetrics?.availabilityImpact || null,
               metricsJson: metric as any,
             },
           });

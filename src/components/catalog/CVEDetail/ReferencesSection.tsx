@@ -11,8 +11,8 @@ export default function ReferencesSection({ cve }: ReferencesSectionProps) {
   }
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700 mb-6">
-      <h2 className="text-xl font-semibold mb-4">References</h2>
+    <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm mb-6">
+      <h2 className="text-xl font-semibold mb-4 text-gray-900">References</h2>
       <div className="space-y-3">
         {cve.references.map((ref, index) => (
           <a
@@ -20,7 +20,7 @@ export default function ReferencesSection({ cve }: ReferencesSectionProps) {
             href={ref.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center space-x-2 text-blue-400 hover:text-blue-300 transition-colors"
+            className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors"
           >
             <LinkIcon className="w-4 h-4" />
             <span className="break-all">{ref.url}</span>

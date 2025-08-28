@@ -147,10 +147,15 @@ export default function CatalogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6">
-      <div className="max-w-full mx-auto px-4">
-        <CatalogHeader totalCVEs={cveData.total} />
-        
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-900">
+      {/* Header Section with Blue Background */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-8 px-6 mb-6">
+        <div className="max-w-full mx-auto px-4">
+          <CatalogHeader totalCVEs={cveData.total} />
+        </div>
+      </div>
+      
+      <div className="max-w-full mx-auto px-4 px-6">
         <div className="w-full">
           {/* Search Bar Above Table */}
           <div className="mb-6">
@@ -160,7 +165,7 @@ export default function CatalogPage() {
                 placeholder="Search CVE ID or description..."
                 value={filter.search}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
               />
             </div>
           </div>
@@ -177,11 +182,11 @@ export default function CatalogPage() {
           {/* Table with Loading Overlay */}
           <div className="relative">
             {searchLoading && (
-              <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
-                <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+                <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-lg">
                   <div className="flex items-center gap-3">
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
-                    <span className="text-gray-300">Searching...</span>
+                    <span className="text-gray-700">Searching...</span>
                   </div>
                 </div>
               </div>
@@ -200,7 +205,7 @@ export default function CatalogPage() {
             
             {cveData.cves.length === 0 && !searchLoading && (
               <div className="text-center py-12">
-                <p className="text-gray-400">No CVEs found matching the current filters.</p>
+                <p className="text-gray-600">No CVEs found matching the current filters.</p>
               </div>
             )}
           </div>

@@ -110,6 +110,22 @@ export interface CVEFilter {
 }
 
 // =============================================================================
+// CVSS PARSING TYPES - Used for parsing CVSS vector strings
+// =============================================================================
+
+export interface ParsedCVSSComponents {
+  version: string;
+  attackVector?: string;
+  attackComplexity?: string;
+  privilegesRequired?: string;
+  userInteraction?: string;
+  scope?: string;
+  confidentialityImpact?: string;
+  integrityImpact?: string;
+  availabilityImpact?: string;
+}
+
+// =============================================================================
 // EXTERNAL API TYPES - Raw CVE data from external sources (NVD, etc.)
 // =============================================================================
 

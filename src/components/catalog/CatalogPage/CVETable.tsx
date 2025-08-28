@@ -46,13 +46,13 @@ export default function CVETable({
   }, []);
   const getSeverityColor = (cve: CVEListItem) => {
     const metric = cve.metrics?.[0];
-    if (!metric?.baseScore) return 'bg-gray-600';
+    if (!metric?.baseScore) return 'bg-gray-500 text-white';
     
     const score = metric.baseScore;
-    if (score >= 9.0) return 'bg-red-600';
-    if (score >= 7.0) return 'bg-orange-600';
-    if (score >= 4.0) return 'bg-yellow-600';
-    return 'bg-green-600';
+    if (score >= 9.0) return 'bg-red-600 text-white';
+    if (score >= 7.0) return 'bg-orange-500 text-white';
+    if (score >= 4.0) return 'bg-yellow-500 text-white';
+    return 'bg-green-600 text-white';
   };
 
   const getSeverityScore = (cve: CVEListItem) => {
@@ -121,15 +121,15 @@ export default function CVETable({
     className?: string;
   }) => (
     <th 
-      className={`px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:text-white transition-colors ${className}`}
+      className={`px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:text-blue-100 transition-colors ${className}`}
       onClick={() => onSort?.(column)}
     >
       <div className="flex items-center gap-1">
         {children}
         {sortBy === column && (
           sortOrder === 'asc' 
-            ? <ChevronUpIcon className="w-4 h-4" />
-            : <ChevronDownIcon className="w-4 h-4" />
+            ? <ChevronUpIcon className="w-4 h-4 text-blue-200" />
+            : <ChevronDownIcon className="w-4 h-4 text-blue-200" />
         )}
       </div>
     </th>
@@ -153,7 +153,7 @@ export default function CVETable({
     <div className="relative">
       <button
         onClick={onToggle}
-        className="flex items-center gap-1 text-xs font-medium text-gray-300 uppercase tracking-wider hover:text-white transition-colors"
+        className="flex items-center gap-1 text-xs font-medium text-white uppercase tracking-wider hover:text-blue-100 transition-colors"
       >
         {title}
         <FunnelIcon className="w-4 h-4" />
@@ -165,20 +165,20 @@ export default function CVETable({
       </button>
       
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-64 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
+        <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
           <div className="p-2">
             {options.map((option) => (
               <label 
                 key={option}
-                className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded cursor-pointer"
+                className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
               >
                 <input
                   type="checkbox"
                   checked={selectedOptions.includes(option)}
                   onChange={() => onToggleOption(option)}
-                  className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-300">{option}</span>
+                <span className="text-sm text-gray-700">{option}</span>
               </label>
             ))}
           </div>
@@ -188,9 +188,9 @@ export default function CVETable({
   );
 
   return (
-    <div ref={tableRef} className="overflow-x-auto bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-700">
-      <table className="min-w-full divide-y divide-gray-700">
-        <thead className="bg-gray-800/70 sticky top-0 z-10">
+    <div ref={tableRef} className="overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10">
           <tr>
             <SortableHeader column="cveId">
               CVE ID
@@ -198,13 +198,13 @@ export default function CVETable({
             <SortableHeader column="baseScore">
               Severity
             </SortableHeader>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
               Level
             </th>
             <SortableHeader column="datePublished">
               Published
             </SortableHeader>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
               <FilterDropdown
                 isOpen={showOSDropdown}
                 onToggle={() => {
@@ -217,7 +217,7 @@ export default function CVETable({
                 title="Platforms"
               />
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
               <FilterDropdown
                 isOpen={showComponentDropdown}
                 onToggle={() => {
@@ -230,40 +230,40 @@ export default function CVETable({
                 title="Components"
               />
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
               Description
             </th>
           </tr>
         </thead>
-        <tbody className="bg-gray-800/30 divide-y divide-gray-700">
+        <tbody className="bg-white divide-y divide-gray-200">
           {cves.map((cve) => (
             <tr 
               key={cve.cveId}
-              className="hover:bg-gray-700/50 transition-colors cursor-pointer"
+              className="hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <td className="px-4 py-4 whitespace-nowrap">
                 <Link 
                   href={`/catalog/${cve.cveId}`}
-                  className="text-blue-400 hover:text-blue-300 font-medium"
+                  className="text-blue-600 hover:text-blue-800 font-medium"
                 >
                   {cve.cveId}
                 </Link>
               </td>
               
               <td className="px-4 py-4 whitespace-nowrap">
-                <div className={`inline-flex px-2 py-1 rounded-full text-xs font-medium text-white ${getSeverityColor(cve)}`}>
+                <div className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(cve)}`}>
                   {getSeverityScore(cve)}
                 </div>
               </td>
               
               <td className="px-4 py-4 whitespace-nowrap">
-                <span className="text-gray-300 text-sm">
+                <span className="text-gray-700 text-sm">
                   {getSeverityLevel(cve)}
                 </span>
               </td>
               
               <td className="px-4 py-4 whitespace-nowrap">
-                <span className="text-gray-300 text-sm">
+                <span className="text-gray-700 text-sm">
                   {new Date(cve.datePublished).toLocaleDateString()}
                 </span>
               </td>
@@ -283,13 +283,13 @@ export default function CVETable({
                   {cve.labels?.components?.slice(0, 2).map((component) => (
                     <span 
                       key={component} 
-                      className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded text-xs"
+                      className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs"
                     >
                       {component}
                     </span>
                   ))}
                   {(cve.labels?.components?.length || 0) > 2 && (
-                    <span className="px-2 py-1 bg-gray-600/20 text-gray-400 rounded text-xs">
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
                       +{(cve.labels?.components?.length || 0) - 2}
                     </span>
                   )}
@@ -299,7 +299,7 @@ export default function CVETable({
               <td className="px-4 py-4">
                 <div className="max-w-md">
                   <p 
-                    className="text-gray-300 text-sm leading-relaxed"
+                    className="text-gray-700 text-sm leading-relaxed"
                     title={cve.descriptions[0]?.description || 'No description available'}
                   >
                     {truncateDescription(

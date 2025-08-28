@@ -55,9 +55,15 @@ export default function CVEDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6">
-      <div className="max-w-4xl mx-auto">
-        <CVEHeader cve={cve} />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-900">
+      {/* Header Section with Blue Background */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-8 px-6 mb-6">
+        <div className="max-w-4xl mx-auto">
+          <CVEHeader cve={cve} />
+        </div>
+      </div>
+      
+      <div className="max-w-4xl mx-auto px-6">
         <DescriptionSection cve={cve} />
         <ClassificationSection cve={cve} />
         <CVSSMetricsSection cve={cve} />

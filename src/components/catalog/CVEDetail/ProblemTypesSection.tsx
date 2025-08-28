@@ -10,14 +10,14 @@ export default function ProblemTypesSection({ cve }: ProblemTypesSectionProps) {
   }
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700 mb-6">
-      <h2 className="text-xl font-semibold mb-4">Problem Types</h2>
+    <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm mb-6">
+      <h2 className="text-xl font-semibold mb-4 text-gray-900">Problem Types</h2>
       <div className="space-y-3">
         {cve.problemTypes.map((problemType, index) => (
           <div key={index} className="flex items-center space-x-3">
-            <span className="text-gray-300">{problemType.description}</span>
+            <span className="text-gray-700">{problemType.description}</span>
             {problemType.cweId && (
-              <span className="px-2 py-1 bg-red-600/20 text-red-300 rounded text-xs font-mono">
+              <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-mono">
                 {problemType.cweId}
               </span>
             )}
