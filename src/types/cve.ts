@@ -106,6 +106,7 @@ export interface CVEListItem {
 export interface CVEFilter {
   operatingSystems: string[];
   components: string[];
+  severityLevels: string[];
   search: string;
 }
 

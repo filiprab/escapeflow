@@ -3,7 +3,7 @@ import { CVEFilter, CVERecord, CVEListItem } from '@/types/cve';
 export interface CVESearchParams extends CVEFilter {
   page?: number;
   limit?: number;
-  sortBy?: 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId';
+  sortBy?: 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId' | 'severity';
   sortOrder?: 'asc' | 'desc';
 }
 
@@ -18,6 +18,7 @@ export interface CVEApiResponse {
 export interface FilterOptions {
   operatingSystems: string[];
   components: string[];
+  severityLevels: string[];
 }
 
 export class CVEApiError extends Error {
@@ -51,6 +52,7 @@ export async function getCVEs(params: CVESearchParams): Promise<CVEApiResponse> 
   
   params.operatingSystems?.forEach(os => searchParams.append('os', os));
   params.components?.forEach(component => searchParams.append('component', component));
+  params.severityLevels?.forEach(severity => searchParams.append('severity', severity));
   
   const url = `/api/cves?${searchParams.toString()}`;
   return fetchApi(url);

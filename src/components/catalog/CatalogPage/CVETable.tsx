@@ -1,49 +1,24 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect, useRef } from 'react';
-import { CVEListItem, CVEFilter } from '@/types/cve';
-import { FilterOptions } from '@/lib/api/cve';
-import { ChevronUpIcon, ChevronDownIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { useRef } from 'react';
+import { CVEListItem } from '@/types/cve';
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface CVETableProps {
   cves: CVEListItem[];
-  sortBy?: 'cveId' | 'datePublished' | 'dateUpdated' | 'baseScore';
+  sortBy?: 'cveId' | 'datePublished' | 'dateUpdated' | 'baseScore' | 'severity';
   sortOrder?: 'asc' | 'desc';
-  onSort?: (column: 'cveId' | 'datePublished' | 'dateUpdated' | 'baseScore') => void;
-  filter: CVEFilter;
-  filterOptions: FilterOptions;
-  onToggleOS: (os: string) => void;
-  onToggleComponent: (component: string) => void;
+  onSort?: (column: 'cveId' | 'datePublished' | 'dateUpdated' | 'baseScore' | 'severity') => void;
 }
 
 export default function CVETable({ 
   cves, 
   sortBy, 
   sortOrder, 
-  onSort, 
-  filter,
-  filterOptions,
-  onToggleOS,
-  onToggleComponent 
+  onSort
 }: CVETableProps) {
-  const [showOSDropdown, setShowOSDropdown] = useState(false);
-  const [showComponentDropdown, setShowComponentDropdown] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (tableRef.current && !tableRef.current.contains(event.target as Node)) {
-        setShowOSDropdown(false);
-        setShowComponentDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
   const getSeverityColor = (cve: CVEListItem) => {
     const metric = cve.metrics?.[0];
     if (!metric?.baseScore) return 'bg-gray-500 text-white';
@@ -116,7 +91,7 @@ export default function CVETable({
     children, 
     className = '' 
   }: { 
-    column: 'cveId' | 'datePublished' | 'dateUpdated' | 'baseScore';
+    column: 'cveId' | 'datePublished' | 'dateUpdated' | 'baseScore' | 'severity';
     children: React.ReactNode;
     className?: string;
   }) => (
@@ -135,57 +110,6 @@ export default function CVETable({
     </th>
   );
 
-  const FilterDropdown = ({ 
-    isOpen, 
-    onToggle, 
-    options, 
-    selectedOptions, 
-    onToggleOption, 
-    title 
-  }: {
-    isOpen: boolean;
-    onToggle: () => void;
-    options: string[];
-    selectedOptions: string[];
-    onToggleOption: (option: string) => void;
-    title: string;
-  }) => (
-    <div className="relative">
-      <button
-        onClick={onToggle}
-        className="flex items-center gap-1 text-xs font-medium text-white uppercase tracking-wider hover:text-blue-100 transition-colors"
-      >
-        {title}
-        <FunnelIcon className="w-4 h-4" />
-        {selectedOptions.length > 0 && (
-          <span className="ml-1 px-1.5 py-0.5 bg-blue-600 text-white rounded-full text-xs">
-            {selectedOptions.length}
-          </span>
-        )}
-      </button>
-      
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-          <div className="p-2">
-            {options.map((option) => (
-              <label 
-                key={option}
-                className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedOptions.includes(option)}
-                  onChange={() => onToggleOption(option)}
-                  className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">{option}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div ref={tableRef} className="overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -196,39 +120,19 @@ export default function CVETable({
               CVE ID
             </SortableHeader>
             <SortableHeader column="baseScore">
+              CVSS Score
+            </SortableHeader>
+            <SortableHeader column="severity">
               Severity
             </SortableHeader>
-            <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-              Level
-            </th>
             <SortableHeader column="datePublished">
               Published
             </SortableHeader>
             <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-              <FilterDropdown
-                isOpen={showOSDropdown}
-                onToggle={() => {
-                  setShowOSDropdown(!showOSDropdown);
-                  setShowComponentDropdown(false);
-                }}
-                options={filterOptions.operatingSystems}
-                selectedOptions={filter.operatingSystems}
-                onToggleOption={onToggleOS}
-                title="Platforms"
-              />
+              Platforms
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-              <FilterDropdown
-                isOpen={showComponentDropdown}
-                onToggle={() => {
-                  setShowComponentDropdown(!showComponentDropdown);
-                  setShowOSDropdown(false);
-                }}
-                options={filterOptions.components}
-                selectedOptions={filter.components}
-                onToggleOption={onToggleComponent}
-                title="Components"
-              />
+              Targeted Component
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
               Description

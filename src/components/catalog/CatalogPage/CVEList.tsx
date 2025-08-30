@@ -1,27 +1,18 @@
-import { CVEListItem, CVEFilter } from '@/types/cve';
-import { FilterOptions } from '@/lib/api/cve';
+import { CVEListItem } from '@/types/cve';
 import CVETable from './CVETable';
 
 interface CVEListProps {
   cves: CVEListItem[];
-  sortBy?: 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId';
+  sortBy?: 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId' | 'severity';
   sortOrder?: 'asc' | 'desc';
-  onSort?: (column: 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId') => void;
-  filter: CVEFilter;
-  filterOptions: FilterOptions;
-  onToggleOS: (os: string) => void;
-  onToggleComponent: (component: string) => void;
+  onSort?: (column: 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId' | 'severity') => void;
 }
 
 export default function CVEList({ 
   cves, 
   sortBy, 
   sortOrder, 
-  onSort,
-  filter,
-  filterOptions,
-  onToggleOS,
-  onToggleComponent
+  onSort
 }: CVEListProps) {
   return (
     <CVETable 
@@ -29,10 +20,6 @@ export default function CVEList({
       sortBy={sortBy}
       sortOrder={sortOrder}
       onSort={onSort}
-      filter={filter}
-      filterOptions={filterOptions}
-      onToggleOS={onToggleOS}
-      onToggleComponent={onToggleComponent}
     />
   );
 }

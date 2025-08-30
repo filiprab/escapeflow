@@ -9,6 +9,7 @@ import CVEList from './CVEList';
 import Pagination from './Pagination';
 import LoadingState from './LoadingState';
 import ErrorState from './ErrorState';
+import FilterDialog from './FilterDialog';
 
 // Custom hook for debouncing
 function useDebounce<T>(value: T, delay: number): T {
@@ -31,16 +32,18 @@ export default function CatalogPage() {
   const [filter, setFilter] = useState<CVEFilter>({
     operatingSystems: [],
     components: [],
+    severityLevels: [],
     search: ''
   });
   const [cveData, setCveData] = useState<CVEApiResponse | null>(null);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ operatingSystems: [], components: [] });
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ operatingSystems: [], components: [], severityLevels: [] });
   const [initialLoading, setInitialLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState<'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId'>('datePublished');
+  const [sortBy, setSortBy] = useState<'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId' | 'severity'>('datePublished');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
   const limit = 20;
 
   // Debounce search term to avoid excessive API calls
@@ -50,8 +53,9 @@ export default function CatalogPage() {
   const debouncedFilter = useMemo(() => ({
     operatingSystems: filter.operatingSystems,
     components: filter.components,
+    severityLevels: filter.severityLevels,
     search: debouncedSearchTerm
-  }), [filter.operatingSystems, filter.components, debouncedSearchTerm]);
+  }), [filter.operatingSystems, filter.components, filter.severityLevels, debouncedSearchTerm]);
 
   // Fetch CVE data
   const fetchCVEData = useCallback(async (isInitial = false) => {
@@ -99,31 +103,20 @@ export default function CatalogPage() {
   // Reset page when filter or sort changes
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearchTerm, filter.operatingSystems, filter.components, sortBy, sortOrder]);
+  }, [debouncedSearchTerm, filter.operatingSystems, filter.components, filter.severityLevels, sortBy, sortOrder]);
 
-  const toggleOSFilter = (os: string) => {
-    setFilter(prev => ({
-      ...prev,
-      operatingSystems: prev.operatingSystems.includes(os)
-        ? prev.operatingSystems.filter(item => item !== os)
-        : [...prev.operatingSystems, os]
-    }));
+
+  const handleApplyFilters = (newFilter: CVEFilter) => {
+    setFilter(newFilter);
   };
 
-  const toggleComponentFilter = (component: string) => {
-    setFilter(prev => ({
-      ...prev,
-      components: prev.components.includes(component)
-        ? prev.components.filter(item => item !== component)
-        : [...prev.components, component]
-    }));
-  };
+  const totalActiveFilters = filter.operatingSystems.length + filter.components.length + filter.severityLevels.length;
 
   const handleSearchChange = (search: string) => {
     setFilter(prev => ({ ...prev, search }));
   };
 
-  const handleSort = (column: 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId') => {
+  const handleSort = (column: 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId' | 'severity') => {
     if (sortBy === column) {
       // Toggle sort order if same column
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -155,7 +148,7 @@ export default function CatalogPage() {
         </div>
       </div>
       
-      <div className="max-w-full mx-auto px-4 px-6">
+      <div className="max-w-full mx-auto px-6">
         <div className="w-full">
           {/* Search Bar Above Table */}
           <div className="mb-6">
@@ -177,6 +170,8 @@ export default function CatalogPage() {
             totalCVEs={cveData.total}
             currentCount={cveData.cves.length}
             onPageChange={setPage}
+            onFilterClick={() => setShowFilterDialog(true)}
+            activeFilterCount={totalActiveFilters}
           />
           
           {/* Table with Loading Overlay */}
@@ -197,10 +192,6 @@ export default function CatalogPage() {
               sortBy={sortBy}
               sortOrder={sortOrder}
               onSort={handleSort}
-              filter={filter}
-              filterOptions={filterOptions}
-              onToggleOS={toggleOSFilter}
-              onToggleComponent={toggleComponentFilter}
             />
             
             {cveData.cves.length === 0 && !searchLoading && (
@@ -211,6 +202,15 @@ export default function CatalogPage() {
           </div>
         </div>
       </div>
+
+      {/* Filter Dialog */}
+      <FilterDialog
+        isOpen={showFilterDialog}
+        onClose={() => setShowFilterDialog(false)}
+        filter={filter}
+        filterOptions={filterOptions}
+        onApplyFilters={handleApplyFilters}
+      />
     </div>
   );
 }
