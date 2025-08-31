@@ -1,0 +1,409 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Dialog, { DialogContent, DialogFooter } from '@/components/ui/Dialog';
+import { fetchFromNVD, fetchFromCVEOrg } from '@/lib/api/external-cve';
+import type { ExternalCVEData } from '@/types/cve';
+
+// Import our new components
+import FetchStep from '@/components/catalog/CVEDetail/FetchStep';
+import EditStep from '@/components/catalog/CVEDetail/EditStep';
+import StepIndicator from '@/components/catalog/CVEDetail/StepIndicator';
+import ErrorSuccessMessages from '@/components/catalog/CVEDetail/ErrorSuccessMessages';
+
+interface CVECreationDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+type CreationStep = 'fetch' | 'edit';
+type Source = 'NVD' | 'CVE.org';
+
+interface CVEFormData {
+  descriptions: Array<{ lang: string; description: string }>;
+  references?: string[];
+  labels?: {
+    operatingSystems: string[];
+    components: string[];
+  };
+}
+
+export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECreationDialogProps) {
+  const router = useRouter();
+  const [step, setStep] = useState<CreationStep>('fetch');
+  const [cveId, setCveId] = useState('');
+  const [source, setSource] = useState<Source>('NVD');
+  const [formData, setFormData] = useState<CVEFormData>({
+    descriptions: [{ lang: 'en', description: '' }],
+    references: [],
+    labels: { operatingSystems: [], components: [] }
+  });
+  
+  const [prefetchLoading, setPrefetchLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [prefetched, setPrefetched] = useState(false);
+
+  const allowedOS = ['Android', 'iOS', 'Windows', 'Linux', 'macOS'];
+
+  const handleClose = () => {
+    setStep('fetch');
+    setCveId('');
+    setSource('NVD');
+    setFormData({
+      descriptions: [{ lang: 'en', description: '' }],
+      references: [],
+      labels: { operatingSystems: [], components: [] }
+    });
+    setPrefetchLoading(false);
+    setLoading(false);
+    setError(null);
+    setSuccess(null);
+    setPrefetched(false);
+    onClose();
+  };
+
+  const validateCVEId = (id: string): boolean => {
+    const cveRegex = /^CVE-(\d{4})-(\d{4,})$/;
+    const match = id.match(cveRegex);
+    if (!match) return false;
+    
+    const year = parseInt(match[1], 10);
+    const number = parseInt(match[2], 10);
+    return year >= 1999 && number >= 1;
+  };
+
+  const handlePrefetch = async () => {
+    if (!cveId.trim()) {
+      setError('CVE ID is required');
+      return;
+    }
+
+    if (!validateCVEId(cveId.trim())) {
+      setError('Invalid CVE ID format. Expected: CVE-YYYY-NNNN');
+      return;
+    }
+
+    setPrefetchLoading(true);
+    setError(null);
+
+    try {
+      // Fetch data from selected external source
+      const externalData = source === 'NVD' 
+        ? await fetchFromNVD(cveId.trim().toUpperCase())
+        : await fetchFromCVEOrg(cveId.trim().toUpperCase());
+
+      // Populate form with fetched data
+      populateFormFromExternalData(externalData);
+      
+      // Move to edit step
+      setStep('edit');
+      setPrefetched(true);
+      
+    } catch (error: unknown) {
+      console.error('Failed to fetch CVE data:', error);
+      setError(error instanceof Error ? error.message : `Failed to fetch CVE data from ${source}`);
+    } finally {
+      setPrefetchLoading(false);
+    }
+  };
+
+  const populateFormFromExternalData = (externalData: ExternalCVEData) => {
+    // Helper function to analyze description for OS detection
+    const detectOperatingSystems = (description: string): string[] => {
+      const lowerDesc = description.toLowerCase();
+      const detectedOS: string[] = [];
+      
+      if (lowerDesc.includes('android')) detectedOS.push('Android');
+      if (lowerDesc.includes('ios') || lowerDesc.includes('iphone') || lowerDesc.includes('ipad')) {
+        detectedOS.push('iOS');
+      }
+      if (lowerDesc.includes('windows')) detectedOS.push('Windows');
+      if (lowerDesc.includes('linux')) detectedOS.push('Linux');
+      if (lowerDesc.includes('macos') || lowerDesc.includes('mac os')) detectedOS.push('macOS');
+      
+      return [...new Set(detectedOS)];
+    };
+
+    // Helper function to analyze description for components
+    const detectComponents = (description: string): string[] => {
+      const lowerDesc = description.toLowerCase();
+      const detectedComponents: string[] = [];
+      
+      if (lowerDesc.includes('chrome') || lowerDesc.includes('chromium')) {
+        detectedComponents.push('Chromium Browser');
+      }
+      if (lowerDesc.includes('v8')) detectedComponents.push('V8 JavaScript Engine');
+      if (lowerDesc.includes('blink')) detectedComponents.push('Blink Rendering Engine');
+      if (lowerDesc.includes('webrtc')) detectedComponents.push('WebRTC');
+      if (lowerDesc.includes('webgl')) detectedComponents.push('WebGL');
+      if (lowerDesc.includes('skia')) detectedComponents.push('Skia Graphics');
+      if (lowerDesc.includes('pdfium')) detectedComponents.push('PDFium');
+      
+      return [...new Set(detectedComponents)];
+    };
+
+    // Populate form data
+    const description = externalData.description || '';
+    const references = externalData.references || [];
+    const detectedOS = detectOperatingSystems(description);
+    const detectedComponents = detectComponents(description);
+
+    setFormData({
+      descriptions: [{ lang: 'en', description }],
+      references: references,
+      labels: {
+        operatingSystems: detectedOS,
+        components: detectedComponents
+      }
+    });
+  };
+
+  const handleStartOver = () => {
+    setStep('fetch');
+    setCveId('');
+    setFormData({
+      descriptions: [{ lang: 'en', description: '' }],
+      references: [],
+      labels: { operatingSystems: [], components: [] }
+    });
+    setPrefetched(false);
+    setError(null);
+  };
+
+  const handleSubmit = async () => {
+    if (!cveId.trim()) {
+      setError('CVE ID is required');
+      return;
+    }
+
+    if (!validateCVEId(cveId.trim())) {
+      setError('Invalid CVE ID format. Expected: CVE-YYYY-NNNN');
+      return;
+    }
+
+    if (!formData.descriptions[0]?.description.trim()) {
+      setError('Description is required');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const requestBody: Record<string, unknown> = {
+        mode: 'manual', // Always use manual mode since we populate form on frontend
+        cveId: cveId.trim().toUpperCase(),
+        cveData: {
+          ...formData,
+          descriptions: formData.descriptions.filter(d => d.description.trim()),
+          references: formData.references?.filter(r => r.trim()) || [],
+        }
+      };
+
+      const response = await fetch('/api/cves', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create CVE');
+      }
+
+      setSuccess(`CVE ${cveId.trim().toUpperCase()} created successfully!`);
+      onSuccess();
+      
+      // Redirect to the new CVE after a short delay
+      setTimeout(() => {
+        handleClose();
+        router.push(`/catalog/${cveId.trim().toUpperCase()}`);
+      }, 2000);
+
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Failed to create CVE');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addReference = () => {
+    const refs = formData.references || [];
+    setFormData({
+      ...formData,
+      references: [...refs, '']
+    });
+  };
+
+  const removeReference = (index: number) => {
+    const refs = formData.references || [];
+    setFormData({
+      ...formData,
+      references: refs.filter((_, i) => i !== index)
+    });
+  };
+
+  const updateReference = (index: number, value: string) => {
+    const refs = formData.references || [];
+    refs[index] = value;
+    setFormData({
+      ...formData,
+      references: [...refs]
+    });
+  };
+
+  const toggleOS = (os: string) => {
+    const current = formData.labels?.operatingSystems || [];
+    const updated = current.includes(os) 
+      ? current.filter(item => item !== os)
+      : [...current, os];
+    
+    setFormData({
+      ...formData,
+      labels: {
+        ...formData.labels,
+        operatingSystems: updated,
+        components: formData.labels?.components || []
+      }
+    });
+  };
+
+  const addComponent = (component: string) => {
+    if (!component.trim()) return;
+    
+    const current = formData.labels?.components || [];
+    if (current.includes(component.trim())) return;
+    
+    setFormData({
+      ...formData,
+      labels: {
+        operatingSystems: formData.labels?.operatingSystems || [],
+        components: [...current, component.trim()]
+      }
+    });
+  };
+
+  const removeComponent = (component: string) => {
+    const current = formData.labels?.components || [];
+    setFormData({
+      ...formData,
+      labels: {
+        ...formData.labels,
+        operatingSystems: formData.labels?.operatingSystems || [],
+        components: current.filter(item => item !== component)
+      }
+    });
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Dialog
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Add New CVE"
+      maxHeight="90vh"
+      footer={
+        <DialogFooter>
+          {step === 'fetch' ? (
+            <>
+              <button
+                onClick={handleClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={prefetchLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePrefetch}
+                disabled={prefetchLoading || !cveId.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {prefetchLoading ? (
+                  <>
+                    <div className="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Fetching...
+                  </>
+                ) : (
+                  'Fetch CVE Data'
+                )}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={handleStartOver}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={loading}
+              >
+                Start Over
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading || !cveId.trim() || !formData.descriptions[0]?.description.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <div className="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create CVE'
+                )}
+              </button>
+            </>
+          )}
+        </DialogFooter>
+      }
+    >
+      <DialogContent>
+        <StepIndicator currentStep={step} />
+
+        {/* Step 1: Fetch Phase */}
+        {step === 'fetch' && (
+          <FetchStep
+            cveId={cveId}
+            setCveId={setCveId}
+            source={source}
+            setSource={setSource}
+            onFetch={handlePrefetch}
+            onSkipToManual={() => setStep('edit')}
+            loading={prefetchLoading}
+          />
+        )}
+
+        {/* Step 2: Edit Phase */}
+        {step === 'edit' && (
+          <EditStep
+            cveId={cveId}
+            setCveId={setCveId}
+            source={source}
+            formData={formData}
+            setFormData={setFormData}
+            prefetched={prefetched}
+            onStartOver={handleStartOver}
+            loading={loading}
+            allowedOS={allowedOS}
+            toggleOS={toggleOS}
+            addComponent={addComponent}
+            removeComponent={removeComponent}
+            addReference={addReference}
+            removeReference={removeReference}
+            updateReference={updateReference}
+          />
+        )}
+
+        <ErrorSuccessMessages error={error} success={success} />
+      </DialogContent>
+    </Dialog>
+  );
+}

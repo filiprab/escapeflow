@@ -208,19 +208,239 @@ export async function getAllComponents() {
 
   return Array.from(componentSet).sort();
 }
-/*
-export async function createCVE(data: Prisma.CveCreateInput) {
-  // Implementation for creating new CVEs
-  // This would include validation and proper data transformation
-  throw new Error('CVE creation not yet implemented');
+export async function updateCVEDescription(cveId: string, description: string, language: string = 'en') {
+  return prisma.cveDescription.updateMany({
+    where: { 
+      cveId,
+      lang: language 
+    },
+    data: { 
+      description 
+    },
+  });
+}
+
+export async function updateCVELabels(cveId: string, operatingSystems: string[], components: string[]) {
+  // Validate operating systems against allowed values
+  const allowedOS = ['Android', 'iOS', 'Windows', 'Linux', 'macOS'];
+  const invalidOS = operatingSystems.filter(os => !allowedOS.includes(os));
+  if (invalidOS.length > 0) {
+    throw new Error(`Invalid operating systems: ${invalidOS.join(', ')}. Allowed: ${allowedOS.join(', ')}`);
+  }
+
+  return prisma.cveLabel.upsert({
+    where: { cveId },
+    update: {
+      operatingSystems,
+      components,
+    },
+    create: {
+      cveId,
+      operatingSystems,
+      components,
+    },
+  });
+}
+
+export async function updateCVEReferences(cveId: string, references: string[]) {
+  // Delete existing references and create new ones
+  await prisma.cveReference.deleteMany({
+    where: { cveId },
+  });
+
+  if (references.length > 0) {
+    await prisma.cveReference.createMany({
+      data: references.map(url => ({
+        cveId,
+        url,
+      })),
+    });
+  }
+
+  return prisma.cveReference.findMany({
+    where: { cveId },
+  });
 }
 
 export async function updateCVE(cveId: string, data: Prisma.CveUpdateInput) {
-  // Implementation for updating CVEs
-  // This would include validation and proper data transformation
-  throw new Error('CVE update not yet implemented');
+  return prisma.cve.update({
+    where: { cveId },
+    data,
+    include: {
+      descriptions: true,
+      references: true,
+      labels: true,
+      metrics: true,
+      problemTypes: true,
+      affectedProducts: {
+        include: {
+          versions: true,
+        },
+      },
+    },
+  });
 }
-*/
+
+export interface CreateCVEData {
+  cveId: string;
+  assignerOrgId: string;
+  assignerShortName: string;
+  dateReserved: Date;
+  datePublished: Date;
+  dateUpdated: Date;
+  descriptions: Array<{
+    lang: string;
+    description: string;
+  }>;
+  references?: Array<{
+    url: string;
+  }>;
+  labels?: {
+    operatingSystems: string[];
+    components: string[];
+  };
+  metrics?: Array<{
+    baseScore: number;
+    baseSeverity: string;
+    vectorString: string;
+    attackVector: string;
+    attackComplexity: string;
+    privilegesRequired: string;
+    userInteraction: string;
+    scope: string;
+    confidentialityImpact: string;
+    integrityImpact: string;
+    availabilityImpact: string;
+    cvssVersion: string;
+  }>;
+  problemTypes?: Array<{
+    description: string;
+    cweId?: string;
+    type?: string;
+    lang: string;
+  }>;
+}
+
+export async function createCVE(data: CreateCVEData) {
+  // Validate operating systems against allowed values
+  const allowedOS = ['Android', 'iOS', 'Windows', 'Linux', 'macOS'];
+  if (data.labels?.operatingSystems) {
+    const invalidOS = data.labels.operatingSystems.filter(os => !allowedOS.includes(os));
+    if (invalidOS.length > 0) {
+      throw new Error(`Invalid operating systems: ${invalidOS.join(', ')}. Allowed: ${allowedOS.join(', ')}`);
+    }
+  }
+
+  // Check if CVE already exists
+  const existingCVE = await prisma.cve.findUnique({
+    where: { cveId: data.cveId }
+  });
+
+  if (existingCVE) {
+    throw new Error(`CVE ${data.cveId} already exists`);
+  }
+
+  // Create CVE with all related data in a transaction
+  return prisma.$transaction(async (tx) => {
+    // Create the main CVE record
+    await tx.cve.create({
+      data: {
+        cveId: data.cveId,
+        dataType: 'CVE_RECORD',
+        dataVersion: '5.1',
+        state: 'PUBLISHED',
+        assignerOrgId: data.assignerOrgId,
+        assignerShortName: data.assignerShortName,
+        dateReserved: data.dateReserved,
+        datePublished: data.datePublished,
+        dateUpdated: data.dateUpdated,
+      },
+    });
+
+    // Create descriptions
+    if (data.descriptions && data.descriptions.length > 0) {
+      await tx.cveDescription.createMany({
+        data: data.descriptions.map(desc => ({
+          cveId: data.cveId,
+          lang: desc.lang,
+          description: desc.description,
+        })),
+      });
+    }
+
+    // Create references
+    if (data.references && data.references.length > 0) {
+      await tx.cveReference.createMany({
+        data: data.references.map(ref => ({
+          cveId: data.cveId,
+          url: ref.url,
+        })),
+      });
+    }
+
+    // Create labels
+    if (data.labels) {
+      await tx.cveLabel.create({
+        data: {
+          cveId: data.cveId,
+          operatingSystems: data.labels.operatingSystems,
+          components: data.labels.components,
+        },
+      });
+    }
+
+    // Create metrics
+    if (data.metrics && data.metrics.length > 0) {
+      await tx.cveMetric.createMany({
+        data: data.metrics.map(metric => ({
+          cveId: data.cveId,
+          baseScore: metric.baseScore,
+          baseSeverity: metric.baseSeverity,
+          vectorString: metric.vectorString,
+          attackVector: metric.attackVector,
+          attackComplexity: metric.attackComplexity,
+          privilegesRequired: metric.privilegesRequired,
+          userInteraction: metric.userInteraction,
+          scope: metric.scope,
+          confidentialityImpact: metric.confidentialityImpact,
+          integrityImpact: metric.integrityImpact,
+          availabilityImpact: metric.availabilityImpact,
+          cvssVersion: metric.cvssVersion,
+        })),
+      });
+    }
+
+    // Create problem types
+    if (data.problemTypes && data.problemTypes.length > 0) {
+      await tx.cveProblemType.createMany({
+        data: data.problemTypes.map(pt => ({
+          cveId: data.cveId,
+          description: pt.description,
+          cweId: pt.cweId,
+          type: pt.type,
+          lang: pt.lang,
+        })),
+      });
+    }
+
+    // Return the complete CVE with all relations
+    return tx.cve.findUnique({
+      where: { cveId: data.cveId },
+      include: {
+        descriptions: true,
+        references: true,
+        labels: true,
+        metrics: true,
+        problemTypes: true,
+        affectedProducts: {
+          include: {
+            versions: true,
+          },
+        },
+      },
+    });
+  });
+}
 export async function deleteCVE(cveId: string) {
   return prisma.cve.delete({
     where: { cveId },

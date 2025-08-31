@@ -10,6 +10,7 @@ import Pagination from './Pagination';
 import LoadingState from './LoadingState';
 import ErrorState from './ErrorState';
 import FilterDialog from './FilterDialog';
+import CVECreationDialog from './CVECreationDialog';
 
 // Custom hook for debouncing
 function useDebounce<T>(value: T, delay: number): T {
@@ -44,6 +45,7 @@ export default function CatalogPage() {
   const [sortBy, setSortBy] = useState<'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId' | 'severity'>('datePublished');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const limit = 20;
 
   // Debounce search term to avoid excessive API calls
@@ -110,6 +112,22 @@ export default function CatalogPage() {
     setFilter(newFilter);
   };
 
+  const handleCVECreated = () => {
+    // Refresh the CVE data and filter options after successful creation
+    fetchCVEData(false);
+    
+    // Refresh filter options to include any new components/OS
+    const refreshFilterOptions = async () => {
+      try {
+        const filterResponse = await getFilterOptions();
+        setFilterOptions(filterResponse);
+      } catch (err) {
+        console.error('Failed to refresh filter options:', err);
+      }
+    };
+    refreshFilterOptions();
+  };
+
   const totalActiveFilters = filter.operatingSystems.length + filter.components.length + filter.severityLevels.length;
 
   const handleSearchChange = (search: string) => {
@@ -150,9 +168,9 @@ export default function CatalogPage() {
       
       <div className="max-w-full mx-auto px-6">
         <div className="w-full">
-          {/* Search Bar Above Table */}
-          <div className="mb-6">
-            <div className="max-w-md">
+          {/* Search Bar and Actions */}
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div className="flex-1 max-w-md">
               <input
                 type="text"
                 placeholder="Search CVE ID or description..."
@@ -161,6 +179,15 @@ export default function CatalogPage() {
                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
               />
             </div>
+            <button
+              onClick={() => setShowCreateDialog(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Add CVE</span>
+            </button>
           </div>
 
           {/* Pagination */}
@@ -210,6 +237,13 @@ export default function CatalogPage() {
         filter={filter}
         filterOptions={filterOptions}
         onApplyFilters={handleApplyFilters}
+      />
+
+      {/* CVE Creation Dialog */}
+      <CVECreationDialog
+        isOpen={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onSuccess={handleCVECreated}
       />
     </div>
   );
