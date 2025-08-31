@@ -210,6 +210,7 @@ export interface CVSSV4Metrics {
 }
 
 export interface CVEMetricRaw {
+  cvssV3_0?: CVSSMetrics;
   cvssV3_1?: CVSSMetrics;
   cvssV4_0?: CVSSV4Metrics;
   other?: {
@@ -260,3 +261,20 @@ export interface CVEDatabase {
 }
 
 export type MetricToProcess = CVEMetricRaw;
+
+// =============================================================================
+// EXTERNAL API TYPES - Unified format for data from NVD and CVE.org APIs
+// =============================================================================
+
+export interface ExternalCVEData {
+  cveId: string;
+  description: string;
+  datePublished?: string;
+  dateUpdated?: string;
+  cvssScore?: number;
+  cvssSeverity?: string;
+  cvssVector?: string;
+  cvssVersion?: string;
+  references: string[];
+  source: 'NVD' | 'CVE.org';
+}

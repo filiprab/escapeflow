@@ -6,23 +6,35 @@
 import type { ParsedCVSSComponents } from '@/types/cve';
 
 /**
- * Parse CVSS v3.1 vector string into individual components
+ * Parse CVSS v3.0/v3.1 vector string into individual components
  * Example: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:N/A:N"
+ * Example: "CVSS:3.0/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:N/A:N"
  */
 export function parseCVSSVector(vectorString: string): ParsedCVSSComponents | null {
-  if (!vectorString || !vectorString.startsWith('CVSS:3.1/')) {
+  if (!vectorString) {
+    return null;
+  }
+
+  // Extract version from vector string
+  let version = '3.1'; // default
+  if (vectorString.startsWith('CVSS:3.0/')) {
+    version = '3.0';
+  } else if (vectorString.startsWith('CVSS:3.1/')) {
+    version = '3.1';
+  } else {
+    // Not a supported CVSS v3.x vector string
     return null;
   }
 
   const metrics: ParsedCVSSComponents = {
-    version: '3.1'
+    version
   };
 
   // Split the vector string by '/' and process each component
   const components = vectorString.split('/');
   
   for (const component of components) {
-    if (component === 'CVSS:3.1') continue;
+    if (component === `CVSS:${version}`) continue;
     
     const [key, value] = component.split(':');
     if (!key || !value) continue;

@@ -121,9 +121,32 @@ async function main() {
         }
       }
       
-      // Process metrics - support both CVSS v3.1 and v4.0
+      // Process metrics - support CVSS v3.0, v3.1 and v4.0
       for (const metric of metricsToProcess) {
-        if (metric.cvssV3_1) {
+        if (metric.cvssV3_0) {
+          // Parse individual components from vector string if not provided
+          const parsedMetrics = parseCVSSVector(metric.cvssV3_0.vectorString);
+          
+          await prisma.cveMetric.create({
+            data: {
+              cveId: cve.cveId,
+              cvssVersion: metric.cvssV3_0.version,
+              baseScore: metric.cvssV3_0.baseScore,
+              baseSeverity: metric.cvssV3_0.baseSeverity,
+              vectorString: metric.cvssV3_0.vectorString,
+              // Use parsed values if individual fields aren't provided in the raw data
+              attackVector: metric.cvssV3_0.attackVector || parsedMetrics?.attackVector || null,
+              attackComplexity: metric.cvssV3_0.attackComplexity || parsedMetrics?.attackComplexity || null,
+              privilegesRequired: metric.cvssV3_0.privilegesRequired || parsedMetrics?.privilegesRequired || null,
+              userInteraction: metric.cvssV3_0.userInteraction || parsedMetrics?.userInteraction || null,
+              scope: metric.cvssV3_0.scope || parsedMetrics?.scope || null,
+              confidentialityImpact: metric.cvssV3_0.confidentialityImpact || parsedMetrics?.confidentialityImpact || null,
+              integrityImpact: metric.cvssV3_0.integrityImpact || parsedMetrics?.integrityImpact || null,
+              availabilityImpact: metric.cvssV3_0.availabilityImpact || parsedMetrics?.availabilityImpact || null,
+              metricsJson: metric as any,
+            },
+          });
+        } else if (metric.cvssV3_1) {
           // Parse individual components from vector string if not provided
           const parsedMetrics = parseCVSSVector(metric.cvssV3_1.vectorString);
           
