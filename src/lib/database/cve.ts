@@ -319,6 +319,16 @@ export interface CreateCVEData {
     type?: string;
     lang: string;
   }>;
+  affectedProducts?: Array<{
+    vendor: string;
+    product: string;
+    versions: Array<{
+      version: string;
+      status: string;
+      lessThan?: string;
+      versionType: string;
+    }>;
+  }>;
 }
 
 export async function createCVE(data: CreateCVEData) {

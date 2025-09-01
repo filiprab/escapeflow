@@ -276,5 +276,20 @@ export interface ExternalCVEData {
   cvssVector?: string;
   cvssVersion?: string;
   references: string[];
+  affectedProducts?: Array<{
+    vendor: string;
+    product: string;
+    versions: Array<{
+      version: string;
+      status: string;
+      lessThan?: string;
+      versionType: string;
+    }>;
+  }>;
+  problemTypes?: Array<{
+    description: string;
+    cweId?: string;
+    lang: string;
+  }>;
   source: 'NVD' | 'CVE.org';
 }

@@ -108,6 +108,8 @@ export async function fetchFromNVD(cveId: string): Promise<ExternalCVEData> {
     descriptions?: unknown;
     metrics?: unknown;
     references?: unknown;
+    configurations?: unknown;
+    weaknesses?: unknown;
   };
   
   // Extract description (prefer English)
@@ -142,6 +144,69 @@ export async function fetchFromNVD(cveId: string): Promise<ExternalCVEData> {
   
   // Extract references
   const references = (cve.references as APIReference[] | undefined)?.map(ref => ref.url) || [];
+
+  // Extract affected products from configurations
+  const affectedProducts: ExternalCVEData['affectedProducts'] = [];
+  const configurations = cve.configurations as { nodes?: Array<{ cpeMatch?: Array<{ 
+    cpe23Uri: string; 
+    vulnerable: boolean;
+    versionStartIncluding?: string;
+    versionEndExcluding?: string;
+    versionEndIncluding?: string;
+  }> }> } | undefined;
+
+  if (configurations?.nodes) {
+    for (const node of configurations.nodes) {
+      if (node.cpeMatch) {
+        for (const match of node.cpeMatch) {
+          if (match.vulnerable && match.cpe23Uri) {
+            // Parse CPE URI: cpe:2.3:a:vendor:product:version:*:*:*:*:*:*:*
+            const cpeParts = match.cpe23Uri.split(':');
+            if (cpeParts.length >= 5) {
+              const vendor = cpeParts[3] || 'unknown';
+              const product = cpeParts[4] || 'unknown';
+              const version = cpeParts[5] || '*';
+              
+              // Find or create affected product entry
+              let affectedProduct = affectedProducts.find(p => p.vendor === vendor && p.product === product);
+              if (!affectedProduct) {
+                affectedProduct = { vendor, product, versions: [] };
+                affectedProducts.push(affectedProduct);
+              }
+              
+              // Add version info
+              affectedProduct.versions.push({
+                version: match.versionStartIncluding || version,
+                status: 'affected',
+                lessThan: match.versionEndExcluding,
+                versionType: 'semver'
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Extract problem types/CWEs
+  const problemTypes: ExternalCVEData['problemTypes'] = [];
+  const weaknesses = cve.weaknesses as Array<{ description: Array<{ lang: string; value: string }> }> | undefined;
+  
+  if (weaknesses) {
+    for (const weakness of weaknesses) {
+      if (weakness.description) {
+        for (const desc of weakness.description) {
+          // Extract CWE ID from description if present (e.g., "CWE-79")
+          const cweMatch = desc.value.match(/CWE-(\d+)/);
+          problemTypes.push({
+            description: desc.value,
+            cweId: cweMatch ? `CWE-${cweMatch[1]}` : undefined,
+            lang: desc.lang || 'en'
+          });
+        }
+      }
+    }
+  }
   
   return {
     cveId: cve.id,
@@ -153,6 +218,8 @@ export async function fetchFromNVD(cveId: string): Promise<ExternalCVEData> {
     cvssVector,
     cvssVersion,
     references,
+    affectedProducts: affectedProducts.length > 0 ? affectedProducts : undefined,
+    problemTypes: problemTypes.length > 0 ? problemTypes : undefined,
     source: 'NVD'
   };
 }
@@ -191,6 +258,8 @@ export async function fetchFromCVEOrg(cveId: string): Promise<ExternalCVEData> {
     descriptions?: unknown;
     metrics?: unknown;
     references?: unknown;
+    affected?: unknown;
+    problemTypes?: unknown;
   };
   
   // Extract description (prefer English)
@@ -238,6 +307,53 @@ export async function fetchFromCVEOrg(cveId: string): Promise<ExternalCVEData> {
   
   // Extract references
   const references = (cna.references as APIReference[] | undefined)?.map(ref => ref.url) || [];
+
+  // Extract affected products
+  const affectedProducts: ExternalCVEData['affectedProducts'] = [];
+  const affected = cna.affected as Array<{
+    vendor: string;
+    product: string;
+    versions: Array<{
+      version: string;
+      status: string;
+      lessThan?: string;
+      versionType: string;
+    }>;
+  }> | undefined;
+
+  if (affected) {
+    for (const item of affected) {
+      affectedProducts.push({
+        vendor: item.vendor,
+        product: item.product,
+        versions: item.versions
+      });
+    }
+  }
+
+  // Extract problem types/CWEs
+  const problemTypes: ExternalCVEData['problemTypes'] = [];
+  const problemTypeRaw = cna.problemTypes as Array<{
+    descriptions: Array<{
+      lang: string;
+      description: string;
+      cweId?: string;
+    }>;
+  }> | undefined;
+
+  if (problemTypeRaw) {
+    for (const problemType of problemTypeRaw) {
+      if (problemType.descriptions) {
+        for (const desc of problemType.descriptions) {
+          problemTypes.push({
+            description: desc.description,
+            cweId: desc.cweId,
+            lang: desc.lang || 'en'
+          });
+        }
+      }
+    }
+  }
   
   return {
     cveId: data.cveMetadata.cveId,
@@ -249,6 +365,8 @@ export async function fetchFromCVEOrg(cveId: string): Promise<ExternalCVEData> {
     cvssVector,
     cvssVersion,
     references,
+    affectedProducts: affectedProducts.length > 0 ? affectedProducts : undefined,
+    problemTypes: problemTypes.length > 0 ? problemTypes : undefined,
     source: 'CVE.org'
   };
 }

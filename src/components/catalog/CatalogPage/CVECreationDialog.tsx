@@ -196,7 +196,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
 
     try {
       const requestBody: Record<string, unknown> = {
-        mode: 'manual', // Always use manual mode since we populate form on frontend
+        source: source, // Pass the selected source (NVD or CVE.org)
         cveId: cveId.trim().toUpperCase(),
         cveData: {
           ...formData,
