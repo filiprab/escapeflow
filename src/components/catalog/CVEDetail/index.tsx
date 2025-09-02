@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { TrashIcon } from '@heroicons/react/24/outline';
 import { getCVEById, CVEApiError } from '@/lib/api/cve';
 import { CVERecord } from '@/types/cve';
 
@@ -117,10 +118,7 @@ export default function CVEDetail() {
       {/* Header Section with Blue Background */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-8 px-6 mb-6">
         <div className="max-w-4xl mx-auto">
-          <CVEHeader 
-            cve={cve} 
-            onDelete={() => setShowDeleteDialog(true)}
-          />
+          <CVEHeader cve={cve} />
         </div>
       </div>
       
@@ -143,6 +141,20 @@ export default function CVEDetail() {
           onUpdate={updateCVEField}
           isUpdating={updating === 'references'}
         />
+        
+        {/* Delete Button Section */}
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowDeleteDialog(true)}
+              className="inline-flex items-center space-x-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+              title="Delete CVE"
+            >
+              <TrashIcon className="w-5 h-5" />
+              <span>Delete CVE</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Delete Confirmation Dialog */}

@@ -1,13 +1,12 @@
 import Link from 'next/link';
-import { ArrowLeftIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { CVERecord, CVEMetric } from '@/types/cve';
 
 interface CVEHeaderProps {
   cve: CVERecord;
-  onDelete?: () => void;
 }
 
-export default function CVEHeader({ cve, onDelete }: CVEHeaderProps) {
+export default function CVEHeader({ cve }: CVEHeaderProps) {
   const getSeverityColor = (cve: CVERecord) => {
     const metric = cve.metrics?.[0];
     if (!metric?.baseScore) return 'bg-gray-500 text-white';
@@ -43,17 +42,6 @@ export default function CVEHeader({ cve, onDelete }: CVEHeaderProps) {
           <ArrowLeftIcon className="w-4 h-4" />
           <span>Back to Catalog</span>
         </Link>
-        
-        {onDelete && (
-          <button
-            onClick={onDelete}
-            className="inline-flex items-center space-x-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-            title="Delete CVE"
-          >
-            <TrashIcon className="w-4 h-4" />
-            <span>Delete</span>
-          </button>
-        )}
       </div>
       
       <div className="flex items-start justify-between">

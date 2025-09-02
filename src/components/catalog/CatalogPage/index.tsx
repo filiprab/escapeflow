@@ -4,11 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { CVEFilter } from '@/types/cve';
 import { getCVEs, getFilterOptions, CVEApiResponse, CVEApiError, FilterOptions } from '@/lib/api/cve';
 
-import CatalogHeader from './CatalogHeader';
-import CVEList from './CVEList';
-import Pagination from './Pagination';
-import LoadingState from './LoadingState';
-import ErrorState from './ErrorState';
+import { CatalogHeader, TablePagination, LoadingState, ErrorState } from '@/components/catalog/shared';
+import CVETable from './CVETable';
 import FilterDialog from './FilterDialog';
 import CVECreationDialog from './CVECreationDialog';
 
@@ -146,11 +143,11 @@ export default function CatalogPage() {
   };
 
   if (initialLoading) {
-    return <LoadingState />;
+    return <LoadingState message="Loading CVE catalog..." />;
   }
 
   if (error && !cveData) {
-    return <ErrorState error={error} />;
+    return <ErrorState error={error} title="Error Loading CVE Data" backLabel="Back to Catalog" backUrl="/catalog" />;
   }
 
   if (!cveData) {
@@ -162,7 +159,10 @@ export default function CatalogPage() {
       {/* Header Section with Blue Background */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-8 px-6 mb-6">
         <div className="max-w-full mx-auto px-4">
-          <CatalogHeader totalCVEs={cveData.total} />
+          <CatalogHeader 
+            title="CVE Catalog" 
+            description={`Browse and filter ${cveData.total.toLocaleString()} Chromium CVEs`}
+          />
         </div>
       </div>
       
@@ -191,14 +191,15 @@ export default function CatalogPage() {
           </div>
 
           {/* Pagination */}
-          <Pagination 
+          <TablePagination 
             currentPage={page}
             totalPages={cveData.totalPages}
-            totalCVEs={cveData.total}
+            totalItems={cveData.total}
             currentCount={cveData.cves.length}
             onPageChange={setPage}
             onFilterClick={() => setShowFilterDialog(true)}
             activeFilterCount={totalActiveFilters}
+            itemName="CVEs"
           />
           
           {/* Table with Loading Overlay */}
@@ -214,7 +215,7 @@ export default function CatalogPage() {
               </div>
             )}
             
-            <CVEList 
+            <CVETable 
               cves={cveData.cves}
               sortBy={sortBy}
               sortOrder={sortOrder}
