@@ -26,6 +26,7 @@ export default function DeleteConfirmationDialog({
 
   const handleConfirm = () => {
     if (isConfirmValid && !isDeleting) {
+      setConfirmText('');
       onConfirm();
     }
   };

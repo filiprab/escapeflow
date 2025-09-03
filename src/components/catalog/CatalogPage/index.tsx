@@ -142,6 +142,26 @@ export default function CatalogPage() {
     }
   };
 
+  const handleDelete = async (cveId: string) => {
+    try {
+      const response = await fetch(`/api/cves/${encodeURIComponent(cveId)}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete CVE');
+      }
+      
+      // Refresh the CVE data after successful deletion
+      await fetchCVEData(false);
+    } catch (error) {
+      console.error('Failed to delete CVE:', error);
+      setError('Failed to delete CVE. Please try again.');
+    }
+  };
+
+
   if (initialLoading) {
     return <LoadingState message="Loading CVE catalog..." />;
   }
@@ -220,6 +240,7 @@ export default function CatalogPage() {
               sortBy={sortBy}
               sortOrder={sortOrder}
               onSort={handleSort}
+              onDelete={handleDelete}
             />
             
             {cveData.cves.length === 0 && !searchLoading && (

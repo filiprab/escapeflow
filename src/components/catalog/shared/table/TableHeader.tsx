@@ -50,7 +50,7 @@ export default function TableHeader<T extends string>({
         <div className="flex items-center gap-1">
           {children}
           {isCurrentSort && (
-            sortOrder === 'asc' 
+            sortOrder === 'asc'
               ? <ChevronUpIcon className="w-4 h-4 text-blue-200" />
               : <ChevronDownIcon className="w-4 h-4 text-blue-200" />
           )}
