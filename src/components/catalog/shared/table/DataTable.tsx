@@ -28,8 +28,8 @@ export default function DataTable<T, K extends string = string>({
 
   if (!data || data.length === 0) {
     return (
-      <div className={`overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm ${className}`}>
-        <div className="p-8 text-center text-gray-500">
+      <div className={`overflow-x-auto bg-gray-800/30 backdrop-blur-lg rounded-2xl border border-gray-700/50 shadow-2xl ${className}`}>
+        <div className="p-12 text-center text-gray-300">
           {emptyMessage}
         </div>
       </div>
@@ -37,19 +37,19 @@ export default function DataTable<T, K extends string = string>({
   }
 
   return (
-    <div ref={tableRef} className={`overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm ${className}`}>
-      <table className="min-w-full divide-y divide-gray-200">
+    <div ref={tableRef} className={`group overflow-x-auto bg-gray-800/30 backdrop-blur-lg rounded-2xl border border-gray-700/50 hover:border-blue-500/30 shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 ${className}`}>
+      <table className="w-full divide-y divide-gray-700/50" style={{ minWidth: '1200px' }}>
         <TableHeader 
           columns={columns}
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSort={onSort}
         />
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-transparent divide-y divide-gray-700/30">
           {data.map((item, index) => (
             <tr 
               key={keyExtractor(item, index)}
-              className="hover:bg-gray-50 transition-colors"
+              className="hover:bg-gray-700/20 transition-all duration-300"
             >
               {renderRow(item, index)}
             </tr>

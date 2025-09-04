@@ -317,7 +317,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
             <>
               <button
                 onClick={handleClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 border border-gray-600/50 rounded-lg hover:bg-gray-600/50 hover:border-gray-500/50 transition-all duration-200"
                 disabled={prefetchLoading}
               >
                 Cancel
@@ -325,7 +325,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
               <button
                 onClick={handlePrefetch}
                 disabled={prefetchLoading || !cveId.trim()}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 border border-transparent rounded-lg hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
               >
                 {prefetchLoading ? (
                   <>
@@ -341,7 +341,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
             <>
               <button
                 onClick={handleStartOver}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 border border-gray-600/50 rounded-lg hover:bg-gray-600/50 hover:border-gray-500/50 transition-all duration-200"
                 disabled={loading}
               >
                 Start Over
@@ -349,7 +349,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
               <button
                 onClick={handleSubmit}
                 disabled={loading || !cveId.trim() || !formData.descriptions[0]?.description.trim()}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 border border-transparent rounded-lg hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
               >
                 {loading ? (
                   <>

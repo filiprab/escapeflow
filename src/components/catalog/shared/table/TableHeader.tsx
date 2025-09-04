@@ -20,7 +20,7 @@ export default function TableHeader<T extends string>({
   sortBy, 
   sortOrder, 
   onSort,
-  className = 'bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10'
+  className = 'bg-gradient-to-r from-gray-800/50 to-gray-700/50 backdrop-blur-lg text-gray-200 sticky top-0 z-10'
 }: TableHeaderProps<T>) {
   const SortableHeaderCell = ({ 
     column, 
@@ -36,7 +36,7 @@ export default function TableHeader<T extends string>({
 
     if (!isSortable) {
       return (
-        <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${cellClassName} ${column.className || ''}`}>
+        <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${cellClassName} ${column.className || ''}`}>
           {children}
         </th>
       );
@@ -44,15 +44,15 @@ export default function TableHeader<T extends string>({
 
     return (
       <th 
-        className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:text-blue-100 transition-colors ${cellClassName} ${column.className || ''}`}
+        className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:text-blue-300 transition-all duration-300 hover:scale-[1.02] ${cellClassName} ${column.className || ''}`}
         onClick={() => onSort(column.key)}
       >
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {children}
           {isCurrentSort && (
             sortOrder === 'asc'
-              ? <ChevronUpIcon className="w-4 h-4 text-blue-200" />
-              : <ChevronDownIcon className="w-4 h-4 text-blue-200" />
+              ? <ChevronUpIcon className="w-4 h-4 text-blue-400" />
+              : <ChevronDownIcon className="w-4 h-4 text-blue-400" />
           )}
         </div>
       </th>
@@ -66,7 +66,7 @@ export default function TableHeader<T extends string>({
           <SortableHeaderCell 
             key={column.key} 
             column={column}
-            cellClassName="text-white"
+            cellClassName="text-gray-200 group-hover:text-gray-100"
           >
             {column.label}
           </SortableHeaderCell>

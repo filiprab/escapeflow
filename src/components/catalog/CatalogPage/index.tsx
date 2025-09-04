@@ -175,10 +175,15 @@ export default function CatalogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-900">
-      {/* Header Section with Blue Background */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-8 px-6 mb-6">
-        <div className="max-w-full mx-auto px-4">
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Animated background grid matching landing page */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+      </div>
+
+      {/* Header Section with Dark Theme */}
+      <div className="relative z-10 py-16 px-8">
+        <div className="max-w-[1400px] mx-auto">
           <CatalogHeader 
             title="CVE Catalog" 
             description={`Browse and filter ${cveData.total.toLocaleString()} Chromium CVEs`}
@@ -186,22 +191,22 @@ export default function CatalogPage() {
         </div>
       </div>
       
-      <div className="max-w-full mx-auto px-6">
+      <div className="relative z-10 mx-32 pb-16">
         <div className="w-full">
           {/* Search Bar and Actions */}
-          <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="mb-8 flex items-center justify-between gap-4">
             <div className="flex-1 max-w-md">
               <input
                 type="text"
                 placeholder="Search CVE ID or description..."
                 value={filter.search}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                className="w-full px-4 py-3 bg-gray-800/30 backdrop-blur-lg border border-gray-700/50 rounded-xl text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 shadow-lg transition-all duration-300"
               />
             </div>
             <button
               onClick={() => setShowCreateDialog(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-blue-500/25 hover:scale-[1.02]"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -225,11 +230,11 @@ export default function CatalogPage() {
           {/* Table with Loading Overlay */}
           <div className="relative">
             {searchLoading && (
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
-                <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-lg">
+              <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
+                <div className="bg-gray-800/50 backdrop-blur-lg rounded-xl p-6 border border-gray-700/50 shadow-2xl">
                   <div className="flex items-center gap-3">
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
-                    <span className="text-gray-700">Searching...</span>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-400 border-t-transparent"></div>
+                    <span className="text-gray-200 font-medium">Searching...</span>
                   </div>
                 </div>
               </div>
@@ -244,8 +249,11 @@ export default function CatalogPage() {
             />
             
             {cveData.cves.length === 0 && !searchLoading && (
-              <div className="text-center py-12">
-                <p className="text-gray-600">No CVEs found matching the current filters.</p>
+              <div className="text-center py-16">
+                <div className="bg-gray-800/30 backdrop-blur-lg rounded-2xl p-8 border border-gray-700/50 max-w-md mx-auto">
+                  <p className="text-gray-300 text-lg">No CVEs found matching the current filters.</p>
+                  <p className="text-gray-400 text-sm mt-2">Try adjusting your search criteria or filters.</p>
+                </div>
               </div>
             )}
           </div>

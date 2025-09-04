@@ -57,8 +57,8 @@ export default function Dialog({
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div 
-        className={`fixed inset-0 bg-black transition-opacity duration-150 ${
-          isOpen ? 'opacity-50' : 'opacity-0'
+        className={`fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-150 ${
+          isOpen ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={onClose}
       />
@@ -66,21 +66,21 @@ export default function Dialog({
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <div 
-          className={`bg-white rounded-lg shadow-xl w-full ${maxWidthClass} transition-all duration-150 ${
+          className={`bg-gray-800/95 backdrop-blur-lg rounded-2xl shadow-2xl shadow-black/50 w-full ${maxWidthClass} border border-gray-700/50 transition-all duration-150 ${
             isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
           }`}
           style={{ maxHeight }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
+            <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">{title}</h2>
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors text-gray-400 hover:text-white"
                 aria-label="Close dialog"
               >
-                <XMarkIcon className="w-5 h-5 text-gray-500" />
+                <XMarkIcon className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -92,7 +92,7 @@ export default function Dialog({
 
           {/* Footer */}
           {footer && (
-            <div className="border-t border-gray-200 bg-gray-50 rounded-b-lg">
+            <div className="border-t border-gray-700/50 bg-gray-800/50 rounded-b-2xl">
               {footer}
             </div>
           )}
@@ -110,7 +110,7 @@ interface DialogHeaderProps {
 
 export function DialogContent({ children, className = '' }: DialogHeaderProps) {
   return (
-    <div className={`p-6 space-y-6 ${className}`}>
+    <div className={`p-6 space-y-6 text-gray-100 ${className}`}>
       {children}
     </div>
   );

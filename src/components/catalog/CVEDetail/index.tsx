@@ -114,15 +114,20 @@ export default function CVEDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-900">
-      {/* Header Section with Blue Background */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-8 px-6 mb-6">
-        <div className="max-w-4xl mx-auto">
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Animated background grid matching landing page */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+      </div>
+
+      {/* Header Section with Dark Theme */}
+      <div className="relative z-10 py-16 px-8">
+        <div className="max-w-[1400px] mx-auto">
           <CVEHeader cve={cve} />
         </div>
       </div>
       
-      <div className="max-w-4xl mx-auto px-6">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-8 pb-16">
         <DescriptionSection 
           cve={cve} 
           onUpdate={updateCVEField}
@@ -143,14 +148,14 @@ export default function CVEDetail() {
         />
         
         {/* Delete Button Section */}
-        <div className="mt-12 pt-8 border-t border-gray-200">
+        <div className="mt-16 pt-8 border-t border-gray-700/30">
           <div className="flex justify-end">
             <button
               onClick={() => setShowDeleteDialog(true)}
-              className="inline-flex items-center space-x-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+              className="group inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-red-500/25 hover:scale-[1.02]"
               title="Delete CVE"
             >
-              <TrashIcon className="w-5 h-5" />
+              <TrashIcon className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
               <span>Delete CVE</span>
             </button>
           </div>

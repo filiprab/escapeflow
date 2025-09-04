@@ -78,7 +78,7 @@ export default function GenericFilterDialog<T extends Record<string, unknown>>({
   const dialogTitle = (
     <div className="flex items-center space-x-3">
       <div className="flex-shrink-0">
-        <FunnelIcon className="w-6 h-6 text-blue-600" />
+        <FunnelIcon className="w-6 h-6 text-blue-400" />
       </div>
       <span>{title}</span>
     </div>
@@ -94,13 +94,13 @@ export default function GenericFilterDialog<T extends Record<string, unknown>>({
         <DialogFooter>
           <button
             onClick={handleReset}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-6 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 border border-gray-600/50 rounded-lg hover:bg-gray-600/50 hover:border-gray-500/50 transition-all duration-200"
           >
             Reset All
           </button>
           <button
             onClick={handleApply}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 border border-transparent rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
           >
             Apply Filters ({getActiveFilterCount()})
           </button>

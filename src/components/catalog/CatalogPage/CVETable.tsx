@@ -79,43 +79,43 @@ export default function CVETable({
 
   const renderRow = (cve: CVEListItem) => (
     <>
-      <td className="px-4 py-4 whitespace-nowrap">
+      <td className="px-6 py-5 whitespace-nowrap">
         <Link 
           href={`/catalog/${cve.cveId}`}
-          className="text-blue-600 hover:text-blue-800 font-medium"
+          className="text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-300 hover:underline decoration-blue-400/30"
         >
           {cve.cveId}
         </Link>
       </td>
       
-      <td className="px-4 py-4 whitespace-nowrap">
+      <td className="px-6 py-5 whitespace-nowrap">
         <SeverityBadge score={cve.metrics?.[0]?.baseScore} />
       </td>
       
-      <td className="px-4 py-4 whitespace-nowrap">
-        <span className="text-gray-700 text-sm">
+      <td className="px-6 py-5 whitespace-nowrap">
+        <span className="text-gray-300 text-sm font-medium">
           {getSeverityLevel(cve)}
         </span>
       </td>
       
-      <td className="px-4 py-4 whitespace-nowrap">
-        <span className="text-gray-700 text-sm">
+      <td className="px-6 py-5 whitespace-nowrap">
+        <span className="text-gray-300 text-sm">
           {new Date(cve.datePublished).toLocaleDateString()}
         </span>
       </td>
       
-      <td className="px-4 py-4">
+      <td className="px-6 py-5">
         <OSIconDisplay operatingSystems={cve.labels?.operatingSystems || []} />
       </td>
       
-      <td className="px-4 py-4">
+      <td className="px-6 py-5">
         <TagList tags={cve.labels?.components || []} maxVisible={2} variant="blue" />
       </td>
       
-      <td className="px-4 py-4">
+      <td className="px-6 py-5">
         <div className="max-w-md">
           <p 
-            className="text-gray-700 text-sm leading-relaxed"
+            className="text-gray-300 text-sm leading-relaxed"
             title={cve.descriptions[0]?.description || 'No description available'}
           >
             {truncateDescription(
@@ -125,14 +125,14 @@ export default function CVETable({
         </div>
       </td>
       
-      <td className="px-4 py-4 whitespace-nowrap">
+      <td className="px-6 py-5 whitespace-nowrap">
         {onDelete && (
           <button
             onClick={() => handleDeleteClick(cve.cveId)}
-            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors bg-transparent"
+            className="group p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-300 bg-transparent hover:scale-110"
             title="Delete CVE"
           >
-            <TrashIcon className="w-4 h-4" />
+            <TrashIcon className="w-4 h-4 group-hover:drop-shadow-lg" />
           </button>
         )}
       </td>

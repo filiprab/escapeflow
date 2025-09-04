@@ -41,7 +41,7 @@ export default function DeleteConfirmationDialog({
   const dialogTitle = (
     <div className="flex items-center space-x-3">
       <div className="flex-shrink-0">
-        <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
+        <ExclamationTriangleIcon className="w-6 h-6 text-red-400" />
       </div>
       <span>Delete CVE</span>
     </div>
@@ -59,7 +59,7 @@ export default function DeleteConfirmationDialog({
           <button
             onClick={handleConfirm}
             disabled={!isConfirmValid || isDeleting}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-red-600 border border-transparent rounded-lg hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-red-500/25"
           >
             {isDeleting ? (
               <>
@@ -77,11 +77,11 @@ export default function DeleteConfirmationDialog({
       }
     >
       <DialogContent className="space-y-4">
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-gray-300">
           <p className="mb-4">
-            This action will permanently delete <span className="font-semibold text-gray-900">{cveId}</span> and all its associated data including:
+            This action will permanently delete <span className="font-semibold text-white">{cveId}</span> and all its associated data including:
           </p>
-          <ul className="list-disc list-inside space-y-1 text-gray-600 ml-4">
+          <ul className="list-disc list-inside space-y-1 text-gray-400 ml-4">
             <li>Descriptions and references</li>
             <li>CVSS metrics and scores</li>
             <li>Labels and classifications</li>
@@ -89,15 +89,15 @@ export default function DeleteConfirmationDialog({
           </ul>
         </div>
 
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 backdrop-blur-sm">
           <div className="flex">
             <ExclamationTriangleIcon className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">
+              <h3 className="text-sm font-medium text-red-300">
                 This action cannot be undone
               </h3>
-              <p className="text-sm text-red-700 mt-1">
-                Please type <span className="font-mono bg-red-100 px-1 rounded">{expectedText}</span> to confirm deletion.
+              <p className="text-sm text-red-300/90 mt-1">
+                Please type <span className="font-mono bg-red-500/30 px-1 rounded text-red-200">{expectedText}</span> to confirm deletion.
               </p>
             </div>
           </div>
@@ -109,7 +109,7 @@ export default function DeleteConfirmationDialog({
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
             placeholder={`Type ${expectedText} here`}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500 backdrop-blur-sm transition-all duration-200"
             disabled={isDeleting}
           />
         </div>
