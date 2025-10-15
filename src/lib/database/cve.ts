@@ -9,24 +9,14 @@ export interface CVESearchParams extends CVEFilter {
   sortOrder?: 'asc' | 'desc';
 }
 
-export async function getCVEs(params: CVESearchParams) {
-  const {
-    operatingSystems = [],
-    components = [],
-    severityLevels = [],
-    search = '',
-    page = 1,
-    limit = 20,
-    sortBy = 'datePublished',
-    sortOrder = 'desc',
-  } = params;
-
-  const skip = (page - 1) * limit;
-  
-  // Build where clause
+function buildCveWhereClause({
+  operatingSystems = [],
+  components = [],
+  severityLevels = [],
+  search = '',
+}: Pick<CVESearchParams, 'operatingSystems' | 'components' | 'severityLevels' | 'search'>): Prisma.CveWhereInput {
   const where: Prisma.CveWhereInput = {};
 
-  // Search in CVE ID and descriptions
   if (search) {
     where.OR = [
       {
@@ -48,7 +38,6 @@ export async function getCVEs(params: CVESearchParams) {
     ];
   }
 
-  // Filter by operating systems and components
   if (operatingSystems.length > 0 || components.length > 0) {
     where.labels = {
       ...(operatingSystems.length > 0 && {
@@ -64,10 +53,9 @@ export async function getCVEs(params: CVESearchParams) {
     };
   }
 
-  // Filter by severity levels
   if (severityLevels.length > 0) {
     const scoreRanges: { gte?: number; lt?: number }[] = [];
-    
+
     if (severityLevels.includes('Critical')) {
       scoreRanges.push({ gte: 9.0 });
     }
@@ -85,12 +73,41 @@ export async function getCVEs(params: CVESearchParams) {
       where.metrics = {
         some: {
           OR: scoreRanges.map(range => ({
-            baseScore: range
-          }))
-        }
+            baseScore: range,
+          })),
+        },
       };
     }
   }
+
+  return where;
+}
+
+function sanitizeCveIds(ids: string[] = []) {
+  return Array.from(
+    new Set(
+      ids
+        .map(id => id.trim())
+        .filter(id => id.length > 0)
+    )
+  );
+}
+
+export async function getCVEs(params: CVESearchParams) {
+  const {
+    operatingSystems = [],
+    components = [],
+    severityLevels = [],
+    search = '',
+    page = 1,
+    limit = 20,
+    sortBy = 'datePublished',
+    sortOrder = 'desc',
+  } = params;
+
+  const skip = (page - 1) * limit;
+  
+  const where = buildCveWhereClause({ operatingSystems, components, severityLevels, search });
 
   // Build orderBy clause
   let orderBy: Prisma.CveOrderByWithRelationInput = {};
@@ -454,5 +471,50 @@ export async function createCVE(data: CreateCVEData) {
 export async function deleteCVE(cveId: string) {
   return prisma.cve.delete({
     where: { cveId },
+  });
+}
+
+export async function deleteCVEsByIds(cveIds: string[]) {
+  const ids = sanitizeCveIds(cveIds);
+
+  if (ids.length === 0) {
+    return { count: 0 };
+  }
+
+  return prisma.cve.deleteMany({
+    where: {
+      cveId: {
+        in: ids,
+      },
+    },
+  });
+}
+
+export async function deleteCVEsByFilter(
+  filter: Pick<CVESearchParams, 'operatingSystems' | 'components' | 'severityLevels' | 'search'>,
+  excludeIds: string[] = [],
+) {
+  const where = buildCveWhereClause(filter);
+  const excludes = sanitizeCveIds(excludeIds);
+
+  if (excludes.length > 0) {
+    const baseAnd = Array.isArray(where.AND)
+      ? [...where.AND]
+      : where.AND
+      ? [where.AND]
+      : [];
+
+    where.AND = [
+      ...baseAnd,
+      {
+        cveId: {
+          notIn: excludes,
+        },
+      },
+    ];
+  }
+
+  return prisma.cve.deleteMany({
+    where,
   });
 }

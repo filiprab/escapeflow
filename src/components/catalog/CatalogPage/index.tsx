@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { TrashIcon } from '@heroicons/react/24/outline';
 import { CVEFilter } from '@/types/cve';
-import { getCVEs, getFilterOptions, CVEApiResponse, CVEApiError, FilterOptions } from '@/lib/api/cve';
+import { getCVEs, getFilterOptions, bulkDeleteCVEs, CVEApiResponse, CVEApiError, FilterOptions } from '@/lib/api/cve';
 
 import { CatalogHeader, TablePagination, LoadingState, ErrorState } from '@/components/catalog/shared';
 import CVETable from './CVETable';
 import FilterDialog from './FilterDialog';
 import CVECreationDialog from './CVECreationDialog';
+import BulkDeleteConfirmationDialog from './BulkDeleteConfirmationDialog';
 
 // Custom hook for debouncing
 function useDebounce<T>(value: T, delay: number): T {
@@ -43,7 +45,18 @@ export default function CatalogPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [excludedIds, setExcludedIds] = useState<Set<string>>(() => new Set());
+  const [selectAllActive, setSelectAllActive] = useState(false);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const limit = 20;
+
+  const resetSelection = useCallback(() => {
+    setSelectAllActive(false);
+    setSelectedIds(() => new Set());
+    setExcludedIds(() => new Set());
+  }, []);
 
   // Debounce search term to avoid excessive API calls
   const debouncedSearchTerm = useDebounce(filter.search, 300);
@@ -104,6 +117,10 @@ export default function CatalogPage() {
     setPage(1);
   }, [debouncedSearchTerm, filter.operatingSystems, filter.components, filter.severityLevels, sortBy, sortOrder]);
 
+  useEffect(() => {
+    resetSelection();
+  }, [debouncedSearchTerm, filter.operatingSystems, filter.components, filter.severityLevels, sortBy, sortOrder, resetSelection]);
+
 
   const handleApplyFilters = (newFilter: CVEFilter) => {
     setFilter(newFilter);
@@ -131,6 +148,117 @@ export default function CatalogPage() {
     setFilter(prev => ({ ...prev, search }));
   };
 
+  const isRowSelected = useCallback((cveId: string) => {
+    if (selectAllActive) {
+      return !excludedIds.has(cveId);
+    }
+    return selectedIds.has(cveId);
+  }, [selectAllActive, excludedIds, selectedIds]);
+
+  const handleRowSelectChange = useCallback((cveId: string, selected: boolean) => {
+    if (selectAllActive) {
+      setExcludedIds(prev => {
+        const next = new Set(prev);
+        if (selected) {
+          next.delete(cveId);
+        } else {
+          next.add(cveId);
+        }
+        return next;
+      });
+    } else {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        if (selected) {
+          next.add(cveId);
+        } else {
+          next.delete(cveId);
+        }
+        return next;
+      });
+    }
+  }, [selectAllActive]);
+
+  const handleSelectAllChange = useCallback((checked: boolean) => {
+    if (checked) {
+      setSelectAllActive(true);
+      setSelectedIds(() => new Set());
+      setExcludedIds(() => new Set());
+    } else {
+      resetSelection();
+    }
+  }, [resetSelection]);
+
+  const totalAvailable = cveData?.total ?? 0;
+
+  const selectedCount = useMemo(() => {
+    if (!cveData) {
+      return 0;
+    }
+
+    if (selectAllActive) {
+      return Math.max(0, cveData.total - excludedIds.size);
+    }
+
+    return selectedIds.size;
+  }, [cveData, selectAllActive, excludedIds, selectedIds]);
+
+  const hasSelection = selectedCount > 0;
+  const isAllSelected = hasSelection && selectedCount === totalAvailable;
+  const isSelectionIndeterminate = hasSelection && selectedCount < totalAvailable;
+
+  const selectionSummaryText = useMemo(() => {
+    if (!hasSelection) {
+      return '';
+    }
+
+    if (selectAllActive) {
+      if (excludedIds.size === 0) {
+        return 'All ' + selectedCount.toLocaleString() + ' CVEs selected';
+      }
+      return selectedCount.toLocaleString() + ' of ' + totalAvailable.toLocaleString() + ' CVEs selected';
+    }
+
+    return selectedCount.toLocaleString() + ' ' + (selectedCount === 1 ? 'CVE' : 'CVEs') + ' selected';
+  }, [hasSelection, selectAllActive, excludedIds.size, selectedCount, totalAvailable]);
+
+  const handleBulkDeleteConfirm = useCallback(async () => {
+    if (!hasSelection) {
+      return;
+    }
+
+    setBulkDeleting(true);
+
+    try {
+      if (selectAllActive) {
+        await bulkDeleteCVEs({
+          selectAll: true,
+          filter: { ...debouncedFilter },
+          excludeIds: Array.from(excludedIds),
+        });
+      } else {
+        await bulkDeleteCVEs({
+          ids: Array.from(selectedIds),
+        });
+      }
+
+      resetSelection();
+      setShowBulkDeleteDialog(false);
+      await fetchCVEData(false);
+    } catch (err) {
+      console.error('Failed to delete selected CVEs:', err);
+      setError('Failed to delete selected CVEs. Please try again.');
+    } finally {
+      setBulkDeleting(false);
+    }
+  }, [hasSelection, selectAllActive, debouncedFilter, excludedIds, selectedIds, resetSelection, fetchCVEData]);
+
+  useEffect(() => {
+    if (showBulkDeleteDialog && !hasSelection) {
+      setShowBulkDeleteDialog(false);
+    }
+  }, [showBulkDeleteDialog, hasSelection]);
+
   const handleSort = (column: 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId' | 'severity') => {
     if (sortBy === column) {
       // Toggle sort order if same column
@@ -154,6 +282,24 @@ export default function CatalogPage() {
       }
       
       // Refresh the CVE data after successful deletion
+      setSelectedIds(prev => {
+        if (!prev.has(cveId)) {
+          return prev;
+        }
+        const next = new Set(prev);
+        next.delete(cveId);
+        return next;
+      });
+
+      setExcludedIds(prev => {
+        if (!prev.has(cveId)) {
+          return prev;
+        }
+        const next = new Set(prev);
+        next.delete(cveId);
+        return next;
+      });
+
       await fetchCVEData(false);
     } catch (error) {
       console.error('Failed to delete CVE:', error);
@@ -194,8 +340,8 @@ export default function CatalogPage() {
       <div className="relative z-10 mx-32 pb-16">
         <div className="w-full">
           {/* Search Bar and Actions */}
-          <div className="mb-8 flex items-center justify-between gap-4">
-            <div className="flex-1 max-w-md">
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex-1 min-w-[220px] max-w-md">
               <input
                 type="text"
                 placeholder="Search CVE ID or description..."
@@ -204,15 +350,38 @@ export default function CatalogPage() {
                 className="w-full px-4 py-3 bg-gray-800/30 backdrop-blur-lg border border-gray-700/50 rounded-xl text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 shadow-lg transition-all duration-300"
               />
             </div>
-            <button
-              onClick={() => setShowCreateDialog(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-blue-500/25 hover:scale-[1.02]"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              <span>Add CVE</span>
-            </button>
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              {hasSelection && (
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                  <span>{selectionSummaryText}</span>
+                  <button
+                    type="button"
+                    onClick={resetSelection}
+                    className="text-xs font-medium text-gray-400 hover:text-gray-200 transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteDialog(true)}
+                disabled={!hasSelection}
+                className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-red-500/25 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <TrashIcon className="w-5 h-5" />
+                <span>Delete Selected</span>
+              </button>
+              <button
+                onClick={() => setShowCreateDialog(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-blue-500/25 hover:scale-[1.02]"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Add CVE</span>
+              </button>
+            </div>
           </div>
 
           {/* Pagination */}
@@ -246,6 +415,11 @@ export default function CatalogPage() {
               sortOrder={sortOrder}
               onSort={handleSort}
               onDelete={handleDelete}
+              isRowSelected={isRowSelected}
+              onRowSelectChange={handleRowSelectChange}
+              isAllSelected={isAllSelected}
+              isSelectionIndeterminate={isSelectionIndeterminate}
+              onSelectAllChange={handleSelectAllChange}
             />
             
             {cveData.cves.length === 0 && !searchLoading && (
@@ -267,6 +441,17 @@ export default function CatalogPage() {
         filter={filter}
         filterOptions={filterOptions}
         onApplyFilters={handleApplyFilters}
+      />
+
+      <BulkDeleteConfirmationDialog
+        isOpen={showBulkDeleteDialog}
+        selectedCount={selectedCount}
+        totalAvailable={totalAvailable}
+        isSelectAll={selectAllActive}
+        excludedCount={excludedIds.size}
+        onClose={() => setShowBulkDeleteDialog(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        isDeleting={bulkDeleting}
       />
 
       {/* CVE Creation Dialog */}

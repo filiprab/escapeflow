@@ -1,10 +1,12 @@
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import type { ReactNode } from 'react';
 
 export interface ColumnDefinition<T = string> {
   key: T;
-  label: string;
+  label?: ReactNode;
   sortable?: boolean;
   className?: string;
+  headerRenderer?: () => ReactNode;
 }
 
 interface TableHeaderProps<T = string> {
@@ -68,7 +70,7 @@ export default function TableHeader<T extends string>({
             column={column}
             cellClassName="text-gray-200 group-hover:text-gray-100"
           >
-            {column.label}
+            {(column.headerRenderer ? column.headerRenderer() : column.label) ?? null}
           </SortableHeaderCell>
         ))}
       </tr>

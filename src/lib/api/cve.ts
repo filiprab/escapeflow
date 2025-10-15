@@ -80,3 +80,35 @@ export async function deleteCVE(cveId: string): Promise<void> {
     );
   }
 }
+
+export interface BulkDeletePayload {
+  ids?: string[];
+  selectAll?: boolean;
+  excludeIds?: string[];
+  filter?: CVEFilter;
+}
+
+export interface BulkDeleteResponse {
+  success: boolean;
+  deletedCount: number;
+}
+
+export async function bulkDeleteCVEs(payload: BulkDeletePayload): Promise<BulkDeleteResponse> {
+  const response = await fetch('/api/cves/bulk-delete', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new CVEApiError(
+      errorData.error || 'Failed to delete CVEs',
+      response.status
+    );
+  }
+
+  return response.json();
+}
