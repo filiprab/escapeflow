@@ -27,6 +27,7 @@ model Cve {
   problemTypes      CveProblemType[]
   references        CveReference[]
   techniqueLinks    TechniqueCveLink[]
+  proofOfConcepts   CveProofOfConcept[]
 
   @@index([datePublished])
   @@index([dateUpdated])
@@ -163,4 +164,20 @@ model TechniqueCveLink {
 
   @@unique([techniqueId, cveId])
   @@map("technique_cve_links")
+}
+
+model CveProofOfConcept {
+  id          String   @id @default(cuid())
+  cveId       String   @map("cve_id")
+  title       String
+  url         String?  @db.VarChar(2048)
+  description String?
+  author      String?
+  code        String?
+  language    String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  cve         Cve      @relation(fields: [cveId], references: [cveId], onDelete: Cascade)
+
+  @@map("cve_proof_of_concepts")
 }

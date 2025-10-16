@@ -10,30 +10,7 @@ until pg_isready -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d 
   sleep 2
 done
 
-# Check if database is already initialized
-echo "Checking if database is already initialized..."
-TABLES_COUNT=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null || echo "0")
-
-if [ "$TABLES_COUNT" -gt 0 ]; then
-  echo "Database already has $TABLES_COUNT tables, checking if seeding is needed..."
-  
-  # Check if CVE data exists
-  CVE_COUNT=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT COUNT(*) FROM cves;" 2>/dev/null || echo "0")
-  
-  if [ "$CVE_COUNT" -gt 0 ]; then
-    echo "Database already initialized with $CVE_COUNT CVEs. Skipping initialization."
-    exit 0
-  else
-    echo "Tables exist but no CVE data found. Running seeding only..."
-    npm run db:seed
-    echo "[+] Database seeding completed!"
-    exit 0
-  fi
-fi
-
-echo "Database not initialized. Running full setup..."
-
-# Run Prisma migrations
+# Always run migrations first (safe to run on existing databases)
 echo "Running database migrations..."
 npx prisma migrate deploy
 
@@ -41,9 +18,16 @@ npx prisma migrate deploy
 echo "Generating Prisma client..."
 npx prisma generate
 
-# Run database seeding
-echo "Seeding database with CVE data..."
-npm run db:seed
+# Check if seeding is needed
+echo "Checking if seeding is needed..."
+CVE_COUNT=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT COUNT(*) FROM cves;" 2>/dev/null || echo "0")
+
+if [ "$CVE_COUNT" -gt 0 ]; then
+  echo "Database already has $CVE_COUNT CVEs. Skipping seeding."
+else
+  echo "No CVE data found. Running seeding..."
+  npm run db:seed
+fi
 
 echo "[+] Database initialization completed successfully!"
 

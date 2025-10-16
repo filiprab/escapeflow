@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Dialog, { DialogContent, DialogFooter } from '@/components/ui/Dialog';
+import Dialog, { DialogFooter } from '@/components/ui/Dialog';
 import { fetchFromNVD, fetchFromCVEOrg } from '@/lib/api/external-cve';
 import type { ExternalCVEData } from '@/types/cve';
 
@@ -365,7 +365,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
         </DialogFooter>
       }
     >
-      <DialogContent>
+      <div className="p-6 space-y-6">
         <StepIndicator currentStep={step} />
 
         {/* Step 1: Fetch Phase */}
@@ -403,7 +403,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
         )}
 
         <ErrorSuccessMessages error={error} success={success} />
-      </DialogContent>
+      </div>
     </Dialog>
   );
 }

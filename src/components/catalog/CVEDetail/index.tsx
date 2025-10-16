@@ -13,6 +13,7 @@ import CVSSMetricsSection from './CVSSMetricsSection';
 import ProblemTypesSection from './ProblemTypesSection';
 import AffectedProductsSection from './AffectedProductsSection';
 import ReferencesSection from './ReferencesSection';
+import ProofOfConceptsSection from './ProofOfConceptsSection';
 import LoadingState from './LoadingState';
 import ErrorState from './ErrorState';
 import DeleteConfirmationDialog from './DeleteConfirmationDialog';
@@ -28,25 +29,30 @@ export default function CVEDetail() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    const fetchCVE = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const cveData = await getCVEById(cveId);
-        setCve(cveData);
-      } catch (err) {
-        console.error('Failed to fetch CVE:', err);
-        setError(err instanceof CVEApiError ? err.message : 'Failed to load CVE data');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchCVE = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const cveData = await getCVEById(cveId);
+      setCve(cveData);
+    } catch (err) {
+      console.error('Failed to fetch CVE:', err);
+      setError(err instanceof CVEApiError ? err.message : 'Failed to load CVE data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (cveId) {
       fetchCVE();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cveId]);
+
+  const handleRefresh = () => {
+    fetchCVE();
+  };
 
   const updateCVEField = async (field: string, data: unknown) => {
     if (!cve) return;
@@ -141,12 +147,16 @@ export default function CVEDetail() {
         <CVSSMetricsSection cve={cve} />
         <ProblemTypesSection cve={cve} />
         <AffectedProductsSection cve={cve} />
-        <ReferencesSection 
-          cve={cve} 
+        <ReferencesSection
+          cve={cve}
           onUpdate={updateCVEField}
           isUpdating={updating === 'references'}
         />
-        
+        <ProofOfConceptsSection
+          cve={cve}
+          onRefresh={handleRefresh}
+        />
+
         {/* Delete Button Section */}
         <div className="mt-16 pt-8 border-t border-gray-700/30">
           <div className="flex justify-end">

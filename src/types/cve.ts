@@ -15,6 +15,19 @@ export interface CVEReference {
   url: string;
 }
 
+export interface CVEProofOfConcept {
+  id: string;
+  cveId: string;
+  title: string;
+  url?: string;
+  description?: string;
+  author?: string;
+  code?: string;
+  language?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CVELabel {
   id: string;
   cveId: string;
@@ -84,6 +97,7 @@ export interface CVERecord {
   metrics: CVEMetric[];
   problemTypes: CVEProblemType[];
   affectedProducts: CVEAffectedProduct[];
+  proofOfConcepts: CVEProofOfConcept[];
 }
 
 // Utility types for components
@@ -97,6 +111,7 @@ export interface CVEListItem {
   labels: CVELabel | null;
   metrics: CVEMetric[];
   references: CVEReference[];
+  proofOfConcepts?: CVEProofOfConcept[];
 }
 
 // =============================================================================

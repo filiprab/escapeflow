@@ -131,6 +131,7 @@ export async function getCVEs(params: CVESearchParams) {
         labels: true,
         metrics: true,
         references: true,
+        proofOfConcepts: true,
         affectedProducts: {
           include: {
             versions: true,
@@ -175,6 +176,7 @@ export async function getCVEById(cveId: string) {
     include: {
       descriptions: true,
       references: true,
+      proofOfConcepts: true,
       affectedProducts: {
         include: {
           versions: true,

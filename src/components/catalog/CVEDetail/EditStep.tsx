@@ -117,9 +117,9 @@ export default function EditStep({
       {/* Operating Systems */}
       <div>
         <label className="block text-sm font-medium text-gray-200 mb-4">Operating Systems</label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {allowedOS.map((os) => (
-            <label key={os} className="flex items-center space-x-3 p-3 hover:bg-gray-700/30 rounded-lg cursor-pointer transition-colors duration-200 border border-gray-600/30 hover:border-gray-500/50">
+            <label key={os} className="flex items-center space-x-3 p-3 bg-gray-700/20 hover:bg-gray-700/40 rounded-lg cursor-pointer transition-colors duration-200">
               <input
                 type="checkbox"
                 checked={formData.labels?.operatingSystems?.includes(os) || false}

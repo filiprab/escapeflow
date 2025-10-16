@@ -6,21 +6,21 @@ interface FilterSectionProps {
   className?: string;
 }
 
-export default function FilterSection({ 
-  title, 
-  options, 
-  selectedOptions, 
+export default function FilterSection({
+  title,
+  options,
+  selectedOptions,
   onToggleOption,
-  className = '' 
+  className = ''
 }: FilterSectionProps) {
   return (
-    <div className={`border-b border-gray-700/50 pb-6 ${className}`}>
+    <div className={`pb-6 ${className}`}>
       <h3 className="text-sm font-medium text-white mb-4">{title}</h3>
-      <div className="space-y-2 max-h-48 overflow-y-auto">
+      <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
         {options.map((option) => (
-          <label 
+          <label
             key={option}
-            className="flex items-center gap-3 p-3 hover:bg-gray-700/30 rounded-lg cursor-pointer transition-colors duration-200"
+            className="flex items-center gap-3 p-3 bg-gray-700/20 hover:bg-gray-700/40 rounded-lg cursor-pointer transition-colors duration-200"
           >
             <input
               type="checkbox"

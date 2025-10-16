@@ -65,8 +65,8 @@ export default function Dialog({
       
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <div 
-          className={`bg-gray-800/95 backdrop-blur-lg rounded-2xl shadow-2xl shadow-black/50 w-full ${maxWidthClass} border border-gray-700/50 transition-all duration-150 ${
+        <div
+          className={`bg-gray-800/95 backdrop-blur-lg rounded-2xl shadow-2xl shadow-black/50 w-full ${maxWidthClass} transition-all duration-150 ${
             isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
           }`}
           style={{ maxHeight }}
@@ -92,7 +92,7 @@ export default function Dialog({
 
           {/* Footer */}
           {footer && (
-            <div className="border-t border-gray-700/50 bg-gray-800/50 rounded-b-2xl">
+            <div className="border-t border-gray-700/50 bg-gray-800/95 rounded-b-2xl">
               {footer}
             </div>
           )}

@@ -107,15 +107,14 @@ export default function GenericFilterDialog<T extends Record<string, unknown>>({
         </DialogFooter>
       }
     >
-      <DialogContent className="space-y-6">
-        {filterConfigs.map((config, index) => (
+      <DialogContent className="space-y-4">
+        {filterConfigs.map((config) => (
           <FilterSection
             key={config.key}
             title={config.title}
             options={config.options}
             selectedOptions={Array.isArray(currentFilter[config.key]) ? currentFilter[config.key] as string[] : []}
             onToggleOption={(option) => toggleFilterOption(config.key, option)}
-            className={index === filterConfigs.length - 1 ? 'border-b-0 pb-0' : ''}
           />
         ))}
       </DialogContent>
