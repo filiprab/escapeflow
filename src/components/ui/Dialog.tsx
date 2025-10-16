@@ -66,13 +66,13 @@ export default function Dialog({
       {/* Dialog */}
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <div
-          className={`bg-gray-800/95 backdrop-blur-lg rounded-2xl shadow-2xl shadow-black/50 w-full ${maxWidthClass} transition-all duration-150 ${
+          className={`bg-gray-800/95 backdrop-blur-lg rounded-2xl shadow-2xl shadow-black/50 w-full ${maxWidthClass} transition-all duration-150 flex flex-col ${
             isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
           }`}
           style={{ maxHeight }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
+          <div className="flex items-center justify-between p-6 border-b border-gray-700/50 flex-shrink-0">
             <h2 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">{title}</h2>
             {showCloseButton && (
               <button
@@ -86,13 +86,13 @@ export default function Dialog({
           </div>
 
           {/* Content */}
-          <div className="overflow-y-auto" style={{ maxHeight: `calc(${maxHeight} - 140px)` }}>
+          <div className="overflow-y-auto flex-1 min-h-0">
             {children}
           </div>
 
           {/* Footer */}
           {footer && (
-            <div className="border-t border-gray-700/50 bg-gray-800/95 rounded-b-2xl">
+            <div className="border-t border-gray-700/50 flex-shrink-0">
               {footer}
             </div>
           )}
