@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { CVEListItem } from '@/types/cve';
-import { DataTable, SeverityBadge, OSIconDisplay, TagList, ColumnDefinition } from '@/components/catalog/shared';
+import { DataTable, SeverityBadge, OSIconDisplay, ColumnDefinition } from '@/components/catalog/shared';
 import DeleteConfirmationDialog from '@/components/catalog/CVEDetail/DeleteConfirmationDialog';
 
 interface CVETableProps {
@@ -166,7 +166,13 @@ export default function CVETable({
       </td>
       
       <td className="px-6 py-5">
-        <TagList tags={cve.labels?.components || []} maxVisible={2} variant="blue" />
+        {cve.labels?.targetComponent ? (
+          <span className="inline-block px-3 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-lg text-sm">
+            {cve.labels.targetComponent}
+          </span>
+        ) : (
+          <span className="text-gray-500 text-sm italic">Unlabeled</span>
+        )}
       </td>
       
       <td className="px-6 py-5">

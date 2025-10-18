@@ -1,0 +1,118 @@
+[
+  {
+    "id": "priv_v8_heap_sandbox",
+    "level": "V8 Heap Sandbox",
+    "capabilities": [
+      "Execute JavaScript code",
+      "Access V8 heap memory",
+      "Trigger JIT compilation",
+      "WebAssembly execution"
+    ],
+    "restrictions": [
+      "Limited to V8 heap memory",
+      "No direct system calls",
+      "No access to renderer process memory",
+      "Isolated from other origins"
+    ],
+    "examples": [
+      "typeof window === \"object\" // true",
+      "navigator.userAgent // access allowed",
+      "new ArrayBuffer(1024) // heap allocation"
+    ],
+    "color": "blue",
+    "order": 1,
+    "description": "JavaScript execution environment with heap isolation"
+  },
+  {
+    "id": "priv_renderer_process",
+    "level": "Renderer Process",
+    "capabilities": [
+      "Access renderer process memory",
+      "DOM manipulation",
+      "Network requests",
+      "File system access (limited)",
+      "Run system commands (sandboxed)"
+    ],
+    "restrictions": [
+      "Sandboxed environment",
+      "No direct kernel access",
+      "Limited file system access",
+      "No raw socket access"
+    ],
+    "examples": [
+      "uname -a // Linux hostname 6.6.87.2 #1 SMP...",
+      "ps aux // shows sandboxed processes",
+      "cat /proc/version // kernel version info"
+    ],
+    "color": "green",
+    "order": 2,
+    "description": "Sandboxed process with limited system access"
+  },
+  {
+    "id": "priv_gpu_process",
+    "level": "GPU Process",
+    "capabilities": [
+      "GPU driver access",
+      "Graphics processing",
+      "Shader compilation",
+      "Video decode/encode"
+    ],
+    "restrictions": [
+      "Limited system access",
+      "Isolated from browser process",
+      "No direct kernel access"
+    ],
+    "examples": [
+      "glxinfo // GPU information",
+      "vulkaninfo // Vulkan capabilities"
+    ],
+    "color": "yellow",
+    "order": 3,
+    "description": "GPU process with graphics driver access"
+  },
+  {
+    "id": "priv_browser_process",
+    "level": "Browser Process",
+    "capabilities": [
+      "Full browser access",
+      "System API calls",
+      "File system operations",
+      "Network access",
+      "Process creation"
+    ],
+    "restrictions": [
+      "User-level permissions",
+      "No kernel-level access",
+      "SELinux/AppArmor constraints"
+    ],
+    "examples": [
+      "id // uid=1000(user) gid=1000(user)",
+      "ls /home // user directories accessible"
+    ],
+    "color": "orange",
+    "order": 4,
+    "description": "Main browser process with user-level privileges"
+  },
+  {
+    "id": "priv_system_root",
+    "level": "System/Root",
+    "capabilities": [
+      "Complete system control",
+      "Kernel access",
+      "Device access",
+      "All file system access",
+      "Process manipulation"
+    ],
+    "restrictions": [
+      "None - full system access"
+    ],
+    "examples": [
+      "id // uid=0(root) gid=0(root)",
+      "dmesg // kernel messages",
+      "insmod // load kernel modules"
+    ],
+    "color": "red",
+    "order": 5,
+    "description": "Root/system-level access with no restrictions"
+  }
+]

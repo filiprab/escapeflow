@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { PencilIcon, XMarkIcon, CheckIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { CVERecord } from '@/types/cve';
+import { TARGET_COMPONENTS } from '@/lib/utils/component-mapping';
 
 interface ClassificationSectionProps {
   cve: CVERecord;
@@ -11,71 +12,48 @@ interface ClassificationSectionProps {
 export default function ClassificationSection({ cve, onUpdate, isUpdating }: ClassificationSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedOS, setEditedOS] = useState<string[]>([]);
-  const [editedComponents, setEditedComponents] = useState<string[]>([]);
-  const [newComponent, setNewComponent] = useState('');
+  const [editedTargetComponent, setEditedTargetComponent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const allowedOS = ['Android', 'iOS', 'Windows', 'Linux', 'macOS'];
   const currentOS = cve.labels?.operatingSystems || [];
-  const currentComponents = cve.labels?.components || [];
+  const currentTargetComponent = cve.labels?.targetComponent || null;
 
   const handleEdit = () => {
     setEditedOS([...currentOS]);
-    setEditedComponents([...currentComponents]);
+    setEditedTargetComponent(currentTargetComponent);
     setIsEditing(true);
     setError(null);
-    setNewComponent('');
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditedOS([]);
-    setEditedComponents([]);
-    setNewComponent('');
+    setEditedTargetComponent(null);
     setError(null);
   };
 
   const handleSave = async () => {
     if (!onUpdate) return;
-    
+
     try {
       setError(null);
-      await onUpdate('labels', { 
-        operatingSystems: editedOS, 
-        components: editedComponents 
+      await onUpdate('labels', {
+        operatingSystems: editedOS,
+        targetComponent: editedTargetComponent
       });
       setIsEditing(false);
-      setNewComponent('');
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to update labels');
     }
   };
 
   const toggleOS = (os: string) => {
-    setEditedOS(prev => 
-      prev.includes(os) 
+    setEditedOS(prev =>
+      prev.includes(os)
         ? prev.filter(item => item !== os)
         : [...prev, os]
     );
-  };
-
-  const removeComponent = (component: string) => {
-    setEditedComponents(prev => prev.filter(item => item !== component));
-  };
-
-  const addComponent = () => {
-    const trimmed = newComponent.trim();
-    if (trimmed && !editedComponents.includes(trimmed)) {
-      setEditedComponents(prev => [...prev, trimmed]);
-      setNewComponent('');
-    }
-  };
-
-  const handleComponentKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addComponent();
-    }
   };
 
   return (
@@ -118,52 +96,25 @@ export default function ClassificationSection({ cve, onUpdate, isUpdating }: Cla
             </div>
           </div>
 
-          {/* Components Section */}
+          {/* Target Component Section */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-300 mb-4">Components</h3>
-            <div className="space-y-3">
-              {/* Existing components */}
-              <div className="flex flex-wrap gap-2">
-                {editedComponents.map((component) => (
-                  <span 
-                    key={component} 
-                    className="inline-flex items-center px-4 py-2 bg-purple-500/20 text-purple-300 rounded-xl text-sm font-medium border border-purple-500/30"
-                  >
-                    {component}
-                    <button
-                      onClick={() => removeComponent(component)}
-                      className="ml-2 text-purple-400 hover:text-purple-200 transition-colors"
-                      disabled={isUpdating}
-                    >
-                      <XMarkIcon className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-                {editedComponents.length === 0 && (
-                  <span className="text-gray-400 text-sm font-medium">No components specified</span>
-                )}
-              </div>
-
-              {/* Add new component */}
-              <div className="flex items-center gap-3">
-                <input
-                  type="text"
-                  value={newComponent}
-                  onChange={(e) => setNewComponent(e.target.value)}
-                  onKeyPress={handleComponentKeyPress}
-                  placeholder="Add new component..."
-                  className="flex-1 px-4 py-2 text-sm bg-gray-700/30 backdrop-blur-lg border border-gray-600/50 rounded-xl text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-300"
-                  disabled={isUpdating}
-                />
-                <button
-                  onClick={addComponent}
-                  disabled={!newComponent.trim() || isUpdating}
-                  className="p-2 text-purple-400 hover:text-purple-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-300 hover:scale-110"
-                >
-                  <PlusIcon className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            <h3 className="text-sm font-semibold text-gray-300 mb-4">Target Component</h3>
+            <select
+              value={editedTargetComponent || ''}
+              onChange={(e) => setEditedTargetComponent(e.target.value || null)}
+              className="select-input w-full"
+              disabled={isUpdating}
+            >
+              <option value="">No component selected</option>
+              {TARGET_COMPONENTS.map((component) => (
+                <option key={component} value={component}>
+                  {component}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-2">
+              Select the primary component targeted by this CVE.
+            </p>
           </div>
 
           {error && (
@@ -205,22 +156,28 @@ export default function ClassificationSection({ cve, onUpdate, isUpdating }: Cla
           <div>
             <h3 className="text-sm font-semibold text-gray-300 mb-3">Operating Systems</h3>
             <div className="flex flex-wrap gap-3">
-              {currentOS?.map((os) => (
-                <span key={os} className="px-4 py-2 bg-blue-500/20 text-blue-300 rounded-xl text-sm font-medium border border-blue-500/30">
-                  {os}
-                </span>
-              )) || <span className="text-gray-400 text-sm font-medium">None specified</span>}
+              {currentOS.length > 0 ? (
+                currentOS.map((os) => (
+                  <span key={os} className="px-4 py-2 bg-blue-500/20 text-blue-300 rounded-xl text-sm font-medium border border-blue-500/30">
+                    {os}
+                  </span>
+                ))
+              ) : (
+                <span className="text-gray-400 text-sm font-medium italic">None specified</span>
+              )}
             </div>
           </div>
-          
+
           <div>
-            <h3 className="text-sm font-semibold text-gray-300 mb-3">Components</h3>
+            <h3 className="text-sm font-semibold text-gray-300 mb-3">Target Component</h3>
             <div className="flex flex-wrap gap-3">
-              {currentComponents?.map((component) => (
-                <span key={component} className="px-4 py-2 bg-purple-500/20 text-purple-300 rounded-xl text-sm font-medium border border-purple-500/30">
-                  {component}
+              {currentTargetComponent ? (
+                <span className="px-4 py-2 bg-purple-500/20 text-purple-300 rounded-xl text-sm font-medium border border-purple-500/30">
+                  {currentTargetComponent}
                 </span>
-              )) || <span className="text-gray-400 text-sm font-medium">None specified</span>}
+              ) : (
+                <span className="text-gray-400 text-sm font-medium italic">Unlabeled</span>
+              )}
             </div>
           </div>
         </div>

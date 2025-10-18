@@ -244,7 +244,7 @@ export default function ProofOfConceptsSection({ cve, onRefresh }: ProofOfConcep
           </DialogFooter>
         }
       >
-        <DialogContent className="space-y-4 max-h-[70vh] overflow-y-auto">
+        <DialogContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Title <span className="text-red-400">*</span>
@@ -310,7 +310,7 @@ export default function ProofOfConceptsSection({ cve, onRefresh }: ProofOfConcep
             <select
               value={formData.language}
               onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-              className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="select-input w-full"
             >
               <option value="javascript">JavaScript</option>
               <option value="python">Python</option>

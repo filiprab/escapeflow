@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import type { 
+import type {
   CVEDatabase,
   CVEDescriptionRaw as CVEDescription,
   CVEReferenceRaw as CVEReference,
@@ -10,6 +10,7 @@ import type {
   MetricToProcess
 } from '../src/types/cve';
 import { parseCVSSVector } from '../src/lib/cvss-parser';
+import { validateComponent } from '../src/lib/utils/component-mapping';
 
 const prisma = new PrismaClient();
 
@@ -96,12 +97,26 @@ async function main() {
       }
 
       // Create labels
+      // Note: Source data has been auto-labeled with targetComponent.
+      // Run scripts/auto-label-components.ts to relabel if needed.
       if (cveRecord.labels) {
+        const targetComponent = cveRecord.labels.targetComponent || null;
+
+        // Validate that component is canonical (will throw if invalid)
+        try {
+          validateComponent(targetComponent);
+        } catch (error) {
+          console.warn(`⚠️  Warning: ${cveId} has invalid targetComponent: ${targetComponent}`);
+          console.warn('   Run scripts/auto-label-components.ts to fix the source data.');
+          // Skip creating labels for this CVE to avoid seeding invalid data
+          continue;
+        }
+
         await prisma.cveLabel.create({
           data: {
             cveId: cve.cveId,
             operatingSystems: cveRecord.labels.operating_systems || [],
-            components: cveRecord.labels.components || [],
+            targetComponent: targetComponent,
           },
         });
       }
@@ -221,14 +236,99 @@ async function main() {
 
   console.log(`Successfully seeded ${processedCount} CVEs!`);
 
-  // Now seed attack surface data from attackData.ts
-  console.log('Seeding attack surface data...');
-  
-  // Import and seed attack data here if needed
-  // For now, we'll just note that this is where it would go
-  console.log('Attack surface data seeding can be added later');
+  // Seed privilege contexts
+  console.log('Seeding privilege contexts...');
 
-  console.log('Database seeding completed!');
+  const privilegeContextsPath = join(process.cwd(), 'prisma', 'privilege-contexts-seed.json');
+  const privilegeContextsRaw = readFileSync(privilegeContextsPath, 'utf8');
+  const privilegeContexts = JSON.parse(privilegeContextsRaw);
+
+  for (const context of privilegeContexts) {
+    await prisma.privilegeContext.upsert({
+      where: { id: context.id },
+      update: {
+        level: context.level,
+        capabilities: context.capabilities,
+        restrictions: context.restrictions,
+        examples: context.examples,
+        color: context.color,
+        order: context.order,
+        description: context.description,
+      },
+      create: {
+        id: context.id,
+        level: context.level,
+        capabilities: context.capabilities,
+        restrictions: context.restrictions,
+        examples: context.examples,
+        color: context.color,
+        order: context.order,
+        description: context.description,
+      },
+    });
+  }
+
+  console.log(`Successfully seeded ${privilegeContexts.length} privilege contexts!`);
+
+  // Seed target components
+  console.log('Seeding target components...');
+
+  const targetComponentsPath = join(process.cwd(), 'prisma', 'target-components-seed.json');
+  const targetComponentsRaw = readFileSync(targetComponentsPath, 'utf8');
+  const targetComponents: Array<{
+    name: string;
+    description: string;
+    sourcePrivilegeLevel: string;
+    targetPrivilegeLevel: string;
+  }> = JSON.parse(targetComponentsRaw);
+
+  // First, clear existing target components to avoid duplicates on re-seed
+  await prisma.targetComponent.deleteMany({});
+
+  for (const component of targetComponents) {
+    // Find the privilege context IDs by level
+    const sourcePrivilege = await prisma.privilegeContext.findUnique({
+      where: { level: component.sourcePrivilegeLevel },
+    });
+    const targetPrivilege = await prisma.privilegeContext.findUnique({
+      where: { level: component.targetPrivilegeLevel },
+    });
+
+    if (!sourcePrivilege || !targetPrivilege) {
+      console.warn(`⚠️  Warning: Could not find privileges for component "${component.name}"`);
+      console.warn(`   Source: ${component.sourcePrivilegeLevel}, Target: ${component.targetPrivilegeLevel}`);
+      continue;
+    }
+
+    await prisma.targetComponent.create({
+      data: {
+        name: component.name,
+        description: component.description,
+        sourcePrivilegeId: sourcePrivilege.id,
+        targetPrivilegeId: targetPrivilege.id,
+      },
+    });
+  }
+
+  console.log(`Successfully seeded ${targetComponents.length} target components!`);
+
+  // Print summary of components by privilege context
+  console.log('\nTarget Components Summary:');
+  const componentsByPrivilege = new Map<string, string[]>();
+  for (const component of targetComponents) {
+    const key = `${component.sourcePrivilegeLevel} → ${component.targetPrivilegeLevel}`;
+    if (!componentsByPrivilege.has(key)) {
+      componentsByPrivilege.set(key, []);
+    }
+    componentsByPrivilege.get(key)!.push(component.name);
+  }
+
+  for (const [escalation, components] of componentsByPrivilege.entries()) {
+    console.log(`  ${escalation}:`);
+    components.forEach(name => console.log(`    - ${name}`));
+  }
+
+  console.log('\nDatabase seeding completed!');
 }
 
 main()

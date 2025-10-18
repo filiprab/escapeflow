@@ -55,13 +55,17 @@ export async function PATCH(
         break;
         
       case 'labels':
-        if (!Array.isArray(data.operatingSystems) || !Array.isArray(data.components)) {
+        if (!Array.isArray(data.operatingSystems)) {
           return NextResponse.json(
-            { error: 'Operating systems and components must be arrays' },
+            { error: 'Operating systems must be an array' },
             { status: 400 }
           );
         }
-        await updateCVELabels(cveId, data.operatingSystems, data.components);
+
+        // targetComponent can be null or a string
+        const targetComponent = data.targetComponent === '' ? null : (data.targetComponent || null);
+
+        await updateCVELabels(cveId, data.operatingSystems, targetComponent);
         break;
         
       case 'references':

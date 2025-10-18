@@ -32,7 +32,7 @@ export interface CVELabel {
   id: string;
   cveId: string;
   operatingSystems: string[];
-  components: string[];
+  targetComponent: string | null;
 }
 
 export interface CVEMetric {
@@ -257,7 +257,7 @@ export interface CVEContainers {
 
 export interface CVELabelsRaw {
   operating_systems: string[];
-  components: string[];
+  targetComponent?: string | null;
 }
 
 export interface CVERecordRaw {

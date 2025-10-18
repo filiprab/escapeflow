@@ -1,6 +1,7 @@
 import { prisma } from './client';
 import type { CVEFilter } from '@/types/cve';
 import type { Prisma } from '@prisma/client';
+import { TARGET_COMPONENTS, validateComponent } from '@/lib/utils/component-mapping';
 
 export interface CVESearchParams extends CVEFilter {
   page?: number;
@@ -45,9 +46,10 @@ function buildCveWhereClause({
           hasSome: operatingSystems,
         },
       }),
+      // Changed from array (hasSome) to single field (in)
       ...(components.length > 0 && {
-        components: {
-          hasSome: components,
+        targetComponent: {
+          in: components,
         },
       }),
     };
@@ -214,18 +216,9 @@ export async function getAllOperatingSystems() {
 }
 
 export async function getAllComponents() {
-  const labels = await prisma.cveLabel.findMany({
-    select: {
-      components: true,
-    },
-  });
-
-  const componentSet = new Set<string>();
-  labels.forEach((label) => {
-    label.components.forEach((component) => componentSet.add(component));
-  });
-
-  return Array.from(componentSet).sort();
+  // Return the canonical list of target components instead of querying the database
+  // This ensures that filters only show components from the Target Components catalog
+  return [...TARGET_COMPONENTS];
 }
 export async function updateCVEDescription(cveId: string, description: string, language: string = 'en') {
   return prisma.cveDescription.updateMany({
@@ -239,7 +232,7 @@ export async function updateCVEDescription(cveId: string, description: string, l
   });
 }
 
-export async function updateCVELabels(cveId: string, operatingSystems: string[], components: string[]) {
+export async function updateCVELabels(cveId: string, operatingSystems: string[], targetComponent: string | null) {
   // Validate operating systems against allowed values
   const allowedOS = ['Android', 'iOS', 'Windows', 'Linux', 'macOS'];
   const invalidOS = operatingSystems.filter(os => !allowedOS.includes(os));
@@ -247,16 +240,19 @@ export async function updateCVELabels(cveId: string, operatingSystems: string[],
     throw new Error(`Invalid operating systems: ${invalidOS.join(', ')}. Allowed: ${allowedOS.join(', ')}`);
   }
 
+  // Validate target component against allowed values
+  validateComponent(targetComponent);
+
   return prisma.cveLabel.upsert({
     where: { cveId },
     update: {
       operatingSystems,
-      components,
+      targetComponent,
     },
     create: {
       cveId,
       operatingSystems,
-      components,
+      targetComponent,
     },
   });
 }
@@ -316,7 +312,7 @@ export interface CreateCVEData {
   }>;
   labels?: {
     operatingSystems: string[];
-    components: string[];
+    targetComponent: string | null;
   };
   metrics?: Array<{
     baseScore: number;
@@ -358,6 +354,11 @@ export async function createCVE(data: CreateCVEData) {
     if (invalidOS.length > 0) {
       throw new Error(`Invalid operating systems: ${invalidOS.join(', ')}. Allowed: ${allowedOS.join(', ')}`);
     }
+  }
+
+  // Validate target component against allowed values
+  if (data.labels?.targetComponent !== undefined) {
+    validateComponent(data.labels.targetComponent);
   }
 
   // Check if CVE already exists
@@ -413,7 +414,7 @@ export async function createCVE(data: CreateCVEData) {
         data: {
           cveId: data.cveId,
           operatingSystems: data.labels.operatingSystems,
-          components: data.labels.components,
+          targetComponent: data.labels.targetComponent,
         },
       });
     }

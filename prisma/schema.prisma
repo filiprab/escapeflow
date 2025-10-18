@@ -81,9 +81,10 @@ model CveLabel {
   id               String   @id @default(cuid())
   cveId            String   @unique @map("cve_id")
   operatingSystems String[] @map("operating_systems")
-  components       String[]
+  targetComponent  String?  @map("target_component")
   cve              Cve      @relation(fields: [cveId], references: [cveId], onDelete: Cascade)
 
+  @@index([targetComponent])
   @@map("cve_labels")
 }
 
@@ -122,18 +123,43 @@ model CveProblemType {
   @@map("cve_problem_types")
 }
 
-model TargetComponent {
-  id                  String                  @id @default(cuid())
-  name                String
-  description         String
-  sourcePrivilege     String                  @map("source_privilege")
-  targetPrivilege     String                  @map("target_privilege")
-  sourcePrivilegeInfo Json                    @map("source_privilege_info")
-  targetPrivilegeInfo Json                    @map("target_privilege_info")
-  createdAt           DateTime                @default(now()) @map("created_at")
-  updatedAt           DateTime                @updatedAt @map("updated_at")
-  techniques          ExploitationTechnique[]
+model PrivilegeContext {
+  id           String            @id @default(cuid())
+  level        String            @unique
+  capabilities String[]
+  restrictions String[]
+  examples     String[]
+  color        String
+  order        Int
+  description  String?
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
 
+  // Relations - components that use this as source privilege
+  sourceComponents TargetComponent[] @relation("SourcePrivilege")
+  // Relations - components that use this as target privilege
+  targetComponents TargetComponent[] @relation("TargetPrivilege")
+
+  @@index([order])
+  @@map("privilege_contexts")
+}
+
+model TargetComponent {
+  id                String                  @id @default(cuid())
+  name              String
+  description       String
+  sourcePrivilegeId String                  @map("source_privilege_id")
+  targetPrivilegeId String                  @map("target_privilege_id")
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @updatedAt @map("updated_at")
+
+  // Relations
+  sourcePrivilege   PrivilegeContext        @relation("SourcePrivilege", fields: [sourcePrivilegeId], references: [id])
+  targetPrivilege   PrivilegeContext        @relation("TargetPrivilege", fields: [targetPrivilegeId], references: [id])
+  techniques        ExploitationTechnique[]
+
+  @@index([sourcePrivilegeId])
+  @@index([targetPrivilegeId])
   @@map("target_components")
 }
 

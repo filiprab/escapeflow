@@ -5,3 +5,186 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
+
+/* Global scrollbar styles - Apply to all scrollable elements */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.3) rgba(31, 41, 55, 0.3);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(31, 41, 55, 0.3);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+/* Custom scrollbar class for specific cases */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.3) rgba(31, 41, 55, 0.3);
+}
+
+/* ============================================
+   Global Dropdown Styles
+   ============================================ */
+
+/* Dropdown trigger button */
+.dropdown-trigger {
+  @apply flex items-center justify-between px-4 py-2.5
+         bg-gray-900 hover:bg-gray-800
+         rounded-lg border border-gray-700
+         transition-all duration-200
+         shadow-md hover:shadow-lg
+         text-white text-sm font-medium
+         cursor-pointer
+         focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50;
+}
+
+/* Dropdown trigger with icon */
+.dropdown-trigger-icon {
+  @apply w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0;
+}
+
+.dropdown-trigger-icon.open {
+  @apply rotate-180;
+}
+
+/* Dropdown menu container */
+.dropdown-menu {
+  @apply absolute top-full left-0 mt-2
+         bg-gray-900/95 backdrop-blur-sm
+         border border-gray-700 rounded-lg
+         shadow-2xl z-50
+         overflow-hidden;
+}
+
+/* Dropdown menu with custom width */
+.dropdown-menu-sm {
+  @apply w-48;
+}
+
+.dropdown-menu-md {
+  @apply w-56;
+}
+
+.dropdown-menu-lg {
+  @apply w-64;
+}
+
+.dropdown-menu-xl {
+  @apply w-72;
+}
+
+/* Dropdown menu inner padding */
+.dropdown-menu-content {
+  @apply p-2 max-h-80 overflow-y-auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.3) rgba(31, 41, 55, 0.3);
+}
+
+.dropdown-menu-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dropdown-menu-content::-webkit-scrollbar-track {
+  background: rgba(31, 41, 55, 0.3);
+  border-radius: 4px;
+}
+
+.dropdown-menu-content::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.dropdown-menu-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+/* Dropdown item */
+.dropdown-item {
+  @apply w-full flex items-center gap-3 px-4 py-3
+         rounded-lg transition-all duration-200
+         text-left text-sm
+         focus:outline-none focus:ring-2 focus:ring-blue-500/50;
+}
+
+/* Dropdown item - default state */
+.dropdown-item-default {
+  @apply hover:bg-gray-700/60 text-gray-200 hover:scale-[1.02];
+}
+
+/* Dropdown item - selected state */
+.dropdown-item-selected {
+  @apply bg-blue-500/10 text-blue-300 border border-blue-500/30 font-medium;
+}
+
+/* Dropdown item - disabled state */
+.dropdown-item-disabled {
+  @apply text-gray-500 opacity-50 cursor-not-allowed hover:bg-transparent hover:scale-100;
+}
+
+/* Dropdown item hover for selected items */
+.dropdown-item-selected:hover {
+  @apply bg-blue-500/15;
+}
+
+/* Dropdown divider */
+.dropdown-divider {
+  @apply my-2 h-px bg-gray-700/50;
+}
+
+/* Dropdown group label */
+.dropdown-label {
+  @apply px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider;
+}
+
+/* Native select element styling (for basic HTML selects) */
+select.select-input {
+  @apply px-4 py-2.5
+         bg-gray-900 hover:bg-gray-800
+         border border-gray-700 rounded-lg
+         text-white text-sm
+         cursor-pointer
+         transition-all duration-200
+         focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50
+         appearance-none
+         bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNCA2TDggMTBMMTIgNiIgc3Ryb2tlPSIjOUI5QkEyIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+')]
+         bg-no-repeat
+         bg-[length:16px]
+         bg-[right_0.75rem_center]
+         pr-10;
+}
+
+select.select-input:disabled {
+  @apply opacity-50 cursor-not-allowed hover:bg-gray-900;
+}
+
+select.select-input option {
+  @apply bg-gray-900 text-white py-2;
+}
+
+/* Small variant */
+select.select-input-sm {
+  @apply px-3 py-2 text-xs;
+}
+
+/* Large variant */
+select.select-input-lg {
+  @apply px-5 py-3 text-base;
+}

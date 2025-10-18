@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Dialog, { DialogFooter } from '@/components/ui/Dialog';
 import { fetchFromNVD, fetchFromCVEOrg } from '@/lib/api/external-cve';
 import type { ExternalCVEData } from '@/types/cve';
+import { detectTargetComponent } from '@/lib/utils/component-mapping';
 
 // Import our new components
 import FetchStep from '@/components/catalog/CVEDetail/FetchStep';
@@ -26,7 +27,7 @@ interface CVEFormData {
   references?: string[];
   labels?: {
     operatingSystems: string[];
-    components: string[];
+    targetComponent: string | null;
   };
 }
 
@@ -38,7 +39,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
   const [formData, setFormData] = useState<CVEFormData>({
     descriptions: [{ lang: 'en', description: '' }],
     references: [],
-    labels: { operatingSystems: [], components: [] }
+    labels: { operatingSystems: [], targetComponent: null }
   });
   
   const [prefetchLoading, setPrefetchLoading] = useState(false);
@@ -56,7 +57,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
     setFormData({
       descriptions: [{ lang: 'en', description: '' }],
       references: [],
-      labels: { operatingSystems: [], components: [] }
+      labels: { operatingSystems: [], targetComponent: null }
     });
     setPrefetchLoading(false);
     setLoading(false);
@@ -128,36 +129,21 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
       return [...new Set(detectedOS)];
     };
 
-    // Helper function to analyze description for components
-    const detectComponents = (description: string): string[] => {
-      const lowerDesc = description.toLowerCase();
-      const detectedComponents: string[] = [];
-      
-      if (lowerDesc.includes('chrome') || lowerDesc.includes('chromium')) {
-        detectedComponents.push('Chromium Browser');
-      }
-      if (lowerDesc.includes('v8')) detectedComponents.push('V8 JavaScript Engine');
-      if (lowerDesc.includes('blink')) detectedComponents.push('Blink Rendering Engine');
-      if (lowerDesc.includes('webrtc')) detectedComponents.push('WebRTC');
-      if (lowerDesc.includes('webgl')) detectedComponents.push('WebGL');
-      if (lowerDesc.includes('skia')) detectedComponents.push('Skia Graphics');
-      if (lowerDesc.includes('pdfium')) detectedComponents.push('PDFium');
-      
-      return [...new Set(detectedComponents)];
-    };
-
     // Populate form data
     const description = externalData.description || '';
     const references = externalData.references || [];
     const detectedOS = detectOperatingSystems(description);
-    const detectedComponents = detectComponents(description);
+
+    // Use the centralized component detection logic
+    const detectionResult = detectTargetComponent(description);
+    const targetComponent = detectionResult.component;
 
     setFormData({
       descriptions: [{ lang: 'en', description }],
       references: references,
       labels: {
         operatingSystems: detectedOS,
-        components: detectedComponents
+        targetComponent: targetComponent
       }
     });
   };
@@ -168,7 +154,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
     setFormData({
       descriptions: [{ lang: 'en', description: '' }],
       references: [],
-      labels: { operatingSystems: [], components: [] }
+      labels: { operatingSystems: [], targetComponent: null }
     });
     setPrefetched(false);
     setError(null);
@@ -262,43 +248,26 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
 
   const toggleOS = (os: string) => {
     const current = formData.labels?.operatingSystems || [];
-    const updated = current.includes(os) 
+    const updated = current.includes(os)
       ? current.filter(item => item !== os)
       : [...current, os];
-    
+
     setFormData({
       ...formData,
       labels: {
         ...formData.labels,
         operatingSystems: updated,
-        components: formData.labels?.components || []
+        targetComponent: formData.labels?.targetComponent || null
       }
     });
   };
 
-  const addComponent = (component: string) => {
-    if (!component.trim()) return;
-    
-    const current = formData.labels?.components || [];
-    if (current.includes(component.trim())) return;
-    
+  const setTargetComponent = (component: string | null) => {
     setFormData({
       ...formData,
       labels: {
         operatingSystems: formData.labels?.operatingSystems || [],
-        components: [...current, component.trim()]
-      }
-    });
-  };
-
-  const removeComponent = (component: string) => {
-    const current = formData.labels?.components || [];
-    setFormData({
-      ...formData,
-      labels: {
-        ...formData.labels,
-        operatingSystems: formData.labels?.operatingSystems || [],
-        components: current.filter(item => item !== component)
+        targetComponent: component
       }
     });
   };
@@ -394,8 +363,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
             loading={loading}
             allowedOS={allowedOS}
             toggleOS={toggleOS}
-            addComponent={addComponent}
-            removeComponent={removeComponent}
+            setTargetComponent={setTargetComponent}
             addReference={addReference}
             removeReference={removeReference}
             updateReference={updateReference}

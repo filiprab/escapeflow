@@ -1,6 +1,7 @@
 'use client';
 
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { TARGET_COMPONENTS } from '@/lib/utils/component-mapping';
 
 type Source = 'NVD' | 'CVE.org';
 
@@ -9,7 +10,7 @@ interface CVEFormData {
   references?: string[];
   labels?: {
     operatingSystems: string[];
-    components: string[];
+    targetComponent: string | null;
   };
 }
 
@@ -25,8 +26,7 @@ interface EditStepProps {
   allowedOS: string[];
   // Form manipulation functions
   toggleOS: (os: string) => void;
-  addComponent: (component: string) => void;
-  removeComponent: (component: string) => void;
+  setTargetComponent: (component: string | null) => void;
   addReference: () => void;
   removeReference: (index: number) => void;
   updateReference: (index: number, value: string) => void;
@@ -43,8 +43,7 @@ export default function EditStep({
   loading,
   allowedOS,
   toggleOS,
-  addComponent,
-  removeComponent,
+  setTargetComponent,
   addReference,
   removeReference,
   updateReference
@@ -133,39 +132,33 @@ export default function EditStep({
         </div>
       </div>
 
-      {/* Components */}
+      {/* Target Component */}
       <div>
-        <label className="block text-sm font-medium text-gray-200 mb-3">Components</label>
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {formData.labels?.components?.map((component) => (
-              <span key={component} className="inline-flex items-center px-4 py-2 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-lg text-sm backdrop-blur-sm">
-                {component}
-                <button
-                  type="button"
-                  onClick={() => removeComponent(component)}
-                  className="ml-2 text-purple-400 hover:text-purple-200 transition-colors"
-                  disabled={loading}
-                >
-                  <XMarkIcon className="w-4 h-4" />
-                </button>
-              </span>
-            ))}
-          </div>
-          <input
-            type="text"
-            placeholder="Add component and press Enter..."
-            className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 backdrop-blur-sm transition-all duration-200"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addComponent(e.currentTarget.value);
-                e.currentTarget.value = '';
-              }
-            }}
-            disabled={loading}
-          />
-        </div>
+        <label className="block text-sm font-medium text-gray-200 mb-3">
+          Target Component
+          <span className="ml-2 text-xs text-gray-400 font-normal">
+            (Select the primary affected component)
+          </span>
+        </label>
+        <select
+          className="select-input w-full"
+          onChange={(e) => {
+            const value = e.target.value === '' ? null : e.target.value;
+            setTargetComponent(value);
+          }}
+          disabled={loading}
+          value={formData.labels?.targetComponent || ''}
+        >
+          <option value="">No component selected</option>
+          {TARGET_COMPONENTS.map((component) => (
+            <option key={component} value={component}>
+              {component}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-400 mt-2">
+          Select the primary component targeted by this CVE from the attack surface catalog.
+        </p>
       </div>
 
       {/* References */}
