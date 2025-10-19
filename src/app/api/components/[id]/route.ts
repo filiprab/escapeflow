@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/database/client';
-import { validateComponent } from '@/lib/utils/component-mapping';
 
 // GET single target component
 export async function GET(
@@ -50,50 +49,43 @@ export async function PUT(
     } = body;
 
     // Validate required fields
-    if (!name || !description || !sourcePrivilegeId || !targetPrivilegeId) {
+    if (!name || !description) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, description, sourcePrivilegeId, targetPrivilegeId' },
+        { error: 'Missing required fields: name, description' },
         { status: 400 }
       );
     }
 
-    // Validate that name is from canonical list
-    try {
-      validateComponent(name);
-    } catch (err) {
-      return NextResponse.json(
-        { error: err instanceof Error ? err.message : 'Invalid component name' },
-        { status: 400 }
-      );
-    }
+    // Optional: Validate privileges if provided
+    if (sourcePrivilegeId && targetPrivilegeId) {
+      // Validate that source and target are different
+      if (sourcePrivilegeId === targetPrivilegeId) {
+        return NextResponse.json(
+          { error: 'Source and target privileges must be different' },
+          { status: 400 }
+        );
+      }
 
-    // Validate that source and target are different
-    if (sourcePrivilegeId === targetPrivilegeId) {
-      return NextResponse.json(
-        { error: 'Source and target privileges must be different' },
-        { status: 400 }
-      );
-    }
+      // Fetch privileges to validate order
+      const [sourcePriv, targetPriv] = await Promise.all([
+        prisma.privilegeContext.findUnique({ where: { id: sourcePrivilegeId } }),
+        prisma.privilegeContext.findUnique({ where: { id: targetPrivilegeId } }),
+      ]);
 
-    // Fetch privileges to validate order
-    const [sourcePriv, targetPriv] = await Promise.all([
-      prisma.privilegeContext.findUnique({ where: { id: sourcePrivilegeId } }),
-      prisma.privilegeContext.findUnique({ where: { id: targetPrivilegeId } }),
-    ]);
+      if (!sourcePriv || !targetPriv) {
+        return NextResponse.json(
+          { error: 'Source or target privilege context not found' },
+          { status: 404 }
+        );
+      }
 
-    if (!sourcePriv || !targetPriv) {
-      return NextResponse.json(
-        { error: 'Source or target privilege context not found' },
-        { status: 404 }
-      );
-    }
-
-    // Validate escalation direction (source must come before target)
-    if (sourcePriv.order >= targetPriv.order) {
-      return NextResponse.json(
-        { error: `Invalid escalation direction: ${sourcePriv.level} (order ${sourcePriv.order}) must come before ${targetPriv.level} (order ${targetPriv.order}) in the escalation chain` },
-        { status: 400 }
-      );
+      // Validate escalation direction (source must come before target)
+      if (sourcePriv.order >= targetPriv.order) {
+        return NextResponse.json(
+          { error: `Invalid escalation direction: ${sourcePriv.level} (order ${sourcePriv.order}) must come before ${targetPriv.level} (order ${targetPriv.order}) in the escalation chain` },
+          { status: 400 }
+        );
+      }
     }
 
     // Update the target component
@@ -102,8 +94,8 @@ export async function PUT(
       data: {
         name,
         description,
-        sourcePrivilegeId,
-        targetPrivilegeId,
+        ...(sourcePrivilegeId && { sourcePrivilegeId }),
+        ...(targetPrivilegeId && { targetPrivilegeId }),
       },
       include: {
         sourcePrivilege: true,
@@ -129,16 +121,16 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // Check if any exploitation techniques reference this component
-    const techniquesCount = await prisma.exploitationTechnique.count({
+    // Check if any escalations reference this component
+    const escalationsCount = await prisma.privilegeEscalation.count({
       where: { targetComponentId: id },
     });
 
-    if (techniquesCount > 0) {
+    if (escalationsCount > 0) {
       return NextResponse.json(
         {
-          error: `Cannot delete component: ${techniquesCount} exploitation technique(s) are using it`,
-          usageCount: techniquesCount,
+          error: `Cannot delete component: ${escalationsCount} escalation path(s) are using it`,
+          usageCount: escalationsCount,
         },
         { status: 409 }
       );

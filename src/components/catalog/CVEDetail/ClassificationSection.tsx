@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PencilIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { CVERecord } from '@/types/cve';
-import { TARGET_COMPONENTS } from '@/lib/utils/component-mapping';
 
 interface ClassificationSectionProps {
   cve: CVERecord;
@@ -14,10 +13,34 @@ export default function ClassificationSection({ cve, onUpdate, isUpdating }: Cla
   const [editedOS, setEditedOS] = useState<string[]>([]);
   const [editedTargetComponent, setEditedTargetComponent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [availableComponents, setAvailableComponents] = useState<string[]>([]);
+  const [loadingComponents, setLoadingComponents] = useState(false);
 
   const allowedOS = ['Android', 'iOS', 'Windows', 'Linux', 'macOS'];
   const currentOS = cve.labels?.operatingSystems || [];
   const currentTargetComponent = cve.labels?.targetComponent || null;
+
+  // Fetch available components when entering edit mode
+  useEffect(() => {
+    if (isEditing && availableComponents.length === 0) {
+      fetchAvailableComponents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing]);
+
+  const fetchAvailableComponents = async () => {
+    try {
+      setLoadingComponents(true);
+      const response = await fetch('/api/cves?type=filters');
+      const data = await response.json();
+      setAvailableComponents(data.components || []);
+    } catch (err) {
+      console.error('Failed to fetch components:', err);
+      setAvailableComponents([]);
+    } finally {
+      setLoadingComponents(false);
+    }
+  };
 
   const handleEdit = () => {
     setEditedOS([...currentOS]);
@@ -103,17 +126,17 @@ export default function ClassificationSection({ cve, onUpdate, isUpdating }: Cla
               value={editedTargetComponent || ''}
               onChange={(e) => setEditedTargetComponent(e.target.value || null)}
               className="select-input w-full"
-              disabled={isUpdating}
+              disabled={isUpdating || loadingComponents}
             >
-              <option value="">No component selected</option>
-              {TARGET_COMPONENTS.map((component) => (
+              <option value="">{loadingComponents ? 'Loading components...' : 'No component selected'}</option>
+              {availableComponents.map((component) => (
                 <option key={component} value={component}>
                   {component}
                 </option>
               ))}
             </select>
             <p className="text-xs text-gray-400 mt-2">
-              Select the primary component targeted by this CVE.
+              Select the primary component targeted by this CVE. Components are defined in the Target Components catalog.
             </p>
           </div>
 

@@ -1,4 +1,4 @@
-import type { AttackVector } from '@/data/attackData';
+import type { AttackVector } from '@/types/attack';
 import { downloadImage, downloadJSON, downloadPlantUML, downloadMermaid, downloadLaTeX } from './exportUtils';
 import { PhotoIcon, DocumentTextIcon, ChartBarIcon, PresentationChartLineIcon, DocumentIcon } from '@heroicons/react/24/outline';
 

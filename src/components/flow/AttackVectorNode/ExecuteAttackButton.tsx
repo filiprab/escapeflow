@@ -1,4 +1,4 @@
-import type { ExploitationTechnique } from '@/data/attackData';
+import type { ExploitationTechnique } from '@/types/attack';
 
 interface ExecuteAttackButtonProps {
   selectedTechnique: ExploitationTechnique | null;

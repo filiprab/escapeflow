@@ -1,27 +1,48 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/database/client';
-import { validateComponent } from '@/lib/utils/component-mapping';
 
 export interface TargetComponentAPI {
   id: string;
   name: string;
   description: string;
-  sourcePrivilege: {
+  sourcePrivilege?: {
+    id: string;
     level: string;
     color: string;
     order: number;
-  };
-  targetPrivilege: {
+  } | null;
+  targetPrivilege?: {
+    id: string;
     level: string;
     color: string;
     order: number;
-  };
+  } | null;
+  escalations?: Array<{
+    id: string;
+    sourcePrivilege: {
+      id: string;
+      level: string;
+      color: string;
+      order: number;
+    };
+    targetPrivilege: {
+      id: string;
+      level: string;
+      color: string;
+      order: number;
+    };
+    technique: {
+      id: string;
+      name: string;
+      description: string;
+    };
+  }>;
   cveCount: number;
 }
 
 export async function GET() {
   try {
-    // Fetch all target components with privilege context info
+    // Fetch all target components with privilege context info and escalations
     const components = await prisma.targetComponent.findMany({
       select: {
         id: true,
@@ -29,6 +50,7 @@ export async function GET() {
         description: true,
         sourcePrivilege: {
           select: {
+            id: true,
             level: true,
             color: true,
             order: true,
@@ -36,16 +58,43 @@ export async function GET() {
         },
         targetPrivilege: {
           select: {
+            id: true,
             level: true,
             color: true,
             order: true,
           },
         },
+        escalations: {
+          select: {
+            id: true,
+            sourcePrivilege: {
+              select: {
+                id: true,
+                level: true,
+                color: true,
+                order: true,
+              },
+            },
+            targetPrivilege: {
+              select: {
+                id: true,
+                level: true,
+                color: true,
+                order: true,
+              },
+            },
+            technique: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        sourcePrivilege: {
-          order: 'asc', // Sort by escalation order
-        },
+        createdAt: 'desc', // Sort by creation date since privileges are optional now
       },
     });
 
@@ -62,16 +111,19 @@ export async function GET() {
           id: comp.id,
           name: comp.name,
           description: comp.description,
-          sourcePrivilege: {
+          sourcePrivilege: comp.sourcePrivilege ? {
+            id: comp.sourcePrivilege.id,
             level: comp.sourcePrivilege.level,
             color: comp.sourcePrivilege.color,
             order: comp.sourcePrivilege.order,
-          },
-          targetPrivilege: {
+          } : null,
+          targetPrivilege: comp.targetPrivilege ? {
+            id: comp.targetPrivilege.id,
             level: comp.targetPrivilege.level,
             color: comp.targetPrivilege.color,
             order: comp.targetPrivilege.order,
-          },
+          } : null,
+          escalations: comp.escalations,
           cveCount,
         };
       })
@@ -102,64 +154,53 @@ export async function POST(request: Request) {
     } = body;
 
     // Validate required fields
-    if (!name || !description || !sourcePrivilegeId || !targetPrivilegeId) {
+    if (!name || !description) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, description, sourcePrivilegeId, targetPrivilegeId' },
+        { error: 'Missing required fields: name, description' },
         { status: 400 }
       );
     }
 
-    // Validate that name is from canonical list
-    try {
-      validateComponent(name);
-    } catch (err) {
-      return NextResponse.json(
-        { error: err instanceof Error ? err.message : 'Invalid component name' },
-        { status: 400 }
-      );
+    // Optional: Validate privileges if provided
+    if (sourcePrivilegeId && targetPrivilegeId) {
+      // Validate that source and target are different
+      if (sourcePrivilegeId === targetPrivilegeId) {
+        return NextResponse.json(
+          { error: 'Source and target privileges must be different' },
+          { status: 400 }
+        );
+      }
+
+      // Fetch privileges to validate order
+      const [sourcePriv, targetPriv] = await Promise.all([
+        prisma.privilegeContext.findUnique({ where: { id: sourcePrivilegeId } }),
+        prisma.privilegeContext.findUnique({ where: { id: targetPrivilegeId } }),
+      ]);
+
+      if (!sourcePriv || !targetPriv) {
+        return NextResponse.json(
+          { error: 'Source or target privilege context not found' },
+          { status: 404 }
+        );
+      }
+
+      // Validate escalation direction (source must come before target)
+      if (sourcePriv.order >= targetPriv.order) {
+        return NextResponse.json(
+          { error: `Invalid escalation direction: ${sourcePriv.level} (order ${sourcePriv.order}) must come before ${targetPriv.level} (order ${targetPriv.order}) in the escalation chain` },
+          { status: 400 }
+        );
+      }
     }
 
-    // Validate that source and target are different
-    if (sourcePrivilegeId === targetPrivilegeId) {
-      return NextResponse.json(
-        { error: 'Source and target privileges must be different' },
-        { status: 400 }
-      );
-    }
-
-    // Fetch privileges to validate order
-    const [sourcePriv, targetPriv] = await Promise.all([
-      prisma.privilegeContext.findUnique({ where: { id: sourcePrivilegeId } }),
-      prisma.privilegeContext.findUnique({ where: { id: targetPrivilegeId } }),
-    ]);
-
-    if (!sourcePriv || !targetPriv) {
-      return NextResponse.json(
-        { error: 'Source or target privilege context not found' },
-        { status: 404 }
-      );
-    }
-
-    // Validate escalation direction (source must come before target)
-    if (sourcePriv.order >= targetPriv.order) {
-      return NextResponse.json(
-        { error: `Invalid escalation direction: ${sourcePriv.level} (order ${sourcePriv.order}) must come before ${targetPriv.level} (order ${targetPriv.order}) in the escalation chain` },
-        { status: 400 }
-      );
-    }
-
-    // Check if this exact escalation path already exists
+    // Check if a component with this name already exists
     const existing = await prisma.targetComponent.findFirst({
-      where: {
-        name,
-        sourcePrivilegeId,
-        targetPrivilegeId,
-      },
+      where: { name },
     });
 
     if (existing) {
       return NextResponse.json(
-        { error: 'A component with this name and privilege escalation already exists' },
+        { error: 'A component with this name already exists' },
         { status: 409 }
       );
     }
@@ -169,8 +210,8 @@ export async function POST(request: Request) {
       data: {
         name,
         description,
-        sourcePrivilegeId,
-        targetPrivilegeId,
+        ...(sourcePrivilegeId && { sourcePrivilegeId }),
+        ...(targetPrivilegeId && { targetPrivilegeId }),
       },
       include: {
         sourcePrivilege: true,

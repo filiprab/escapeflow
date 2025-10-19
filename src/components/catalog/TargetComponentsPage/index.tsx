@@ -9,14 +9,28 @@ interface TargetComponent {
   id: string;
   name: string;
   description: string;
-  sourcePrivilege: {
+  sourcePrivilege?: {
     level: string;
     color: string;
-  };
-  targetPrivilege: {
+  } | null;
+  targetPrivilege?: {
     level: string;
     color: string;
-  };
+  } | null;
+  escalations?: Array<{
+    id: string;
+    sourcePrivilege: {
+      level: string;
+      color: string;
+    };
+    targetPrivilege: {
+      level: string;
+      color: string;
+    };
+    technique: {
+      name: string;
+    };
+  }>;
   cveCount: number;
 }
 
@@ -217,8 +231,12 @@ export default function TargetComponentsPage() {
 
         <div className="grid gap-4">
           {components.map((component) => {
-            const sourceColors = getColorClasses(component.sourcePrivilege.color as keyof typeof colorClasses);
-            const targetColors = getColorClasses(component.targetPrivilege.color as keyof typeof colorClasses);
+            const sourceColors = component.sourcePrivilege
+              ? getColorClasses(component.sourcePrivilege.color as keyof typeof colorClasses)
+              : colorClasses.gray;
+            const targetColors = component.targetPrivilege
+              ? getColorClasses(component.targetPrivilege.color as keyof typeof colorClasses)
+              : colorClasses.gray;
 
             return (
               <div
@@ -233,16 +251,27 @@ export default function TargetComponentsPage() {
                     </div>
                     <p className="text-sm text-gray-400 mb-3">{component.description}</p>
 
-                    {/* Privilege Escalation Badge */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-xs px-2 py-1 ${sourceColors.bg} ${sourceColors.text} rounded-md border ${sourceColors.border}`}>
-                        {component.sourcePrivilege.level}
-                      </span>
-                      <ArrowRightIcon className="w-4 h-4 text-gray-500" />
-                      <span className={`text-xs px-2 py-1 ${targetColors.bg} ${targetColors.text} rounded-md border ${targetColors.border}`}>
-                        {component.targetPrivilege.level}
-                      </span>
-                    </div>
+                    {/* Escalations Count */}
+                    {component.escalations && component.escalations.length > 0 && (
+                      <div className="mb-2">
+                        <span className="text-xs text-gray-400">
+                          {component.escalations.length} escalation path{component.escalations.length > 1 ? 's' : ''} defined
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Legacy Privilege Escalation Badge (only if defined) */}
+                    {component.sourcePrivilege && component.targetPrivilege && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-xs px-2 py-1 ${sourceColors.bg} ${sourceColors.text} rounded-md border ${sourceColors.border}`}>
+                          {component.sourcePrivilege.level}
+                        </span>
+                        <ArrowRightIcon className="w-4 h-4 text-gray-500" />
+                        <span className={`text-xs px-2 py-1 ${targetColors.bg} ${targetColors.text} rounded-md border ${targetColors.border}`}>
+                          {component.targetPrivilege.level}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Actions */}
@@ -336,11 +365,16 @@ export default function TargetComponentsPage() {
           id: editingComponent.id,
           name: editingComponent.name,
           description: editingComponent.description,
-          sourcePrivilegeId: privileges.find(p => p.level === editingComponent.sourcePrivilege.level)?.id || '',
-          targetPrivilegeId: privileges.find(p => p.level === editingComponent.targetPrivilege.level)?.id || '',
+          sourcePrivilegeId: editingComponent.sourcePrivilege
+            ? privileges.find(p => p.level === editingComponent.sourcePrivilege?.level)?.id
+            : undefined,
+          targetPrivilegeId: editingComponent.targetPrivilege
+            ? privileges.find(p => p.level === editingComponent.targetPrivilege?.level)?.id
+            : undefined,
         } : undefined}
         mode={dialogMode}
         privileges={privileges}
+        onEscalationsUpdate={fetchComponents}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { AttackVector } from '@/data/attackData';
+import type { AttackVector } from '@/types/attack';
 
 interface ChainVisualizationProps {
   attackChain: AttackVector[];

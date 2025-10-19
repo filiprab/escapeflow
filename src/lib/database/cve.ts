@@ -1,7 +1,6 @@
 import { prisma } from './client';
 import type { CVEFilter } from '@/types/cve';
 import type { Prisma } from '@prisma/client';
-import { TARGET_COMPONENTS, validateComponent } from '@/lib/utils/component-mapping';
 
 export interface CVESearchParams extends CVEFilter {
   page?: number;
@@ -189,11 +188,7 @@ export async function getCVEById(cveId: string) {
       problemTypes: true,
       techniqueLinks: {
         include: {
-          technique: {
-            include: {
-              targetComponent: true,
-            },
-          },
+          technique: true,
         },
       },
     },
@@ -216,9 +211,17 @@ export async function getAllOperatingSystems() {
 }
 
 export async function getAllComponents() {
-  // Return the canonical list of target components instead of querying the database
-  // This ensures that filters only show components from the Target Components catalog
-  return [...TARGET_COMPONENTS];
+  // Query the database to get all unique component names from TargetComponent table
+  const components = await prisma.targetComponent.findMany({
+    select: {
+      name: true,
+    },
+    orderBy: {
+      name: 'asc',
+    },
+  });
+
+  return components.map(c => c.name);
 }
 export async function updateCVEDescription(cveId: string, description: string, language: string = 'en') {
   return prisma.cveDescription.updateMany({
@@ -239,9 +242,6 @@ export async function updateCVELabels(cveId: string, operatingSystems: string[],
   if (invalidOS.length > 0) {
     throw new Error(`Invalid operating systems: ${invalidOS.join(', ')}. Allowed: ${allowedOS.join(', ')}`);
   }
-
-  // Validate target component against allowed values
-  validateComponent(targetComponent);
 
   return prisma.cveLabel.upsert({
     where: { cveId },
@@ -354,11 +354,6 @@ export async function createCVE(data: CreateCVEData) {
     if (invalidOS.length > 0) {
       throw new Error(`Invalid operating systems: ${invalidOS.join(', ')}. Allowed: ${allowedOS.join(', ')}`);
     }
-  }
-
-  // Validate target component against allowed values
-  if (data.labels?.targetComponent !== undefined) {
-    validateComponent(data.labels.targetComponent);
   }
 
   // Check if CVE already exists

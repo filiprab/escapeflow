@@ -1,7 +1,6 @@
 'use client';
 
-import type { AttackVector, ExploitationTechnique } from '@/data/attackData';
-import { targetComponents } from '@/data/attackData';
+import type { AttackVector } from '@/types/attack';
 import { EmptyState } from './EmptyState';
 import { AttackHeader } from './AttackHeader';
 import { PrivilegeEscalationSection } from './PrivilegeEscalationSection';
@@ -16,36 +15,30 @@ interface AttackDetailsProps {
 }
 
 export default function AttackDetails({ attack }: AttackDetailsProps) {
-  // Helper function to get the technique data from attack vector
-  const getTechniqueData = (attack: AttackVector): ExploitationTechnique | null => {
-    const component = targetComponents.find(comp => comp.id === attack.componentId);
-    if (!component) return null;
-    
-    return component.techniques.find(tech => tech.id === attack.techniqueId) || null;
-  };
-
   if (!attack) {
     return <EmptyState />;
   }
 
-  const techniqueData = getTechniqueData(attack);
+  // AttackVector already contains all the data we need from createAttackVector()
+  // including contextSpecificImpact from the technique
+  const contextSpecificImpact = attack.contextSpecificImpact || [];
 
   return (
     <div className="space-y-6">
       <AttackHeader attack={attack} />
-      
+
       <PrivilegeEscalationSection attack={attack} />
-      
-      <ImpactSection 
-        impacts={techniqueData?.contextSpecificImpact || []} 
+
+      <ImpactSection
+        impacts={contextSpecificImpact}
       />
-      
+
       <CVESection cves={attack.cves || []} />
-      
+
       <PoCSection pocs={attack.pocs || []} />
-      
+
       <MitigationsSection mitigations={attack.mitigations || []} />
-      
+
       <ReferencesSection references={attack.references || []} />
     </div>
   );

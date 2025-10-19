@@ -1,6 +1,6 @@
 'use client';
 
-import type { AttackVector } from '@/data/attackData';
+import type { AttackVector } from '@/types/attack';
 import { ChainVisualization } from './ChainVisualization';
 import { ExportButtons } from './ExportButtons';
 

@@ -12,8 +12,8 @@ import {
   MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { targetComponents } from '@/data/attackData';
-import type { AttackVector, ExploitationTechnique, TargetComponent } from '@/data/attackData';
+import type { AttackVector, ExploitationTechnique, TargetComponent } from '@/types/attack';
+import { useVisualizationData } from '@/hooks/useVisualizationData';
 import { getLayoutedElements } from './layout';
 import { PrivilegeModal } from './PrivilegeModal';
 import { TechniqueModal } from './TechniqueModal';
@@ -35,11 +35,14 @@ export default function TreeView({ onClose }: TreeViewProps) {
   const [selectedPrivilege, setSelectedPrivilege] = useState<string | null>(null);
   const [selectedTechnique, setSelectedTechnique] = useState<{technique: ExploitationTechnique, component: TargetComponent} | null>(null);
 
+  // Fetch all visualization data from database
+  const { components: targetComponents, loading, error } = useVisualizationData(undefined, true);
+
   // Generate all nodes and edges dynamically
   const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(() => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
-    
+
     // Build a map of privilege levels that actually exist in the data
     const usedPrivilegeLevels = new Set<string>();
     targetComponents.forEach(component => {
@@ -222,7 +225,7 @@ export default function TreeView({ onClose }: TreeViewProps) {
 
     // Apply dagre layout
     return getLayoutedElements(nodes, edges, 'TB');
-  }, []);
+  }, [targetComponents]);
 
   const nodes = layoutedNodes;
   const edges = layoutedEdges;
@@ -249,7 +252,7 @@ export default function TreeView({ onClose }: TreeViewProps) {
               Complete view of all attack vectors and privilege escalation paths
             </p>
           </div>
-          
+
           <div className="flex gap-3">
             <button
               onClick={onClose}
@@ -259,6 +262,18 @@ export default function TreeView({ onClose }: TreeViewProps) {
             </button>
           </div>
         </div>
+
+        {/* Loading/Error States */}
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-gray-400">Loading attack tree data...</div>
+          </div>
+        ) : error ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-red-400">Error: {error}</div>
+          </div>
+        ) : (
+          <>
 
         {/* Legend */}
         <div className="flex gap-4 p-4 border-b border-gray-700 text-sm">
@@ -320,19 +335,21 @@ export default function TreeView({ onClose }: TreeViewProps) {
             />
           </ReactFlow>
         </div>
+        </>
+        )}
       </div>
-      
+
       {/* Privilege Level Popup Modal */}
       {selectedPrivilege && (
-        <PrivilegeModal 
+        <PrivilegeModal
           selectedPrivilege={selectedPrivilege}
           onClose={() => setSelectedPrivilege(null)}
         />
       )}
-      
+
       {/* Attack Technique Popup Modal */}
       {selectedTechnique && (
-        <TechniqueModal 
+        <TechniqueModal
           selectedTechnique={selectedTechnique}
           onClose={() => setSelectedTechnique(null)}
         />

@@ -1,4 +1,4 @@
-import type { AttackVector } from '@/data/attackData';
+import type { AttackVector } from '@/types/attack';
 import { ArrowPathIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 
 interface AttackCompletionScreenProps {

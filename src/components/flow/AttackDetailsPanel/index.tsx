@@ -1,6 +1,6 @@
 'use client';
 
-import type { AttackVector } from '@/data/attackData';
+import type { AttackVector } from '@/types/attack';
 import AttackDetails from '../AttackDetails';
 
 interface AttackDetailsPanelProps {

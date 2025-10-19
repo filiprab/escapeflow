@@ -1,4 +1,4 @@
-import type { ExploitationTechnique, TargetComponent } from '@/data/attackData';
+import type { ExploitationTechnique, TargetComponent } from '@/types/attack';
 import Link from 'next/link';
 import { XMarkIcon, BoltIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 

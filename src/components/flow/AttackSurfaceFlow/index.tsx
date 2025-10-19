@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { getAvailableComponents } from '@/data/attackData';
-import type { AttackVector } from '@/data/attackData';
+import type { AttackVector } from '@/types/attack';
+import { useVisualizationData } from '@/hooks/useVisualizationData';
 import { AttackCompletionScreen } from './AttackCompletionScreen';
 import { NoTargetsScreen } from './NoTargetsScreen';
 import { ReactFlowWrapper } from './ReactFlowWrapper';
@@ -21,15 +21,16 @@ export default function AttackSurfaceFlow({
   onPrivilegeEscalation,
   attackChain,
 }: AttackSurfaceFlowProps) {
-  const availableComponents = getAvailableComponents(currentPrivilege);
+  // Fetch visualization data from database
+  const { components, loading, error } = useVisualizationData(currentPrivilege);
 
-  // Generate nodes based on current privilege level
+  // Generate nodes based on database components
   const initialNodes = useMemo(() => {
-    return generateNodes(currentPrivilege, {
+    return generateNodes(components, {
       onAttackSelect,
       onPrivilegeEscalation,
     });
-  }, [currentPrivilege, onAttackSelect, onPrivilegeEscalation]);
+  }, [components, onAttackSelect, onPrivilegeEscalation]);
 
   // Generate edges
   const initialEdges = useMemo(() => {
@@ -37,21 +38,29 @@ export default function AttackSurfaceFlow({
   }, []);
 
   // Check if attack chain is complete
-  const isAttackComplete = availableComponents.length === 0 && 
-                          (currentPrivilege === 'System/Root' || currentPrivilege === 'Kernel/Root') && 
+  const isAttackComplete = components.length === 0 &&
+                          (currentPrivilege === 'System/Root' || currentPrivilege === 'Kernel/Root') &&
                           attackChain.length > 0;
 
   return (
     <div className="w-full h-full relative">
-      {isAttackComplete ? (
-        <AttackCompletionScreen 
+      {loading ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-gray-400">Loading visualization data...</div>
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-red-400">Error: {error}</div>
+        </div>
+      ) : isAttackComplete ? (
+        <AttackCompletionScreen
           currentPrivilege={currentPrivilege}
           attackChain={attackChain}
         />
-      ) : availableComponents.length === 0 ? (
+      ) : components.length === 0 ? (
         <NoTargetsScreen currentPrivilege={currentPrivilege} />
       ) : (
-        <ReactFlowWrapper 
+        <ReactFlowWrapper
           initialNodes={initialNodes}
           initialEdges={initialEdges}
         />

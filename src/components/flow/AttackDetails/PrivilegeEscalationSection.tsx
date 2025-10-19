@@ -1,4 +1,4 @@
-import type { AttackVector } from '@/data/attackData';
+import type { AttackVector } from '@/types/attack';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface PrivilegeEscalationSectionProps {

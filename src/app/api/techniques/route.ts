@@ -1,17 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/database/client';
 
-// GET all exploitation techniques with target component info and CVE counts
+// GET all exploitation techniques with CVE counts
 export async function GET() {
   try {
     const techniques = await prisma.exploitationTechnique.findMany({
       include: {
-        targetComponent: {
-          include: {
-            sourcePrivilege: true,
-            targetPrivilege: true,
-          },
-        },
         _count: {
           select: {
             cveLinks: true,
@@ -32,24 +26,6 @@ export async function GET() {
       mitigations: technique.mitigations,
       references: technique.references,
       contextSpecificImpact: technique.contextSpecificImpact,
-      targetComponentId: technique.targetComponentId,
-      targetComponent: {
-        id: technique.targetComponent.id,
-        name: technique.targetComponent.name,
-        description: technique.targetComponent.description,
-        sourcePrivilege: {
-          id: technique.targetComponent.sourcePrivilege.id,
-          level: technique.targetComponent.sourcePrivilege.level,
-          color: technique.targetComponent.sourcePrivilege.color,
-          order: technique.targetComponent.sourcePrivilege.order,
-        },
-        targetPrivilege: {
-          id: technique.targetComponent.targetPrivilege.id,
-          level: technique.targetComponent.targetPrivilege.level,
-          color: technique.targetComponent.targetPrivilege.color,
-          order: technique.targetComponent.targetPrivilege.order,
-        },
-      },
       cveCount: technique._count.cveLinks,
       createdAt: technique.createdAt,
       updatedAt: technique.updatedAt,
@@ -76,26 +52,13 @@ export async function POST(request: Request) {
       mitigations,
       references,
       contextSpecificImpact,
-      targetComponentId,
     } = body;
 
     // Validate required fields
-    if (!name || !description || !targetComponentId) {
+    if (!name || !description) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, description, targetComponentId' },
+        { error: 'Missing required fields: name, description' },
         { status: 400 }
-      );
-    }
-
-    // Validate that target component exists
-    const targetComponent = await prisma.targetComponent.findUnique({
-      where: { id: targetComponentId },
-    });
-
-    if (!targetComponent) {
-      return NextResponse.json(
-        { error: `Target component with ID "${targetComponentId}" not found` },
-        { status: 404 }
       );
     }
 
@@ -105,19 +68,9 @@ export async function POST(request: Request) {
         name,
         description,
         detailedDescription: detailedDescription || '',
-        pocs: [], // Empty array - PoCs come from linked CVEs
         mitigations: Array.isArray(mitigations) ? mitigations : [],
         references: Array.isArray(references) ? references : [],
         contextSpecificImpact: Array.isArray(contextSpecificImpact) ? contextSpecificImpact : [],
-        targetComponentId,
-      },
-      include: {
-        targetComponent: {
-          include: {
-            sourcePrivilege: true,
-            targetPrivilege: true,
-          },
-        },
       },
     });
 

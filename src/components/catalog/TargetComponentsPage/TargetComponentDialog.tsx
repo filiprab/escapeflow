@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { TARGET_COMPONENTS, getComponentDescription } from '@/lib/utils/component-mapping';
+import EscalationManager from './EscalationManager';
 
 interface PrivilegeContext {
   id: string;
@@ -16,14 +16,15 @@ interface TargetComponentDialogProps {
   initialData?: TargetComponentFormData;
   mode: 'create' | 'edit';
   privileges: PrivilegeContext[];
+  onEscalationsUpdate?: () => void;
 }
 
 export interface TargetComponentFormData {
   id?: string;
   name: string;
   description: string;
-  sourcePrivilegeId: string;
-  targetPrivilegeId: string;
+  sourcePrivilegeId?: string;
+  targetPrivilegeId?: string;
 }
 
 export default function TargetComponentDialog({
@@ -33,12 +34,11 @@ export default function TargetComponentDialog({
   initialData,
   mode,
   privileges,
+  onEscalationsUpdate,
 }: TargetComponentDialogProps) {
   const [formData, setFormData] = useState<TargetComponentFormData>({
     name: '',
     description: '',
-    sourcePrivilegeId: '',
-    targetPrivilegeId: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,8 +50,6 @@ export default function TargetComponentDialog({
       setFormData({
         name: '',
         description: '',
-        sourcePrivilegeId: '',
-        targetPrivilegeId: '',
       });
     }
     setError(null);
@@ -72,18 +70,6 @@ export default function TargetComponentDialog({
       setError('Description is required');
       return;
     }
-    if (!formData.sourcePrivilegeId) {
-      setError('Source privilege is required');
-      return;
-    }
-    if (!formData.targetPrivilegeId) {
-      setError('Target privilege is required');
-      return;
-    }
-    if (formData.sourcePrivilegeId === formData.targetPrivilegeId) {
-      setError('Source and target privileges must be different');
-      return;
-    }
 
     try {
       setSaving(true);
@@ -97,30 +83,10 @@ export default function TargetComponentDialog({
   };
 
   const handleNameChange = (name: string) => {
-    const description = getComponentDescription(name as typeof TARGET_COMPONENTS[number]);
     setFormData(prev => ({
       ...prev,
       name,
-      description: description || prev.description,
     }));
-  };
-
-  // Sort privileges by escalation order
-  const sortedPrivileges = [...privileges].sort((a, b) => a.order - b.order);
-
-  // Get color classes for privilege badges
-  const getPrivilegeColor = (level: string) => {
-    const priv = privileges.find(p => p.level === level);
-    if (!priv) return 'bg-gray-500';
-    const colorMap: Record<string, string> = {
-      blue: 'bg-blue-500',
-      green: 'bg-green-500',
-      yellow: 'bg-yellow-500',
-      orange: 'bg-orange-500',
-      red: 'bg-red-500',
-      gray: 'bg-gray-500',
-    };
-    return colorMap[priv.color] || 'bg-gray-500';
   };
 
   return (
@@ -147,33 +113,22 @@ export default function TargetComponentDialog({
             </div>
           )}
 
-          {/* Component Name - Dropdown for create, read-only for edit */}
+          {/* Component Name - Editable text input */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Component Name <span className="text-red-400">*</span>
             </label>
-            {mode === 'create' ? (
-              <select
-                value={formData.name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                className="select-input w-full"
-                required
-              >
-                <option value="">Select a component...</option>
-                {TARGET_COMPONENTS.map((component) => (
-                  <option key={component} value={component}>
-                    {component}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className="w-full bg-gray-700/50 text-gray-400 rounded-lg px-4 py-2 border border-gray-600">
-                {formData.name}
-                <p className="text-xs text-gray-500 mt-1">
-                  Component names cannot be edited (they match CVE labels)
-                </p>
-              </div>
-            )}
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 border border-gray-600 focus:border-blue-500 focus:outline-none"
+              placeholder="e.g., V8 JavaScript Engine, Blink Rendering Engine, etc."
+              required
+            />
+            <p className="text-xs text-gray-400 mt-2">
+              Enter any component name. This will be used to categorize CVEs.
+            </p>
           </div>
 
           {/* Description */}
@@ -191,87 +146,23 @@ export default function TargetComponentDialog({
             />
           </div>
 
-          {/* Source Privilege */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Source Privilege (Escalates FROM) <span className="text-red-400">*</span>
-            </label>
-            <select
-              value={formData.sourcePrivilegeId}
-              onChange={(e) => setFormData(prev => ({ ...prev, sourcePrivilegeId: e.target.value }))}
-              className="select-input w-full"
-              required
-            >
-              <option value="">Select source privilege...</option>
-              {sortedPrivileges.map((priv) => (
-                <option key={priv.id} value={priv.id}>
-                  {priv.level} (Order: {priv.order})
-                </option>
-              ))}
-            </select>
-            {formData.sourcePrivilegeId && (
-              <div className="mt-2 flex items-center gap-2">
-                <div className={`w-3 h-3 rounded ${getPrivilegeColor(
-                  privileges.find(p => p.id === formData.sourcePrivilegeId)?.level || ''
-                )}`}></div>
-                <span className="text-xs text-gray-400">
-                  {privileges.find(p => p.id === formData.sourcePrivilegeId)?.level}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Target Privilege */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Target Privilege (Escalates TO) <span className="text-red-400">*</span>
-            </label>
-            <select
-              value={formData.targetPrivilegeId}
-              onChange={(e) => setFormData(prev => ({ ...prev, targetPrivilegeId: e.target.value }))}
-              className="select-input w-full"
-              required
-            >
-              <option value="">Select target privilege...</option>
-              {sortedPrivileges.map((priv) => (
-                <option key={priv.id} value={priv.id}>
-                  {priv.level} (Order: {priv.order})
-                </option>
-              ))}
-            </select>
-            {formData.targetPrivilegeId && (
-              <div className="mt-2 flex items-center gap-2">
-                <div className={`w-3 h-3 rounded ${getPrivilegeColor(
-                  privileges.find(p => p.id === formData.targetPrivilegeId)?.level || ''
-                )}`}></div>
-                <span className="text-xs text-gray-400">
-                  {privileges.find(p => p.id === formData.targetPrivilegeId)?.level}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Escalation Direction Validation Hint */}
-          {formData.sourcePrivilegeId && formData.targetPrivilegeId && (
+          {mode === 'create' && (
             <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
               <p className="text-blue-300 text-sm">
-                <strong>Escalation Path:</strong> {privileges.find(p => p.id === formData.sourcePrivilegeId)?.level} → {privileges.find(p => p.id === formData.targetPrivilegeId)?.level}
+                💡 After creating the component, you can add specific privilege escalation paths using the Escalation Manager.
               </p>
-              {formData.sourcePrivilegeId === formData.targetPrivilegeId && (
-                <p className="text-red-300 text-xs mt-1">⚠️ Source and target must be different</p>
-              )}
-              {(() => {
-                const source = privileges.find(p => p.id === formData.sourcePrivilegeId);
-                const target = privileges.find(p => p.id === formData.targetPrivilegeId);
-                if (source && target && source.order >= target.order) {
-                  return (
-                    <p className="text-red-300 text-xs mt-1">
-                      ⚠️ Invalid direction: source (order {source.order}) must come before target (order {target.order})
-                    </p>
-                  );
-                }
-                return null;
-              })()}
+            </div>
+          )}
+
+          {/* Escalation Manager (Edit Mode Only) */}
+          {mode === 'edit' && formData.id && (
+            <div className="pt-6 border-t border-gray-600">
+              <EscalationManager
+                componentId={formData.id}
+                componentName={formData.name}
+                privileges={privileges}
+                onUpdate={() => onEscalationsUpdate?.()}
+              />
             </div>
           )}
         </form>

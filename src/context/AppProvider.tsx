@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, ReactNode } from 'react';
 import { AppContext, AppContextType } from './AppContext';
-import type { AttackVector } from '@/data/attackData';
+import type { AttackVector } from '@/types/attack';
 
 const STORAGE_KEY = 'escapeflow-app-state';
 

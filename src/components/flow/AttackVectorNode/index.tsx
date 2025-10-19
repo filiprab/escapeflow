@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { TargetComponent, ExploitationTechnique } from '@/data/attackData';
+import type { TargetComponent, ExploitationTechnique } from '@/types/attack';
 import { ComponentHeader } from './ComponentHeader';
 import { PrivilegeLevelBadge } from './PrivilegeLevelBadge';
 import { TechniqueDropdown } from './TechniqueDropdown';
@@ -38,8 +38,8 @@ export default function AttackVectorNode({ data }: ComponentNodeProps) {
   };
 
   return (
-    <div 
-      className="bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-600 rounded-xl p-4 min-w-[320px] max-w-[380px] cursor-pointer transition-all duration-300 hover:transform hover:-translate-y-1 hover:border-red-500 hover:shadow-lg hover:shadow-red-500/20" 
+    <div
+      className="bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-600 rounded-xl p-4 w-[340px] cursor-pointer transition-all duration-300 hover:transform hover:-translate-y-1 hover:border-red-500 hover:shadow-lg hover:shadow-red-500/20"
       onClick={handleComponentClick}
     >
       <ComponentHeader 

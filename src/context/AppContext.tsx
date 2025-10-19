@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { AttackVector } from '@/data/attackData';
+import type { AttackVector } from '@/types/attack';
 
 export interface AppContextType {
   // State

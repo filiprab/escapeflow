@@ -1,26 +1,53 @@
-import { targetComponents } from '@/data/attackData';
-import type { PrivilegeInfo } from '@/data/attackData';
+import { useState, useEffect } from 'react';
+import type { PrivilegeInfo } from '@/types/attack';
 
 interface PrivilegeModalProps {
   selectedPrivilege: string;
   onClose: () => void;
 }
 
-// Helper function to get privilege information
-const getPrivilegeInfo = (privilegeLevel: string): PrivilegeInfo | null => {
-  for (const component of targetComponents) {
-    if (component.sourcePrivilegeInfo?.level === privilegeLevel) {
-      return component.sourcePrivilegeInfo;
-    }
-    if (component.targetPrivilegeInfo?.level === privilegeLevel) {
-      return component.targetPrivilegeInfo;
-    }
-  }
-  return null;
-};
+interface PrivilegeContext {
+  id: string;
+  level: string;
+  capabilities: string[];
+  restrictions: string[];
+  examples: string[];
+}
 
 export function PrivilegeModal({ selectedPrivilege, onClose }: PrivilegeModalProps) {
-  const privInfo = getPrivilegeInfo(selectedPrivilege);
+  const [privInfo, setPrivInfo] = useState<PrivilegeInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPrivilegeInfo = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/privileges');
+        if (!response.ok) throw new Error('Failed to fetch privileges');
+
+        const { privileges } = await response.json();
+        const privilege = privileges.find((p: PrivilegeContext) => p.level === selectedPrivilege);
+
+        if (privilege) {
+          setPrivInfo({
+            level: privilege.level,
+            capabilities: privilege.capabilities,
+            restrictions: privilege.restrictions,
+            examples: privilege.examples,
+          });
+        } else {
+          setPrivInfo(null);
+        }
+      } catch (error) {
+        console.error('Error fetching privilege info:', error);
+        setPrivInfo(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPrivilegeInfo();
+  }, [selectedPrivilege]);
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center">
@@ -40,7 +67,11 @@ export function PrivilegeModal({ selectedPrivilege, onClose }: PrivilegeModalPro
         
         {/* Modal Content */}
         <div className="p-6">
-          {!privInfo ? (
+          {loading ? (
+            <div className="text-gray-400 text-center py-8">
+              Loading privilege information...
+            </div>
+          ) : !privInfo ? (
             <div className="text-gray-400 text-center py-8">
               No detailed information available for this privilege level.
             </div>

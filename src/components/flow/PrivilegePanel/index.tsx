@@ -1,7 +1,7 @@
 'use client';
 
-import { targetComponents } from '@/data/attackData';
-import type { PrivilegeInfo } from '@/data/attackData';
+import { useState, useEffect } from 'react';
+import type { PrivilegeInfo } from '@/types/attack';
 
 interface PrivilegePanelProps {
   currentPrivilege: string;
@@ -10,23 +10,50 @@ interface PrivilegePanelProps {
   attackChainPanelOpen: boolean;
 }
 
-// Helper function to get privilege information
-const getPrivilegeInfo = (privilegeLevel: string): PrivilegeInfo | null => {
-  for (const component of targetComponents) {
-    if (component.sourcePrivilegeInfo?.level === privilegeLevel) {
-      return component.sourcePrivilegeInfo;
-    }
-    if (component.targetPrivilegeInfo?.level === privilegeLevel) {
-      return component.targetPrivilegeInfo;
-    }
-  }
-  return null;
-};
+interface PrivilegeContext {
+  id: string;
+  level: string;
+  capabilities: string[];
+  restrictions: string[];
+  examples: string[];
+}
 
 export default function PrivilegePanel({ currentPrivilege, isOpen, onToggle, attackChainPanelOpen }: PrivilegePanelProps) {
-  const privInfo = getPrivilegeInfo(currentPrivilege);
+  const [privInfo, setPrivInfo] = useState<PrivilegeInfo | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!privInfo) {
+  useEffect(() => {
+    const fetchPrivilegeInfo = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/privileges');
+        if (!response.ok) throw new Error('Failed to fetch privileges');
+
+        const { privileges } = await response.json();
+        const privilege = privileges.find((p: PrivilegeContext) => p.level === currentPrivilege);
+
+        if (privilege) {
+          setPrivInfo({
+            level: privilege.level,
+            capabilities: privilege.capabilities,
+            restrictions: privilege.restrictions,
+            examples: privilege.examples,
+          });
+        } else {
+          setPrivInfo(null);
+        }
+      } catch (error) {
+        console.error('Error fetching privilege info:', error);
+        setPrivInfo(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPrivilegeInfo();
+  }, [currentPrivilege]);
+
+  if (loading || !privInfo) {
     return null;
   }
 

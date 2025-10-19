@@ -12,15 +12,10 @@ export async function GET(
     const technique = await prisma.exploitationTechnique.findUnique({
       where: { id },
       include: {
-        targetComponent: {
-          include: {
-            sourcePrivilege: true,
-            targetPrivilege: true,
-          },
-        },
         _count: {
           select: {
             cveLinks: true,
+            escalations: true,
           },
         },
       },
@@ -58,7 +53,6 @@ export async function PUT(
       mitigations,
       references,
       contextSpecificImpact,
-      targetComponentId,
     } = body;
 
     // Check if technique exists
@@ -74,26 +68,14 @@ export async function PUT(
     }
 
     // Validate required fields
-    if (!name || !description || !targetComponentId) {
+    if (!name || !description) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, description, targetComponentId' },
+        { error: 'Missing required fields: name, description' },
         { status: 400 }
       );
     }
 
-    // Validate that target component exists
-    const targetComponent = await prisma.targetComponent.findUnique({
-      where: { id: targetComponentId },
-    });
-
-    if (!targetComponent) {
-      return NextResponse.json(
-        { error: `Target component with ID "${targetComponentId}" not found` },
-        { status: 404 }
-      );
-    }
-
-    // Update the technique (don't modify pocs - they come from linked CVEs)
+    // Update the technique
     const updated = await prisma.exploitationTechnique.update({
       where: { id },
       data: {
@@ -103,15 +85,6 @@ export async function PUT(
         mitigations: Array.isArray(mitigations) ? mitigations : [],
         references: Array.isArray(references) ? references : [],
         contextSpecificImpact: Array.isArray(contextSpecificImpact) ? contextSpecificImpact : [],
-        targetComponentId,
-      },
-      include: {
-        targetComponent: {
-          include: {
-            sourcePrivilege: true,
-            targetPrivilege: true,
-          },
-        },
       },
     });
 

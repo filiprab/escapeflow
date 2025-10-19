@@ -1,5 +1,5 @@
 import { toPng } from 'html-to-image';
-import type { AttackVector } from '@/data/attackData';
+import type { AttackVector } from '@/types/attack';
 
 // Export to PNG
 export const downloadImage = () => {

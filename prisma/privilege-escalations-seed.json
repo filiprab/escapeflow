@@ -1,0 +1,184 @@
+[
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "V8 JavaScript Engine",
+    "techniqueName": "Type Confusion in V8",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "V8 JavaScript Engine",
+    "techniqueName": "Out-of-Bounds Write in V8",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "V8 JavaScript Engine",
+    "techniqueName": "Integer Overflow in V8",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "V8 JavaScript Engine",
+    "techniqueName": "JIT Compiler Exploitation",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "V8 JavaScript Engine",
+    "techniqueName": "WebAssembly Runtime Exploitation",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "Blink Rendering Engine",
+    "techniqueName": "Use-After-Free in Blink",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "Blink Rendering Engine",
+    "techniqueName": "Type Confusion in V8",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "WebRTC",
+    "techniqueName": "Use-After-Free in Blink",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "WebRTC",
+    "techniqueName": "Insufficient Data Validation",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "Media/Codecs",
+    "techniqueName": "Use-After-Free in Blink",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "Media/Codecs",
+    "techniqueName": "Out-of-Bounds Write in V8",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "Media/Codecs",
+    "techniqueName": "Integer Overflow in V8",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "PDFium",
+    "techniqueName": "Use-After-Free in Blink",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "V8 Heap Sandbox",
+    "targetPrivilegeLevel": "Renderer Process",
+    "componentName": "PDFium",
+    "techniqueName": "Out-of-Bounds Write in V8",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Renderer Process",
+    "targetPrivilegeLevel": "GPU Process",
+    "componentName": "WebGL/ANGLE",
+    "techniqueName": "GPU Command Buffer Exploitation",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Renderer Process",
+    "targetPrivilegeLevel": "GPU Process",
+    "componentName": "WebGL/ANGLE",
+    "techniqueName": "Insufficient Data Validation",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Renderer Process",
+    "targetPrivilegeLevel": "GPU Process",
+    "componentName": "Skia Graphics",
+    "techniqueName": "GPU Command Buffer Exploitation",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Renderer Process",
+    "targetPrivilegeLevel": "GPU Process",
+    "componentName": "Skia Graphics",
+    "techniqueName": "Use-After-Free in Blink",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Renderer Process",
+    "targetPrivilegeLevel": "Browser Process",
+    "componentName": "Network Stack",
+    "techniqueName": "IPC Message Manipulation",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Renderer Process",
+    "targetPrivilegeLevel": "Browser Process",
+    "componentName": "Network Stack",
+    "techniqueName": "Insufficient Data Validation",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Renderer Process",
+    "targetPrivilegeLevel": "Browser Process",
+    "componentName": "Browser UI",
+    "techniqueName": "IPC Message Manipulation",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Renderer Process",
+    "targetPrivilegeLevel": "Browser Process",
+    "componentName": "Browser UI",
+    "techniqueName": "Use-After-Free in Blink",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Renderer Process",
+    "targetPrivilegeLevel": "Browser Process",
+    "componentName": "IPC/Mojo",
+    "techniqueName": "IPC Message Manipulation",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Renderer Process",
+    "targetPrivilegeLevel": "Browser Process",
+    "componentName": "IPC/Mojo",
+    "techniqueName": "Insufficient Data Validation",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Browser Process",
+    "targetPrivilegeLevel": "System/Root",
+    "componentName": "Sandbox/Kernel",
+    "techniqueName": "Kernel Exploitation (Android)",
+    "visibleInVisualization": true
+  },
+  {
+    "sourcePrivilegeLevel": "Browser Process",
+    "targetPrivilegeLevel": "System/Root",
+    "componentName": "Sandbox/Kernel",
+    "techniqueName": "Insufficient Data Validation",
+    "visibleInVisualization": true
+  }
+]

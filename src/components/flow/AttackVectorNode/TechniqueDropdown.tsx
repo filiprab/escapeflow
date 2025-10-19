@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ExploitationTechnique } from '@/data/attackData';
+import type { ExploitationTechnique } from '@/types/attack';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface TechniqueDropdownProps {

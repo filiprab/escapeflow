@@ -4,21 +4,6 @@ import { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, BoltIcon } from '@heroicons/react/24/outline';
 import ExploitationTechniqueDialog, { ExploitationTechniqueFormData } from './ExploitationTechniqueDialog';
 
-interface PrivilegeContext {
-  id: string;
-  level: string;
-  color: string;
-  order: number;
-}
-
-interface TargetComponent {
-  id: string;
-  name: string;
-  description: string;
-  sourcePrivilege: PrivilegeContext;
-  targetPrivilege: PrivilegeContext;
-}
-
 interface ExploitationTechnique {
   id: string;
   name: string;
@@ -27,8 +12,6 @@ interface ExploitationTechnique {
   mitigations: string[];
   references: string[];
   contextSpecificImpact: string[];
-  targetComponentId: string;
-  targetComponent: TargetComponent;
   cveCount: number;
   createdAt: string;
   updatedAt: string;
@@ -36,7 +19,6 @@ interface ExploitationTechnique {
 
 export default function AttackVectorsPage() {
   const [techniques, setTechniques] = useState<ExploitationTechnique[]>([]);
-  const [components, setComponents] = useState<TargetComponent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +30,6 @@ export default function AttackVectorsPage() {
 
   useEffect(() => {
     fetchTechniques();
-    fetchComponents();
   }, []);
 
   const fetchTechniques = async () => {
@@ -64,17 +45,6 @@ export default function AttackVectorsPage() {
     }
   };
 
-  const fetchComponents = async () => {
-    try {
-      const response = await fetch('/api/components');
-      if (!response.ok) throw new Error('Failed to fetch components');
-      const data = await response.json();
-      // API returns {components: [...], total: number}
-      setComponents(data.components || []);
-    } catch (err) {
-      console.error('Error fetching components:', err);
-    }
-  };
 
   const handleCreate = () => {
     setDialogMode('create');
@@ -163,23 +133,6 @@ export default function AttackVectorsPage() {
     }
   };
 
-  // Group techniques by target component
-  const techniquesByComponent = techniques.reduce((acc, technique) => {
-    const key = technique.targetComponent.id;
-    if (!acc[key]) {
-      acc[key] = {
-        component: technique.targetComponent,
-        techniques: [],
-      };
-    }
-    acc[key].techniques.push(technique);
-    return acc;
-  }, {} as Record<string, { component: TargetComponent; techniques: ExploitationTechnique[] }>);
-
-  // Sort by escalation order
-  const sortedGroups = Object.values(techniquesByComponent).sort(
-    (a, b) => a.component.sourcePrivilege.order - b.component.sourcePrivilege.order
-  );
 
   if (loading) {
     return (
@@ -225,40 +178,21 @@ export default function AttackVectorsPage() {
           </button>
         </div>
 
-        {/* Techniques grouped by component */}
+        {/* Techniques list */}
         {techniques.length === 0 ? (
           <div className="text-center py-12">
             <BoltIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
             <p className="text-gray-400">No attack vectors defined yet</p>
+            <p className="text-gray-500 text-sm mt-2">
+              Create exploitation techniques that can be used in escalation paths
+            </p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {sortedGroups.map(({ component, techniques: groupTechniques }) => (
-              <div key={component.id} className="space-y-3">
-                {/* Component header */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white">{component.name}</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                      <span
-                        className="px-2 py-1 rounded text-xs font-medium"
-                        style={{ backgroundColor: `${component.sourcePrivilege.color}20`, color: component.sourcePrivilege.color }}
-                      >
-                        {component.sourcePrivilege.level}
-                      </span>
-                      <span>→</span>
-                      <span
-                        className="px-2 py-1 rounded text-xs font-medium"
-                        style={{ backgroundColor: `${component.targetPrivilege.color}20`, color: component.targetPrivilege.color }}
-                      >
-                        {component.targetPrivilege.level}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Techniques for this component */}
-                {groupTechniques.map((technique) => (
+          <div className="space-y-3">
+            {techniques.map((technique) => (
+              <div key={technique.id} className="space-y-3">
+                {/* Technique card */}
+                {[technique].map((technique) => (
                   <div
                     key={technique.id}
                     className="bg-gray-700/30 rounded-lg p-6 border border-gray-600/50 hover:border-gray-500/50 transition-all"
@@ -345,10 +279,8 @@ export default function AttackVectorsPage() {
           mitigations: editingTechnique.mitigations,
           references: editingTechnique.references,
           contextSpecificImpact: editingTechnique.contextSpecificImpact,
-          targetComponentId: editingTechnique.targetComponentId,
         } : undefined}
         mode={dialogMode}
-        components={components}
       />
     </div>
   );

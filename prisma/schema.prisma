@@ -140,6 +140,10 @@ model PrivilegeContext {
   // Relations - components that use this as target privilege
   targetComponents TargetComponent[] @relation("TargetPrivilege")
 
+  // Relations - escalations that use this as source/target
+  sourceEscalations PrivilegeEscalation[] @relation("EscalationSource")
+  targetEscalations PrivilegeEscalation[] @relation("EscalationTarget")
+
   @@index([order])
   @@map("privilege_contexts")
 }
@@ -148,15 +152,15 @@ model TargetComponent {
   id                String                  @id @default(cuid())
   name              String
   description       String
-  sourcePrivilegeId String                  @map("source_privilege_id")
-  targetPrivilegeId String                  @map("target_privilege_id")
+  sourcePrivilegeId String?                 @map("source_privilege_id")
+  targetPrivilegeId String?                 @map("target_privilege_id")
   createdAt         DateTime                @default(now()) @map("created_at")
   updatedAt         DateTime                @updatedAt @map("updated_at")
 
   // Relations
-  sourcePrivilege   PrivilegeContext        @relation("SourcePrivilege", fields: [sourcePrivilegeId], references: [id])
-  targetPrivilege   PrivilegeContext        @relation("TargetPrivilege", fields: [targetPrivilegeId], references: [id])
-  techniques        ExploitationTechnique[]
+  sourcePrivilege   PrivilegeContext?       @relation("SourcePrivilege", fields: [sourcePrivilegeId], references: [id])
+  targetPrivilege   PrivilegeContext?       @relation("TargetPrivilege", fields: [targetPrivilegeId], references: [id])
+  escalations       PrivilegeEscalation[]
 
   @@index([sourcePrivilegeId])
   @@index([targetPrivilegeId])
@@ -164,21 +168,43 @@ model TargetComponent {
 }
 
 model ExploitationTechnique {
-  id                    String             @id @default(cuid())
+  id                    String                @id @default(cuid())
   name                  String
   description           String
-  detailedDescription   String             @map("detailed_description")
-  pocs                  String[]
+  detailedDescription   String                @map("detailed_description")
   mitigations           String[]
   references            String[]
-  contextSpecificImpact String[]           @map("context_specific_impact")
-  targetComponentId     String             @map("target_component_id")
-  createdAt             DateTime           @default(now()) @map("created_at")
-  updatedAt             DateTime           @updatedAt @map("updated_at")
-  targetComponent       TargetComponent    @relation(fields: [targetComponentId], references: [id], onDelete: Cascade)
+  contextSpecificImpact String[]              @map("context_specific_impact")
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
   cveLinks              TechniqueCveLink[]
+  escalations           PrivilegeEscalation[]
 
   @@map("exploitation_techniques")
+}
+
+model PrivilegeEscalation {
+  id                      String                @id @default(cuid())
+  sourcePrivilegeId       String                @map("source_privilege_id")
+  targetPrivilegeId       String                @map("target_privilege_id")
+  techniqueId             String                @map("technique_id")
+  targetComponentId       String                @map("target_component_id")
+  visibleInVisualization  Boolean               @default(true) @map("visible_in_visualization")
+  createdAt               DateTime              @default(now()) @map("created_at")
+  updatedAt               DateTime              @updatedAt @map("updated_at")
+
+  // Relations
+  sourcePrivilege     PrivilegeContext      @relation("EscalationSource", fields: [sourcePrivilegeId], references: [id])
+  targetPrivilege     PrivilegeContext      @relation("EscalationTarget", fields: [targetPrivilegeId], references: [id])
+  technique           ExploitationTechnique @relation(fields: [techniqueId], references: [id], onDelete: Cascade)
+  targetComponent     TargetComponent       @relation(fields: [targetComponentId], references: [id], onDelete: Cascade)
+
+  @@index([sourcePrivilegeId])
+  @@index([targetPrivilegeId])
+  @@index([techniqueId])
+  @@index([targetComponentId])
+  @@index([visibleInVisualization])
+  @@map("privilege_escalations")
 }
 
 model TechniqueCveLink {

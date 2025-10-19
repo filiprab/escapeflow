@@ -1,7 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { TARGET_COMPONENTS } from '@/lib/utils/component-mapping';
 
 type Source = 'NVD' | 'CVE.org';
 
@@ -48,6 +48,28 @@ export default function EditStep({
   removeReference,
   updateReference
 }: EditStepProps) {
+  const [availableComponents, setAvailableComponents] = useState<string[]>([]);
+  const [loadingComponents, setLoadingComponents] = useState(false);
+
+  // Fetch available components on mount
+  useEffect(() => {
+    fetchAvailableComponents();
+  }, []);
+
+  const fetchAvailableComponents = async () => {
+    try {
+      setLoadingComponents(true);
+      const response = await fetch('/api/cves?type=filters');
+      const data = await response.json();
+      setAvailableComponents(data.components || []);
+    } catch (err) {
+      console.error('Failed to fetch components:', err);
+      setAvailableComponents([]);
+    } finally {
+      setLoadingComponents(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header with CVE ID and Source Info */}
@@ -146,18 +168,18 @@ export default function EditStep({
             const value = e.target.value === '' ? null : e.target.value;
             setTargetComponent(value);
           }}
-          disabled={loading}
+          disabled={loading || loadingComponents}
           value={formData.labels?.targetComponent || ''}
         >
-          <option value="">No component selected</option>
-          {TARGET_COMPONENTS.map((component) => (
+          <option value="">{loadingComponents ? 'Loading components...' : 'No component selected'}</option>
+          {availableComponents.map((component) => (
             <option key={component} value={component}>
               {component}
             </option>
           ))}
         </select>
         <p className="text-xs text-gray-400 mt-2">
-          Select the primary component targeted by this CVE from the attack surface catalog.
+          Select the primary component targeted by this CVE. Components are defined in the Target Components catalog.
         </p>
       </div>
 
