@@ -5,19 +5,32 @@
 
 **This web application was created as part of my Bachelor thesis about browser sandbox escapes. It is an interactive web application designed for security researchers that visualizes attack surfaces and privilege escalation paths in modern browsers. This tool demonstrates various exploitation techniques across different privilege levels, from browser engine sandbox escapes to kernel-level privilege escalation.**
 
-Currently focused on Android Chromium with plans to expand to multi-platform browser security research.
+Currently focused on Chromium with a database of 2,366+ CVEs, with plans to expand to multi-platform browser security research.
 
 ## Features
 
-- **Interactive Attack Flow**: Visualize attack surfaces with draggable React Flow components
-- **Multi-Level Privilege Escalation**: Simulate attacks across JavaScript Engine, Renderer Process, GPU Process, Browser Process, and System/Root levels
-- **Real CVE Data**: Attack vectors based on actual CVEs with proof-of-concept links
-- **Attack Chain Visualization**: Complete visual representation of successful attack paths with sliding panel
+### Attack Flow Visualization
+- **Interactive Flow Diagrams**: Visualize attack surfaces with draggable React Flow components
+- **Multi-Level Privilege Escalation**: Simulate attacks across V8 Heap Sandbox, Renderer Process, GPU Process, Browser Process, and System/Root levels
+- **Attack Chain Tracking**: Complete visual representation of successful attack paths with sliding panel
 - **Tree View**: Comprehensive tree visualization modal showing all attack progression paths
 - **Platform Selection**: Choose between different OS (Android, iOS, Windows, macOS, Linux) and browser combinations
 - **Multiple Export Formats**: Export attack chains as PNG, JSON, PlantUML, and Mermaid diagrams
-- **Responsive Design**: Adaptive layout with collapsible panels and detailed attack information
-- **Global State Management**: Centralized state management using React Context API
+
+### CVE Database & Catalog
+- **Comprehensive CVE Database**: Browse and manage 2,366+ Chromium CVEs with PostgreSQL backend
+- **Advanced Filtering**: Filter by severity, OS, target components, date ranges, and search by CVE ID
+- **CVSS Scoring**: Detailed CVSS v3.x metrics and severity ratings with visual indicators
+- **CVE Management**: Create, edit, delete, and bulk operations on CVE entries
+- **Proof-of-Concept Tracking**: Store and manage POCs with code snippets, URLs, and references
+- **Attack Vector Mapping**: Link CVEs to exploitation techniques and target components
+- **External Data Integration**: Fetch and import CVE data from NVD and other external sources
+
+### Architecture & Design
+- **Database-Driven**: PostgreSQL with Prisma ORM for scalable data management
+- **Responsive Design**: Adaptive layout with collapsible panels and detailed information views
+- **Global State Management**: React Context API for attack simulation state
+- **RESTful API**: Full API layer for CVE, attack techniques, and component management
 
 ## Getting Started
 

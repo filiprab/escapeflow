@@ -195,6 +195,18 @@ export async function getCVEById(cveId: string) {
   });
 }
 
+/**
+ * Check if a CVE exists in the database (lightweight query)
+ * @param cveId - CVE identifier
+ * @returns true if exists, false otherwise
+ */
+export async function cveExists(cveId: string): Promise<boolean> {
+  const count = await prisma.cve.count({
+    where: { cveId }
+  });
+  return count > 0;
+}
+
 export async function getAllOperatingSystems() {
   const labels = await prisma.cveLabel.findMany({
     select: {

@@ -233,3 +233,12 @@ model CveProofOfConcept {
 
   @@map("cve_proof_of_concepts")
 }
+
+model SystemMetadata {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_metadata")
+}

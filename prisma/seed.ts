@@ -434,6 +434,31 @@ async function main() {
     );
   }
 
+  // Seed system metadata
+  console.log('\nSeeding system metadata...');
+
+  // Set initial last bulk update time to 2025-07-02T00:00:00.000Z
+  await prisma.systemMetadata.upsert({
+    where: { key: 'cve_last_bulk_update' },
+    update: { value: '2025-07-02T00:00:00.000Z' },
+    create: {
+      key: 'cve_last_bulk_update',
+      value: '2025-07-02T00:00:00.000Z',
+    },
+  });
+
+  // Set bulk update not in progress
+  await prisma.systemMetadata.upsert({
+    where: { key: 'cve_bulk_update_in_progress' },
+    update: { value: 'false' },
+    create: {
+      key: 'cve_bulk_update_in_progress',
+      value: 'false',
+    },
+  });
+
+  console.log('Successfully seeded system metadata!');
+
   console.log('\nDatabase seeding completed!');
 }
 
