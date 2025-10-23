@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import PoCInput, { type ProofOfConcept } from './PoCInput';
 
 type Source = 'NVD' | 'CVE.org';
 
@@ -12,6 +13,7 @@ interface CVEFormData {
     operatingSystems: string[];
     targetComponent: string | null;
   };
+  proofOfConcepts?: ProofOfConcept[];
 }
 
 interface EditStepProps {
@@ -50,6 +52,7 @@ export default function EditStep({
 }: EditStepProps) {
   const [availableComponents, setAvailableComponents] = useState<string[]>([]);
   const [loadingComponents, setLoadingComponents] = useState(false);
+  const [showAllReferences, setShowAllReferences] = useState(false);
 
   // Fetch available components on mount
   useEffect(() => {
@@ -187,7 +190,10 @@ export default function EditStep({
       <div>
         <label className="block text-sm font-medium text-gray-200 mb-3">References</label>
         <div className="space-y-3">
-          {formData.references?.map((ref, index) => (
+          {(showAllReferences
+            ? formData.references
+            : formData.references?.slice(0, 5)
+          )?.map((ref, index) => (
             <div key={index} className="flex items-center space-x-3">
               <input
                 type="url"
@@ -207,6 +213,22 @@ export default function EditStep({
               </button>
             </div>
           ))}
+
+          {/* Show More/Less Toggle */}
+          {(formData.references?.length || 0) > 5 && (
+            <button
+              type="button"
+              onClick={() => setShowAllReferences(!showAllReferences)}
+              className="w-full text-sm text-gray-400 hover:text-gray-200 transition-colors p-3 hover:bg-gray-700/30 rounded-lg border border-gray-600/30"
+              disabled={loading}
+            >
+              {showAllReferences
+                ? `Show Less (hiding ${(formData.references?.length || 0) - 5} references)`
+                : `Show More (${(formData.references?.length || 0) - 5} more references)`
+              }
+            </button>
+          )}
+
           <button
             type="button"
             onClick={addReference}
@@ -217,6 +239,21 @@ export default function EditStep({
           </button>
         </div>
       </div>
+
+      {/* Divider */}
+      <div className="border-t border-gray-600/50" />
+
+      {/* Proof of Concept */}
+      <PoCInput
+        value={formData.proofOfConcepts || []}
+        onChange={(proofOfConcepts) => {
+          setFormData({
+            ...formData,
+            proofOfConcepts
+          });
+        }}
+        disabled={loading}
+      />
     </div>
   );
 }

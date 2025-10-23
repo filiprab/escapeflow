@@ -126,8 +126,6 @@ export async function searchNVD(
     // Parse response with full CVE data
     const results: CVESearchResult[] = [];
     if (data.vulnerabilities && Array.isArray(data.vulnerabilities)) {
-      console.log("CVEs fetched:");
-      console.log(data.vulnerabilities.length);
       for (const vuln of data.vulnerabilities) {
         const cve = vuln.cve;
         if (!cve?.id) continue;

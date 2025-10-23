@@ -12,6 +12,7 @@ import FetchStep from '@/components/catalog/CVEDetail/FetchStep';
 import EditStep from '@/components/catalog/CVEDetail/EditStep';
 import StepIndicator from '@/components/catalog/CVEDetail/StepIndicator';
 import ErrorSuccessMessages from '@/components/catalog/CVEDetail/ErrorSuccessMessages';
+import type { ProofOfConcept } from '@/components/catalog/CVEDetail/PoCInput';
 
 interface CVECreationDialogProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ interface CVEFormData {
     operatingSystems: string[];
     targetComponent: string | null;
   };
+  proofOfConcepts?: ProofOfConcept[];
 }
 
 export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECreationDialogProps) {
@@ -39,7 +41,8 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
   const [formData, setFormData] = useState<CVEFormData>({
     descriptions: [{ lang: 'en', description: '' }],
     references: [],
-    labels: { operatingSystems: [], targetComponent: null }
+    labels: { operatingSystems: [], targetComponent: null },
+    proofOfConcepts: [],
   });
   
   const [prefetchLoading, setPrefetchLoading] = useState(false);
@@ -57,7 +60,8 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
     setFormData({
       descriptions: [{ lang: 'en', description: '' }],
       references: [],
-      labels: { operatingSystems: [], targetComponent: null }
+      labels: { operatingSystems: [], targetComponent: null },
+      proofOfConcepts: [],
     });
     setPrefetchLoading(false);
     setLoading(false);
@@ -154,7 +158,8 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
     setFormData({
       descriptions: [{ lang: 'en', description: '' }],
       references: [],
-      labels: { operatingSystems: [], targetComponent: null }
+      labels: { operatingSystems: [], targetComponent: null },
+      proofOfConcepts: [],
     });
     setPrefetched(false);
     setError(null);
@@ -345,7 +350,6 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
             source={source}
             setSource={setSource}
             onFetch={handlePrefetch}
-            onSkipToManual={() => setStep('edit')}
             loading={prefetchLoading}
           />
         )}

@@ -10,7 +10,6 @@ interface FetchStepProps {
   source: Source;
   setSource: (value: Source) => void;
   onFetch: () => void;
-  onSkipToManual: () => void;
   loading: boolean;
 }
 
@@ -20,7 +19,6 @@ export default function FetchStep({
   source,
   setSource,
   onFetch,
-  onSkipToManual,
   loading
 }: FetchStepProps) {
   return (
@@ -98,18 +96,6 @@ export default function FetchStep({
               Fetch CVE Data from {source}
             </>
           )}
-        </button>
-      </div>
-
-      {/* Manual Entry Option */}
-      <div className="pt-6 border-t border-gray-600/50">
-        <button
-          type="button"
-          onClick={onSkipToManual}
-          className="w-full text-sm text-gray-400 hover:text-gray-200 transition-colors p-3 hover:bg-gray-700/30 rounded-lg"
-          disabled={loading}
-        >
-          Can&apos;t find CVE data? Enter manually instead →
         </button>
       </div>
     </div>
