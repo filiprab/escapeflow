@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCVEs, getAllOperatingSystems, getAllComponents, createCVE, CreateCVEData } from '@/lib/database/cve';
-import { fetchFromNVD, fetchFromCVEOrg, validateCVEId } from '@/lib/api/external-cve';
+import { fetchFromNVD, validateCVEId } from '@/lib/api/external-cve';
 import { transformExternalCVEData, createDefaultCVEData } from '@/lib/utils/cve-transform';
 
 export async function GET(request: NextRequest) {
@@ -75,13 +75,11 @@ export async function POST(request: NextRequest) {
 
     let createData: CreateCVEData;
 
-    // Always use hybrid approach: fetch external data if source provided, otherwise use defaults
-    if (source && ['NVD', 'CVE.org'].includes(source)) {
+    // Always use NVD as the source for fetching external data
+    if (source === 'NVD') {
       try {
-        // Fetch data from external source
-        const externalData = source === 'NVD' 
-          ? await fetchFromNVD(cveId)
-          : await fetchFromCVEOrg(cveId);
+        // Fetch data from NVD
+        const externalData = await fetchFromNVD(cveId);
 
         // Transform external data
         const baseData = transformExternalCVEData(externalData, body.additionalLabels);
@@ -102,16 +100,16 @@ export async function POST(request: NextRequest) {
           cveId, // Always preserve the CVE ID
         };
       } catch (error) {
-        console.error(`Failed to fetch from ${source}:`, error);
+        console.error('Failed to fetch from NVD:', error);
         return NextResponse.json(
-          { error: `Failed to fetch base data from ${source}: ${error instanceof Error ? error.message : 'Unknown error'}` },
+          { error: `Failed to fetch base data from NVD: ${error instanceof Error ? error.message : 'Unknown error'}` },
           { status: 500 }
         );
       }
     } else {
       // No external source provided, use manual approach with defaults
       const defaultData = createDefaultCVEData(cveId);
-      
+
       // Transform references from string[] to {url: string}[] if needed
       let transformedReferences = undefined;
       if (cveData.references && Array.isArray(cveData.references)) {
@@ -119,7 +117,7 @@ export async function POST(request: NextRequest) {
           .filter((ref: unknown) => ref && typeof ref === 'string' && (ref as string).trim())
           .map((ref: unknown) => ({ url: (ref as string).trim() }));
       }
-      
+
       createData = {
         ...defaultData,
         ...cveData, // User input overrides defaults

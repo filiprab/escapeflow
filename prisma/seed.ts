@@ -18,7 +18,7 @@ async function main() {
   console.log('Starting database seed...');
 
   // Read the existing CVE data
-  const cveDataPath = join(process.cwd(), 'prisma', 'chromium_cve_details.json');
+  const cveDataPath = join(process.cwd(), 'prisma', 'cve_details.json');
   const cveDataRaw = readFileSync(cveDataPath, 'utf8');
   const cveData: CVEDatabase = JSON.parse(cveDataRaw);
 
@@ -29,61 +29,107 @@ async function main() {
 
   for (const [cveId, cveRecord] of cveEntries) {
     try {
+      // Handle both NVD API format (with cve.id) and transformed format (with cveMetadata)
+      const cveData = (cveRecord as any).cve ? (cveRecord as any).cve : cveRecord;
+
+      // Extract metadata - handle both formats
+      let metadata;
+      if ((cveRecord as any).cveMetadata) {
+        // Transformed CVE.org-like format
+        metadata = (cveRecord as any).cveMetadata;
+      } else {
+        // Raw NVD API format - create metadata from cve object
+        metadata = {
+          cveId: cveData.id,
+          dateReserved: cveData.published,
+          datePublished: cveData.published,
+          dateUpdated: cveData.lastModified,
+          state: 'PUBLISHED',
+          assignerOrgId: cveData.sourceIdentifier || 'nvd@nist.gov',
+          assignerShortName: 'NVD'
+        };
+      }
+
       // Parse dates
-      const dateReserved = new Date(cveRecord.cveMetadata.dateReserved);
-      const datePublished = new Date(cveRecord.cveMetadata.datePublished);
-      const dateUpdated = new Date(cveRecord.cveMetadata.dateUpdated);
+      const dateReserved = new Date(metadata.dateReserved);
+      const datePublished = new Date(metadata.datePublished);
+      const dateUpdated = new Date(metadata.dateUpdated);
 
       // Create the main CVE record
       const cve = await prisma.cve.create({
         data: {
-          cveId: cveRecord.cveMetadata.cveId,
-          dataType: cveRecord.dataType,
-          dataVersion: cveRecord.dataVersion,
-          state: cveRecord.cveMetadata.state,
-          assignerOrgId: cveRecord.cveMetadata.assignerOrgId,
-          assignerShortName: cveRecord.cveMetadata.assignerShortName,
+          cveId: metadata.cveId,
+          dataType: (cveRecord as any).dataType || 'CVE_RECORD',
+          dataVersion: (cveRecord as any).dataVersion || '5.1',
+          state: metadata.state,
+          assignerOrgId: metadata.assignerOrgId,
+          assignerShortName: metadata.assignerShortName,
           dateReserved,
           datePublished,
           dateUpdated,
         },
       });
 
-      // Create descriptions
-      if (cveRecord.containers.cna.descriptions && cveRecord.containers.cna.descriptions.length > 0) {
+      // Create descriptions - handle both formats
+      let descriptions: any[] = [];
+      if ((cveRecord as any).containers?.cna?.descriptions) {
+        // Transformed format
+        descriptions = (cveRecord as any).containers.cna.descriptions;
+      } else if (cveData.descriptions) {
+        // NVD API format
+        descriptions = cveData.descriptions;
+      }
+
+      if (descriptions && descriptions.length > 0) {
         await prisma.cveDescription.createMany({
-          data: cveRecord.containers.cna.descriptions.map((desc: CVEDescription) => ({
+          data: descriptions.map((desc: any) => ({
             cveId: cve.cveId,
             lang: desc.lang,
-            description: desc.value,
+            description: desc.value || desc.description,
           })),
         });
       }
 
-      // Create references
-      if (cveRecord.containers.cna.references && cveRecord.containers.cna.references.length > 0) {
+      // Create references - handle both formats
+      let references: any[] = [];
+      if ((cveRecord as any).containers?.cna?.references) {
+        // Transformed format
+        references = (cveRecord as any).containers.cna.references;
+      } else if (cveData.references) {
+        // NVD API format
+        references = cveData.references.map((ref: any) => ({ url: ref.url }));
+      }
+
+      if (references && references.length > 0) {
         await prisma.cveReference.createMany({
-          data: cveRecord.containers.cna.references.map((ref: CVEReference) => ({
+          data: references.map((ref: any) => ({
             cveId: cve.cveId,
             url: ref.url,
           })),
         });
       }
 
-      // Create affected products and versions
-      if (cveRecord.containers.cna.affected && cveRecord.containers.cna.affected.length > 0) {
-        for (const affected of cveRecord.containers.cna.affected) {
+      // Create affected products and versions - handle both formats
+      let affected: any[] = [];
+      if ((cveRecord as any).containers?.cna?.affected) {
+        // Transformed format
+        affected = (cveRecord as any).containers.cna.affected;
+      }
+      // Note: Raw NVD API format doesn't provide affected products in a structured way
+
+      if (affected && affected.length > 0) {
+        for (const affectedItem of affected) {
           const affectedProduct = await prisma.cveAffectedProduct.create({
             data: {
               cveId: cve.cveId,
-              vendor: affected.vendor,
-              product: affected.product,
+              vendor: affectedItem.vendor,
+              product: affectedItem.product,
             },
           });
 
-          if (affected.versions && affected.versions.length > 0) {
+          if (affectedItem.versions && affectedItem.versions.length > 0) {
             await prisma.cveVersion.createMany({
-              data: affected.versions.map((version: CVEVersion) => ({
+              data: affectedItem.versions.map((version: CVEVersion) => ({
                 affectedProductId: affectedProduct.id,
                 version: version.version,
                 status: version.status,
@@ -110,17 +156,36 @@ async function main() {
         });
       }
 
-      // Create metrics (CVSS data) - prioritize CNA over ADP
+      // Create metrics (CVSS data) - handle both formats
       let metricsToProcess: MetricToProcess[] = [];
-      
-      if (cveRecord.containers.cna.metrics && cveRecord.containers.cna.metrics.length > 0) {
-        // CNA is authoritative - use only CNA metrics
-        metricsToProcess = cveRecord.containers.cna.metrics;
-      } else if (cveRecord.containers.adp && cveRecord.containers.adp.length > 0) {
-        // Fall back to ADP only if no CNA metrics exist
-        for (const adp of cveRecord.containers.adp) {
+
+      if ((cveRecord as any).containers?.cna?.metrics) {
+        // Transformed format - CNA is authoritative
+        metricsToProcess = (cveRecord as any).containers.cna.metrics;
+      } else if ((cveRecord as any).containers?.adp) {
+        // Transformed format - Fall back to ADP only if no CNA metrics exist
+        for (const adp of (cveRecord as any).containers.adp) {
           if (adp.metrics && adp.metrics.length > 0) {
             metricsToProcess.push(...adp.metrics);
+          }
+        }
+      } else if (cveData.metrics) {
+        // Raw NVD API format - transform metrics
+        const metrics = cveData.metrics;
+        // Handle CVSS v3.1 metrics
+        if (metrics.cvssMetricV31) {
+          for (const metric of metrics.cvssMetricV31) {
+            if (metric.cvssData) {
+              metricsToProcess.push({ cvssV3_1: metric.cvssData } as any);
+            }
+          }
+        }
+        // Handle CVSS v3.0 metrics if no v3.1
+        if (metricsToProcess.length === 0 && metrics.cvssMetricV30) {
+          for (const metric of metrics.cvssMetricV30) {
+            if (metric.cvssData) {
+              metricsToProcess.push({ cvssV3_0: metric.cvssData } as any);
+            }
           }
         }
       }
@@ -196,9 +261,16 @@ async function main() {
         }
       }
 
-      // Create problem types
-      if (cveRecord.containers.cna.problemTypes && cveRecord.containers.cna.problemTypes.length > 0) {
-        for (const problemType of cveRecord.containers.cna.problemTypes) {
+      // Create problem types - handle both formats
+      let problemTypes: any[] = [];
+      if ((cveRecord as any).containers?.cna?.problemTypes) {
+        // Transformed format
+        problemTypes = (cveRecord as any).containers.cna.problemTypes;
+      }
+      // Note: Raw NVD API format stores weaknesses, not problem types
+
+      if (problemTypes && problemTypes.length > 0) {
+        for (const problemType of problemTypes) {
           if (problemType.descriptions && problemType.descriptions.length > 0) {
             await prisma.cveProblemType.createMany({
               data: problemType.descriptions.map((desc: CVEProblemTypeDescription) => ({
@@ -437,13 +509,13 @@ async function main() {
   // Seed system metadata
   console.log('\nSeeding system metadata...');
 
-  // Set initial last bulk update time to 2025-07-02T00:00:00.000Z
+  // Set initial last bulk update time to 2025-10-25T16:00:17.532953Z
   await prisma.systemMetadata.upsert({
     where: { key: 'cve_last_bulk_update' },
-    update: { value: '2025-07-02T00:00:00.000Z' },
+    update: { value: '2025-10-25T16:00:17.532953Z' },
     create: {
       key: 'cve_last_bulk_update',
-      value: '2025-07-02T00:00:00.000Z',
+      value: '2025-10-25T16:00:17.532953Z',
     },
   });
 

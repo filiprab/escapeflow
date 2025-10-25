@@ -2,13 +2,9 @@
 
 import { CloudArrowDownIcon } from '@heroicons/react/24/outline';
 
-type Source = 'NVD' | 'CVE.org';
-
 interface FetchStepProps {
   cveId: string;
   setCveId: (value: string) => void;
-  source: Source;
-  setSource: (value: Source) => void;
   onFetch: () => void;
   loading: boolean;
 }
@@ -16,8 +12,6 @@ interface FetchStepProps {
 export default function FetchStep({
   cveId,
   setCveId,
-  source,
-  setSource,
   onFetch,
   loading
 }: FetchStepProps) {
@@ -38,43 +32,14 @@ export default function FetchStep({
         />
       </div>
 
-      {/* Source Selection */}
-      <div>
-        <label className="block text-sm font-medium text-gray-200 mb-3">
-          Data Source <span className="text-red-400">*</span>
-        </label>
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            onClick={() => setSource('NVD')}
-            className={`p-4 border-2 rounded-xl text-center transition-all duration-200 ${
-              source === 'NVD' 
-                ? 'border-blue-500 bg-blue-500/20 text-white backdrop-blur-sm shadow-lg shadow-blue-500/25' 
-                : 'border-gray-600/50 bg-gray-700/30 text-gray-300 hover:border-gray-500/50 hover:bg-gray-600/30'
-            }`}
-            disabled={loading}
-          >
-            <div className="font-semibold text-lg mb-1">NVD</div>
-            <div className={`text-sm ${
-              source === 'NVD' ? 'text-blue-200' : 'text-gray-400'
-            }`}>National Vulnerability Database</div>
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => setSource('CVE.org')}
-            className={`p-4 border-2 rounded-xl text-center transition-all duration-200 ${
-              source === 'CVE.org' 
-                ? 'border-blue-500 bg-blue-500/20 text-white backdrop-blur-sm shadow-lg shadow-blue-500/25' 
-                : 'border-gray-600/50 bg-gray-700/30 text-gray-300 hover:border-gray-500/50 hover:bg-gray-600/30'
-            }`}
-            disabled={loading}
-          >
-            <div className="font-semibold text-lg mb-1">CVE.org</div>
-            <div className={`text-sm ${
-              source === 'CVE.org' ? 'text-blue-200' : 'text-gray-400'
-            }`}>MITRE Corporation</div>
-          </button>
+      {/* Data Source Info */}
+      <div className="bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl border border-gray-600/50">
+        <div className="flex items-center gap-3">
+          <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+          <div>
+            <div className="font-medium text-white">NVD</div>
+            <div className="text-sm text-gray-400">National Vulnerability Database</div>
+          </div>
         </div>
       </div>
 
@@ -93,7 +58,7 @@ export default function FetchStep({
           ) : (
             <>
               <CloudArrowDownIcon className="w-5 h-5 mr-2" />
-              Fetch CVE Data from {source}
+              Fetch CVE Data from NVD
             </>
           )}
         </button>

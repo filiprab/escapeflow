@@ -306,5 +306,5 @@ export interface ExternalCVEData {
     cweId?: string;
     lang: string;
   }>;
-  source: 'NVD' | 'CVE.org';
+  source: 'NVD';
 }

@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import PoCInput, { type ProofOfConcept } from './PoCInput';
 
-type Source = 'NVD' | 'CVE.org';
-
 interface CVEFormData {
   descriptions: Array<{ lang: string; description: string }>;
   references?: string[];
@@ -19,7 +17,6 @@ interface CVEFormData {
 interface EditStepProps {
   cveId: string;
   setCveId: (value: string) => void;
-  source: Source;
   formData: CVEFormData;
   setFormData: (value: CVEFormData) => void;
   prefetched: boolean;
@@ -37,7 +34,6 @@ interface EditStepProps {
 export default function EditStep({
   cveId,
   setCveId,
-  source,
   formData,
   setFormData,
   prefetched,
@@ -85,7 +81,7 @@ export default function EditStep({
             {prefetched && (
               <div className="text-sm text-green-400 mt-2 flex items-center">
                 <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                Data fetched from {source}
+                Data fetched from NVD
               </div>
             )}
             {!prefetched && (

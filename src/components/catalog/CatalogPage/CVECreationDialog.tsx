@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Dialog, { DialogFooter } from '@/components/ui/Dialog';
-import { fetchFromNVD, fetchFromCVEOrg } from '@/lib/api/external-cve';
+import { fetchFromNVD } from '@/lib/api/external-cve';
 import type { ExternalCVEData } from '@/types/cve';
 import { detectTargetComponent } from '@/lib/utils/component-mapping';
 
@@ -21,7 +21,6 @@ interface CVECreationDialogProps {
 }
 
 type CreationStep = 'fetch' | 'edit';
-type Source = 'NVD' | 'CVE.org';
 
 interface CVEFormData {
   descriptions: Array<{ lang: string; description: string }>;
@@ -37,7 +36,6 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
   const router = useRouter();
   const [step, setStep] = useState<CreationStep>('fetch');
   const [cveId, setCveId] = useState('');
-  const [source, setSource] = useState<Source>('NVD');
   const [formData, setFormData] = useState<CVEFormData>({
     descriptions: [{ lang: 'en', description: '' }],
     references: [],
@@ -56,7 +54,6 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
   const handleClose = () => {
     setStep('fetch');
     setCveId('');
-    setSource('NVD');
     setFormData({
       descriptions: [{ lang: 'en', description: '' }],
       references: [],
@@ -96,21 +93,19 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
     setError(null);
 
     try {
-      // Fetch data from selected external source
-      const externalData = source === 'NVD' 
-        ? await fetchFromNVD(cveId.trim().toUpperCase())
-        : await fetchFromCVEOrg(cveId.trim().toUpperCase());
+      // Fetch data from NVD
+      const externalData = await fetchFromNVD(cveId.trim().toUpperCase());
 
       // Populate form with fetched data
       populateFormFromExternalData(externalData);
-      
+
       // Move to edit step
       setStep('edit');
       setPrefetched(true);
-      
+
     } catch (error: unknown) {
       console.error('Failed to fetch CVE data:', error);
-      setError(error instanceof Error ? error.message : `Failed to fetch CVE data from ${source}`);
+      setError(error instanceof Error ? error.message : 'Failed to fetch CVE data from NVD');
     } finally {
       setPrefetchLoading(false);
     }
@@ -187,7 +182,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
 
     try {
       const requestBody: Record<string, unknown> = {
-        source: source, // Pass the selected source (NVD or CVE.org)
+        source: 'NVD', // Always use NVD as the source
         cveId: cveId.trim().toUpperCase(),
         cveData: {
           ...formData,
@@ -347,8 +342,6 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
           <FetchStep
             cveId={cveId}
             setCveId={setCveId}
-            source={source}
-            setSource={setSource}
             onFetch={handlePrefetch}
             loading={prefetchLoading}
           />
@@ -359,7 +352,6 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
           <EditStep
             cveId={cveId}
             setCveId={setCveId}
-            source={source}
             formData={formData}
             setFormData={setFormData}
             prefetched={prefetched}
