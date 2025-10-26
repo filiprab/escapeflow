@@ -8,18 +8,18 @@ datasource db {
 }
 
 model Cve {
-  id                String               @id @default(cuid())
-  cveId             String               @unique @map("cve_id")
-  dataType          String               @map("data_type")
-  dataVersion       String               @map("data_version")
+  id                String                @id @default(cuid())
+  cveId             String                @unique @map("cve_id")
+  dataType          String                @map("data_type")
+  dataVersion       String                @map("data_version")
   state             String
-  assignerOrgId     String               @map("assigner_org_id")
-  assignerShortName String               @map("assigner_short_name")
-  dateReserved      DateTime             @map("date_reserved")
-  datePublished     DateTime             @map("date_published")
-  dateUpdated       DateTime             @map("date_updated")
-  createdAt         DateTime             @default(now()) @map("created_at")
-  updatedAt         DateTime             @updatedAt @map("updated_at")
+  assignerOrgId     String                @map("assigner_org_id")
+  assignerShortName String                @map("assigner_short_name")
+  dateReserved      DateTime              @map("date_reserved")
+  datePublished     DateTime              @map("date_published")
+  dateUpdated       DateTime              @map("date_updated")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
   affectedProducts  CveAffectedProduct[]
   descriptions      CveDescription[]
   labels            CveLabel?
@@ -27,6 +27,7 @@ model Cve {
   problemTypes      CveProblemType[]
   references        CveReference[]
   techniqueLinks    TechniqueCveLink[]
+  escalationLinks   EscalationCveLink[]
   proofOfConcepts   CveProofOfConcept[]
 
   @@index([datePublished])
@@ -198,6 +199,7 @@ model PrivilegeEscalation {
   targetPrivilege     PrivilegeContext      @relation("EscalationTarget", fields: [targetPrivilegeId], references: [id])
   technique           ExploitationTechnique @relation(fields: [techniqueId], references: [id], onDelete: Cascade)
   targetComponent     TargetComponent       @relation(fields: [targetComponentId], references: [id], onDelete: Cascade)
+  cveLinks            EscalationCveLink[]
 
   @@index([sourcePrivilegeId])
   @@index([targetPrivilegeId])
@@ -216,6 +218,19 @@ model TechniqueCveLink {
 
   @@unique([techniqueId, cveId])
   @@map("technique_cve_links")
+}
+
+model EscalationCveLink {
+  id           String              @id @default(cuid())
+  escalationId String              @map("escalation_id")
+  cveId        String              @map("cve_id")
+  cve          Cve                 @relation(fields: [cveId], references: [cveId], onDelete: Cascade)
+  escalation   PrivilegeEscalation @relation(fields: [escalationId], references: [id], onDelete: Cascade)
+
+  @@unique([escalationId, cveId])
+  @@index([escalationId])
+  @@index([cveId])
+  @@map("escalation_cve_links")
 }
 
 model CveProofOfConcept {

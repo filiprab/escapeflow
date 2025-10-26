@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CubeIcon, ArrowRightIcon, BugAntIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { CubeIcon, ArrowRightIcon, BugAntIcon, PlusIcon, PencilIcon, TrashIcon, BoltIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import TargetComponentDialog, { TargetComponentFormData } from './TargetComponentDialog';
+import EscalationCveManagerDialog from './EscalationCveManagerDialog';
 
 interface TargetComponent {
   id: string;
@@ -30,6 +31,7 @@ interface TargetComponent {
     technique: {
       name: string;
     };
+    cveCount: number;
   }>;
   cveCount: number;
 }
@@ -83,6 +85,7 @@ interface PrivilegeContext {
 export default function TargetComponentsPage() {
   const [components, setComponents] = useState<TargetComponent[]>([]);
   const [privileges, setPrivileges] = useState<PrivilegeContext[]>([]);
+  const [selectedComponent, setSelectedComponent] = useState<TargetComponent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -90,6 +93,13 @@ export default function TargetComponentsPage() {
   const [editingComponent, setEditingComponent] = useState<TargetComponent | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [managingCvesForEscalation, setManagingCvesForEscalation] = useState<{
+    id: string;
+    sourceLevel: string;
+    targetLevel: string;
+    techniqueName: string;
+    componentName: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchComponents();
@@ -234,17 +244,20 @@ export default function TargetComponentsPage() {
             const sourceColors = component.sourcePrivilege
               ? getColorClasses(component.sourcePrivilege.color as keyof typeof colorClasses)
               : colorClasses.gray;
-            const targetColors = component.targetPrivilege
-              ? getColorClasses(component.targetPrivilege.color as keyof typeof colorClasses)
-              : colorClasses.gray;
+            const isSelected = selectedComponent?.id === component.id;
 
             return (
               <div
                 key={component.id}
-                className={`bg-gray-700/30 rounded-xl p-6 border ${sourceColors.border} ${sourceColors.hover} transition-all duration-300`}
+                className={`bg-gray-700/30 rounded-xl p-6 border ${sourceColors.border} ${sourceColors.hover} transition-all duration-300 ${
+                  isSelected ? 'ring-2 ring-offset-2 ring-offset-gray-900 ' + sourceColors.border : ''
+                }`}
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
+                  <button
+                    onClick={() => setSelectedComponent(isSelected ? null : component)}
+                    className="flex-1 text-left"
+                  >
                     <div className="flex items-center gap-3 mb-2">
                       <CubeIcon className={`w-6 h-6 ${sourceColors.text}`} />
                       <h3 className="text-xl font-bold text-white">{component.name}</h3>
@@ -259,28 +272,16 @@ export default function TargetComponentsPage() {
                         </span>
                       </div>
                     )}
-
-                    {/* Legacy Privilege Escalation Badge (only if defined) */}
-                    {component.sourcePrivilege && component.targetPrivilege && (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-xs px-2 py-1 ${sourceColors.bg} ${sourceColors.text} rounded-md border ${sourceColors.border}`}>
-                          {component.sourcePrivilege.level}
-                        </span>
-                        <ArrowRightIcon className="w-4 h-4 text-gray-500" />
-                        <span className={`text-xs px-2 py-1 ${targetColors.bg} ${targetColors.text} rounded-md border ${targetColors.border}`}>
-                          {component.targetPrivilege.level}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  </button>
 
                   {/* Actions */}
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-2 ml-4">
                     {/* CVE Count Badge */}
                     {component.cveCount > 0 ? (
                       <Link
                         href={`/catalog?component=${encodeURIComponent(component.name)}`}
                         className={`px-4 py-2 ${sourceColors.bg} ${sourceColors.text} text-sm font-medium rounded-lg border ${sourceColors.border} hover:bg-opacity-80 transition-all flex items-center gap-2`}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <BugAntIcon className="w-5 h-5" />
                         <span>{component.cveCount} CVEs</span>
@@ -293,7 +294,10 @@ export default function TargetComponentsPage() {
 
                     {/* Edit Button */}
                     <button
-                      onClick={() => handleEdit(component)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(component);
+                      }}
                       className="p-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-all"
                       title="Edit component"
                     >
@@ -302,7 +306,10 @@ export default function TargetComponentsPage() {
 
                     {/* Delete Button */}
                     <button
-                      onClick={() => setDeleteConfirmId(component.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirmId(component.id);
+                      }}
                       className="p-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-all"
                       title="Delete component"
                     >
@@ -310,6 +317,77 @@ export default function TargetComponentsPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* Expanded details */}
+                {isSelected && (
+                  <div className="mt-6 pt-6 border-t border-gray-600/50 space-y-4">
+                    {/* Privilege Escalation Paths */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-white mb-3">Privilege Escalation Paths</h4>
+                      {component.escalations && component.escalations.length > 0 ? (
+                        <div className="space-y-3">
+                          {component.escalations.map((escalation) => {
+                            const escSourceColors = getColorClasses(escalation.sourcePrivilege.color as keyof typeof colorClasses);
+                            const escTargetColors = getColorClasses(escalation.targetPrivilege.color as keyof typeof colorClasses);
+
+                            return (
+                              <div key={escalation.id} className="p-4 bg-gray-800/50 rounded-lg border border-gray-600/30">
+                                {/* Escalation Path */}
+                                <div className="flex items-center gap-3 mb-3">
+                                  <div className={`px-3 py-2 ${escSourceColors.bg} ${escSourceColors.text} rounded-lg border ${escSourceColors.border} text-sm font-medium`}>
+                                    {escalation.sourcePrivilege.level}
+                                  </div>
+                                  <ArrowRightIcon className="w-5 h-5 text-gray-400" />
+                                  <div className={`px-3 py-2 ${escTargetColors.bg} ${escTargetColors.text} rounded-lg border ${escTargetColors.border} text-sm font-medium`}>
+                                    {escalation.targetPrivilege.level}
+                                  </div>
+                                </div>
+
+                                {/* Technique Used */}
+                                <div className="flex items-center justify-between text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <BoltIcon className="w-4 h-4 text-purple-400" />
+                                    <span className="text-gray-300">{escalation.technique.name}</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    {/* CVE count for this escalation */}
+                                    {escalation.cveCount > 0 && (
+                                      <span className="text-xs text-blue-400 px-2 py-1 bg-blue-500/10 rounded border border-blue-500/30">
+                                        {escalation.cveCount} CVE{escalation.cveCount !== 1 ? 's' : ''}
+                                      </span>
+                                    )}
+
+                                    {/* Manage CVEs Button */}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setManagingCvesForEscalation({
+                                          id: escalation.id,
+                                          sourceLevel: escalation.sourcePrivilege.level,
+                                          targetLevel: escalation.targetPrivilege.level,
+                                          techniqueName: escalation.technique.name,
+                                          componentName: component.name,
+                                        });
+                                      }}
+                                      className="px-2 py-1 text-xs bg-blue-500/20 text-blue-300 rounded hover:bg-blue-500/30 transition-colors flex items-center gap-1"
+                                      title="Manage CVEs for this escalation"
+                                    >
+                                      <BugAntIcon className="w-3 h-3" />
+                                      Manage CVEs
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No escalation paths defined</p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Delete Confirmation */}
                 {deleteConfirmId === component.id && (
@@ -340,6 +418,13 @@ export default function TargetComponentsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Click hint */}
+                {!isSelected && !deleteConfirmId && (
+                  <p className={`text-xs ${sourceColors.text} font-medium mt-2`}>
+                    Click to view details
+                  </p>
+                )}
               </div>
             );
           })}
@@ -355,6 +440,24 @@ export default function TargetComponentsPage() {
           </div>
         )}
       </div>
+
+      {/* CVE Manager Dialog */}
+      {managingCvesForEscalation && (
+        <EscalationCveManagerDialog
+          isOpen={true}
+          onClose={() => {
+            setManagingCvesForEscalation(null);
+            fetchComponents(); // Refresh to update CVE counts
+          }}
+          escalationId={managingCvesForEscalation.id}
+          escalationPath={{
+            sourceLevel: managingCvesForEscalation.sourceLevel,
+            targetLevel: managingCvesForEscalation.targetLevel,
+            techniqueName: managingCvesForEscalation.techniqueName,
+            componentName: managingCvesForEscalation.componentName,
+          }}
+        />
+      )}
 
       {/* Create/Edit Dialog */}
       <TargetComponentDialog

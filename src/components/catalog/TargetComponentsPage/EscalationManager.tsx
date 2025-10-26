@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { PlusIcon, TrashIcon, BoltIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, TrashIcon, BoltIcon, EyeIcon, EyeSlashIcon, BugAntIcon } from '@heroicons/react/24/outline';
+import EscalationCveManagerDialog from './EscalationCveManagerDialog';
 
 interface PrivilegeContext {
   id: string;
@@ -48,6 +49,7 @@ export default function EscalationManager({
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [managingCvesForEscalation, setManagingCvesForEscalation] = useState<Escalation | null>(null);
 
   useEffect(() => {
     fetchEscalations();
@@ -337,6 +339,16 @@ export default function EscalationManager({
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                {/* Manage CVEs Button */}
+                <button
+                  type="button"
+                  onClick={() => setManagingCvesForEscalation(escalation)}
+                  className="p-2 bg-blue-500/20 text-blue-300 rounded hover:bg-blue-500/30 transition-colors"
+                  title="Manage CVEs for this escalation"
+                >
+                  <BugAntIcon className="w-4 h-4" />
+                </button>
+
                 {/* Visibility Toggle */}
                 <button
                   type="button"
@@ -371,6 +383,25 @@ export default function EscalationManager({
           ))
         )}
       </div>
+
+      {/* CVE Manager Dialog */}
+      {managingCvesForEscalation && (
+        <EscalationCveManagerDialog
+          isOpen={true}
+          onClose={() => {
+            setManagingCvesForEscalation(null);
+            fetchEscalations(); // Refresh to update CVE counts
+            onUpdate();
+          }}
+          escalationId={managingCvesForEscalation.id}
+          escalationPath={{
+            sourceLevel: managingCvesForEscalation.sourcePrivilege.level,
+            targetLevel: managingCvesForEscalation.targetPrivilege.level,
+            techniqueName: managingCvesForEscalation.technique.name,
+            componentName: componentName,
+          }}
+        />
+      )}
     </div>
   );
 }

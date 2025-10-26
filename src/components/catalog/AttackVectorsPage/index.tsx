@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, BoltIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, BoltIcon, ShieldCheckIcon, ExclamationTriangleIcon, LinkIcon } from '@heroicons/react/24/outline';
 import ExploitationTechniqueDialog, { ExploitationTechniqueFormData } from './ExploitationTechniqueDialog';
 
 interface ExploitationTechnique {
@@ -22,6 +22,7 @@ export default function AttackVectorsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [selectedTechnique, setSelectedTechnique] = useState<ExploitationTechnique | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
   const [editingTechnique, setEditingTechnique] = useState<ExploitationTechnique | null>(null);
@@ -70,25 +71,6 @@ export default function AttackVectorsPage() {
         if (!response.ok) {
           const error = await response.json();
           throw new Error(error.error || 'Failed to create technique');
-        }
-
-        // Link CVEs if any were added during creation
-        if (data.cveIdsToLink && data.cveIdsToLink.length > 0) {
-          const createdTechnique = await response.json();
-
-          // Link each CVE to the newly created technique
-          for (const cveId of data.cveIdsToLink) {
-            try {
-              await fetch(`/api/techniques/${createdTechnique.id}/cves`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cveId }),
-              });
-            } catch (linkError) {
-              console.error(`Failed to link CVE ${cveId}:`, linkError);
-              // Continue linking other CVEs even if one fails
-            }
-          }
         }
       } else if (data.id) {
         const response = await fetch(`/api/techniques/${data.id}`, {
@@ -189,79 +171,168 @@ export default function AttackVectorsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {techniques.map((technique) => (
-              <div key={technique.id} className="space-y-3">
-                {/* Technique card */}
-                {[technique].map((technique) => (
-                  <div
-                    key={technique.id}
-                    className="bg-gray-700/30 rounded-lg p-6 border border-gray-600/50 hover:border-gray-500/50 transition-all"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h4 className="text-lg font-semibold text-white mb-1">{technique.name}</h4>
-                        <p className="text-gray-300 text-sm">{technique.description}</p>
+            {techniques.map((technique) => {
+              const isSelected = selectedTechnique?.id === technique.id;
+
+              return (
+                <div
+                  key={technique.id}
+                  className={`bg-gray-700/30 rounded-lg p-6 border border-gray-600/50 hover:border-gray-500/50 transition-all duration-300 ${
+                    isSelected ? 'ring-2 ring-offset-2 ring-offset-gray-900 ring-purple-500/50' : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <button
+                      onClick={() => setSelectedTechnique(isSelected ? null : technique)}
+                      className="flex-1 text-left"
+                    >
+                      <h4 className="text-lg font-semibold text-white mb-1">{technique.name}</h4>
+                      <p className="text-gray-300 text-sm">{technique.description}</p>
+                    </button>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-2 ml-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(technique);
+                        }}
+                        className="p-2 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 rounded-lg transition-colors"
+                        title="Edit technique"
+                      >
+                        <PencilIcon className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirmId(technique.id);
+                        }}
+                        className="p-2 bg-red-500/20 text-red-300 hover:bg-red-500/30 rounded-lg transition-colors"
+                        title="Delete technique"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Info note - CVEs managed at escalation level */}
+                  <div className="mt-3">
+                    <p className="text-xs text-gray-500">
+                      CVEs are managed at the escalation level in Target Components
+                    </p>
+                  </div>
+
+                  {/* Expanded details */}
+                  {isSelected && (
+                    <div className="mt-6 pt-6 border-t border-gray-600/50 space-y-6">
+                      {/* Detailed Description */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <BoltIcon className="w-5 h-5 text-purple-400" />
+                          <h4 className="text-sm font-semibold text-white">Detailed Description</h4>
+                        </div>
+                        <p className="text-sm text-gray-300 leading-relaxed">{technique.detailedDescription}</p>
                       </div>
-                      <div className="flex items-center gap-2 ml-4">
+
+                      {/* Mitigations */}
+                      {technique.mitigations.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <ShieldCheckIcon className="w-5 h-5 text-green-400" />
+                            <h4 className="text-sm font-semibold text-white">Mitigations</h4>
+                          </div>
+                          <ul className="space-y-2">
+                            {technique.mitigations.map((mitigation, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-sm text-gray-300">
+                                <span className="mt-1.5 w-1.5 h-1.5 bg-green-500/30 rounded-full flex-shrink-0"></span>
+                                <span>{mitigation}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Context-Specific Impact */}
+                      {technique.contextSpecificImpact.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <ExclamationTriangleIcon className="w-5 h-5 text-orange-400" />
+                            <h4 className="text-sm font-semibold text-white">Context-Specific Impact</h4>
+                          </div>
+                          <ul className="space-y-2">
+                            {technique.contextSpecificImpact.map((impact, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-sm text-gray-300">
+                                <span className="mt-1.5 w-1.5 h-1.5 bg-orange-500/30 rounded-full flex-shrink-0"></span>
+                                <span>{impact}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* References */}
+                      {technique.references.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <LinkIcon className="w-5 h-5 text-blue-400" />
+                            <h4 className="text-sm font-semibold text-white">References</h4>
+                          </div>
+                          <ul className="space-y-2">
+                            {technique.references.map((ref, idx) => (
+                              <li key={idx}>
+                                <a
+                                  href={ref}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-blue-400 hover:text-blue-300 hover:underline break-all"
+                                >
+                                  {ref}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Delete confirmation */}
+                  {deleteConfirmId === technique.id && (
+                    <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                      <p className="text-red-300 text-sm mb-3">
+                        Are you sure you want to delete <strong>{technique.name}</strong>?
+                      </p>
+                      <p className="text-yellow-300 text-xs mb-3">
+                        ⚠️ This will also remove any escalation paths using this technique.
+                      </p>
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => handleEdit(technique)}
-                          className="p-2 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 rounded-lg transition-colors"
-                          title="Edit technique & link CVEs"
+                          onClick={() => handleDelete(technique.id)}
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm disabled:opacity-50"
+                          disabled={deletingId === technique.id}
                         >
-                          <PencilIcon className="w-4 h-4" />
+                          {deletingId === technique.id ? 'Deleting...' : 'Delete'}
                         </button>
                         <button
-                          onClick={() => setDeleteConfirmId(technique.id)}
-                          className="p-2 bg-red-500/20 text-red-300 hover:bg-red-500/30 rounded-lg transition-colors"
-                          title="Delete technique"
+                          onClick={() => setDeleteConfirmId(null)}
+                          className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
+                          disabled={deletingId === technique.id}
                         >
-                          <TrashIcon className="w-4 h-4" />
+                          Cancel
                         </button>
                       </div>
                     </div>
+                  )}
 
-                    {/* CVE count */}
-                    {technique.cveCount > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        <span className="text-xs bg-blue-600/30 text-blue-300 px-2 py-1 rounded">
-                          {technique.cveCount} linked CVE{technique.cveCount !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Delete confirmation */}
-                    {deleteConfirmId === technique.id && (
-                      <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-                        <p className="text-red-300 text-sm mb-3">
-                          Are you sure you want to delete <strong>{technique.name}</strong>?
-                        </p>
-                        {technique.cveCount > 0 && (
-                          <p className="text-yellow-300 text-xs mb-3">
-                            ⚠️ This technique is linked to {technique.cveCount} CVE(s). The links will be removed.
-                          </p>
-                        )}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleDelete(technique.id)}
-                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm disabled:opacity-50"
-                            disabled={deletingId === technique.id}
-                          >
-                            {deletingId === technique.id ? 'Deleting...' : 'Delete'}
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirmId(null)}
-                            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
-                            disabled={deletingId === technique.id}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ))}
+                  {/* Click hint */}
+                  {!isSelected && !deleteConfirmId && (
+                    <p className="text-xs text-purple-400 font-medium mt-2">
+                      Click to view details
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

@@ -36,6 +36,7 @@ export interface TargetComponentAPI {
       name: string;
       description: string;
     };
+    cveCount: number;
   }>;
   cveCount: number;
 }
@@ -90,6 +91,11 @@ export async function GET() {
                 description: true,
               },
             },
+            cveLinks: {
+              select: {
+                cveId: true,
+              },
+            },
           },
         },
       },
@@ -123,7 +129,13 @@ export async function GET() {
             color: comp.targetPrivilege.color,
             order: comp.targetPrivilege.order,
           } : null,
-          escalations: comp.escalations,
+          escalations: comp.escalations.map(esc => ({
+            id: esc.id,
+            sourcePrivilege: esc.sourcePrivilege,
+            targetPrivilege: esc.targetPrivilege,
+            technique: esc.technique,
+            cveCount: esc.cveLinks?.length || 0,
+          })),
           cveCount,
         };
       })

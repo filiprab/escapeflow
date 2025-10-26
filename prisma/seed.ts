@@ -567,6 +567,100 @@ async function main() {
     );
   }
 
+  // Link CVEs to specific escalations
+  console.log('\nLinking CVEs to privilege escalations...');
+
+  const escalationCveLinksPath = join(process.cwd(), 'prisma', 'escalation-cve-links-seed.json');
+  let escalationCveLinksData: Array<{
+    componentName: string;
+    techniqueName: string;
+    sourceLevel: string;
+    targetLevel: string;
+    cveIds: string[];
+  }> = [];
+
+  try {
+    const escalationCveLinksRaw = readFileSync(escalationCveLinksPath, 'utf8');
+    escalationCveLinksData = JSON.parse(escalationCveLinksRaw);
+  } catch (error) {
+    console.warn('⚠️  escalation-cve-links-seed.json not found, skipping escalation CVE links');
+  }
+
+  let escalationCveLinksCreated = 0;
+  let escalationCveLinksSkipped = 0;
+
+  for (const link of escalationCveLinksData) {
+    // Find the specific escalation
+    const escalation = await prisma.privilegeEscalation.findFirst({
+      where: {
+        targetComponent: {
+          name: link.componentName,
+        },
+        technique: {
+          name: link.techniqueName,
+        },
+        sourcePrivilege: {
+          level: link.sourceLevel,
+        },
+        targetPrivilege: {
+          level: link.targetLevel,
+        },
+      },
+    });
+
+    if (!escalation) {
+      console.warn(
+        `⚠️  Escalation not found: ${link.componentName} (${link.sourceLevel} → ${link.targetLevel}) via ${link.techniqueName}`
+      );
+      continue;
+    }
+
+    // Link each CVE to the escalation
+    if (link.cveIds && link.cveIds.length > 0) {
+      for (const cveId of link.cveIds) {
+        try {
+          // Check if the CVE exists
+          const cveExists = await prisma.cve.findUnique({
+            where: { cveId },
+          });
+
+          if (!cveExists) {
+            console.warn(
+              `⚠️  CVE ${cveId} not found in database, skipping link for escalation ${link.componentName}`
+            );
+            escalationCveLinksSkipped++;
+            continue;
+          }
+
+          // Create the link
+          await prisma.escalationCveLink.create({
+            data: {
+              escalationId: escalation.id,
+              cveId,
+            },
+          });
+
+          escalationCveLinksCreated++;
+        } catch (error) {
+          // Handle duplicate key errors gracefully
+          if ((error as any).code === 'P2002') {
+            // This CVE is already linked to this escalation
+            continue;
+          }
+          console.error(
+            `Error linking CVE ${cveId} to escalation ${link.componentName}:`,
+            error
+          );
+        }
+      }
+    }
+  }
+
+  console.log(`Successfully linked ${escalationCveLinksCreated} CVEs to privilege escalations!`);
+  if (escalationCveLinksSkipped > 0) {
+    console.log(`⚠️  Skipped ${escalationCveLinksSkipped} escalation CVE links (CVEs not found in database)`);
+  }
+
   // Seed system metadata
   console.log('\nSeeding system metadata...');
 
