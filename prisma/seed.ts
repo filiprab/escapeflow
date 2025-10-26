@@ -401,6 +401,7 @@ async function main() {
     mitigations: string[];
     references: string[];
     contextSpecificImpact: string[];
+    relevantCVEs?: string[];
   }> = JSON.parse(techniquesRaw);
 
   // Clear existing techniques to avoid duplicates on re-seed
@@ -420,6 +421,66 @@ async function main() {
   }
 
   console.log(`Successfully seeded ${techniques.length} exploitation techniques!`);
+
+  // Link CVEs to exploitation techniques
+  console.log('\nLinking CVEs to exploitation techniques...');
+
+  let cveLinksCreated = 0;
+  let cveLinksSkipped = 0;
+
+  for (const technique of techniques) {
+    if (!technique.relevantCVEs || technique.relevantCVEs.length === 0) {
+      continue;
+    }
+
+    // Find the technique in the database
+    const techniqueRecord = await prisma.exploitationTechnique.findFirst({
+      where: { name: technique.name },
+    });
+
+    if (!techniqueRecord) {
+      console.warn(`⚠️  Could not find technique "${technique.name}" in database`);
+      continue;
+    }
+
+    // Link each CVE to the technique
+    for (const cveId of technique.relevantCVEs) {
+      try {
+        // Check if the CVE exists
+        const cveExists = await prisma.cve.findUnique({
+          where: { cveId },
+        });
+
+        if (!cveExists) {
+          console.warn(`⚠️  CVE ${cveId} not found in database, skipping link for technique "${technique.name}"`);
+          cveLinksSkipped++;
+          continue;
+        }
+
+        // Create the link
+        await prisma.techniqueCveLink.create({
+          data: {
+            techniqueId: techniqueRecord.id,
+            cveId,
+          },
+        });
+
+        cveLinksCreated++;
+      } catch (error) {
+        // Handle duplicate key errors gracefully
+        if ((error as any).code === 'P2002') {
+          // This CVE is already linked to this technique
+          continue;
+        }
+        console.error(`Error linking CVE ${cveId} to technique "${technique.name}":`, error);
+      }
+    }
+  }
+
+  console.log(`Successfully linked ${cveLinksCreated} CVEs to exploitation techniques!`);
+  if (cveLinksSkipped > 0) {
+    console.log(`⚠️  Skipped ${cveLinksSkipped} CVE links (CVEs not found in database)`);
+  }
 
   // Seed privilege escalations
   console.log('\nSeeding privilege escalations...');

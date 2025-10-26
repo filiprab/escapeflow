@@ -47,3 +47,4 @@ CLAUDE.md
 /src/generated/prisma
 
 backups/
+*.backup
