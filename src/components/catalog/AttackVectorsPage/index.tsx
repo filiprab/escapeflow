@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, BoltIcon, ShieldCheckIcon, ExclamationTriangleIcon, LinkIcon } from '@heroicons/react/24/outline';
 import ExploitationTechniqueDialog, { ExploitationTechniqueFormData } from './ExploitationTechniqueDialog';
+import { useToast } from '@/context/ToastContext';
 
 interface ExploitationTechnique {
   id: string;
@@ -18,6 +19,7 @@ interface ExploitationTechnique {
 }
 
 export default function AttackVectorsPage() {
+  const { showToast } = useToast();
   const [techniques, setTechniques] = useState<ExploitationTechnique[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +74,7 @@ export default function AttackVectorsPage() {
           const error = await response.json();
           throw new Error(error.error || 'Failed to create technique');
         }
+        showToast('Attack vector created successfully', 'success', 2000);
       } else if (data.id) {
         const response = await fetch(`/api/techniques/${data.id}`, {
           method: 'PUT',
@@ -83,13 +86,14 @@ export default function AttackVectorsPage() {
           const error = await response.json();
           throw new Error(error.error || 'Failed to update technique');
         }
+        showToast('Attack vector updated successfully', 'success', 2000);
       }
 
       setDialogOpen(false);
       setEditingTechnique(null);
       fetchTechniques();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save technique');
+      showToast(err instanceof Error ? err.message : 'Failed to save technique', 'error');
       throw err;
     }
   };
@@ -108,8 +112,9 @@ export default function AttackVectorsPage() {
 
       setDeleteConfirmId(null);
       fetchTechniques();
+      showToast('Attack vector deleted successfully', 'success', 2000);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete technique');
+      showToast(err instanceof Error ? err.message : 'Failed to delete technique', 'error');
     } finally {
       setDeletingId(null);
     }
@@ -181,39 +186,48 @@ export default function AttackVectorsPage() {
                     isSelected ? 'ring-2 ring-offset-2 ring-offset-gray-900 ring-purple-500/50' : ''
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <button
-                      onClick={() => setSelectedTechnique(isSelected ? null : technique)}
-                      className="flex-1 text-left"
-                    >
-                      <h4 className="text-lg font-semibold text-white mb-1">{technique.name}</h4>
-                      <p className="text-gray-300 text-sm">{technique.description}</p>
-                    </button>
+                  <button
+                    onClick={() => setSelectedTechnique(isSelected ? null : technique)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold text-white mb-1">{technique.name}</h4>
+                        <p className="text-gray-300 text-sm">{technique.description}</p>
+                      </div>
 
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-2 ml-4">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(technique);
-                        }}
-                        className="p-2 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 rounded-lg transition-colors"
-                        title="Edit technique"
-                      >
-                        <PencilIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteConfirmId(technique.id);
-                        }}
-                        className="p-2 bg-red-500/20 text-red-300 hover:bg-red-500/30 rounded-lg transition-colors"
-                        title="Delete technique"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2 ml-4">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(technique);
+                          }}
+                          className="p-2 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 rounded-lg transition-colors"
+                          title="Edit technique"
+                        >
+                          <PencilIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirmId(technique.id);
+                          }}
+                          className="p-2 bg-red-500/20 text-red-300 hover:bg-red-500/30 rounded-lg transition-colors"
+                          title="Delete technique"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
+
+                    {/* Click hint */}
+                    {!isSelected && !deleteConfirmId && (
+                      <p className="text-xs text-purple-400 font-medium mt-2">
+                        Click to view details
+                      </p>
+                    )}
+                  </button>
 
                   {/* Info note - CVEs managed at escalation level */}
                   <div className="mt-3">
@@ -322,13 +336,6 @@ export default function AttackVectorsPage() {
                         </button>
                       </div>
                     </div>
-                  )}
-
-                  {/* Click hint */}
-                  {!isSelected && !deleteConfirmId && (
-                    <p className="text-xs text-purple-400 font-medium mt-2">
-                      Click to view details
-                    </p>
                   )}
                 </div>
               );

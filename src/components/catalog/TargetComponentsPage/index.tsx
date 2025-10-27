@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { CubeIcon, ArrowRightIcon, BugAntIcon, PlusIcon, PencilIcon, TrashIcon, BoltIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import TargetComponentDialog, { TargetComponentFormData } from './TargetComponentDialog';
-import EscalationCveManagerDialog from './EscalationCveManagerDialog';
+import { useToast } from '@/context/ToastContext';
 
 interface TargetComponent {
   id: string;
@@ -82,7 +82,24 @@ interface PrivilegeContext {
   order: number;
 }
 
+interface CVE {
+  cveId: string;
+  datePublished: string;
+  dateLastModified: string;
+  descriptions: Array<{
+    lang: string;
+    description: string;
+  }>;
+  metrics: Array<{
+    cvssV3?: {
+      baseScore: number;
+      baseSeverity: string;
+    };
+  }>;
+}
+
 export default function TargetComponentsPage() {
+  const { showToast } = useToast();
   const [components, setComponents] = useState<TargetComponent[]>([]);
   const [privileges, setPrivileges] = useState<PrivilegeContext[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<TargetComponent | null>(null);
@@ -93,13 +110,8 @@ export default function TargetComponentsPage() {
   const [editingComponent, setEditingComponent] = useState<TargetComponent | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [managingCvesForEscalation, setManagingCvesForEscalation] = useState<{
-    id: string;
-    sourceLevel: string;
-    targetLevel: string;
-    techniqueName: string;
-    componentName: string;
-  } | null>(null);
+  const [escalationCves, setEscalationCves] = useState<Record<string, CVE[]>>({});
+  const [loadingCves, setLoadingCves] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchComponents();
@@ -136,6 +148,35 @@ export default function TargetComponentsPage() {
       setPrivileges(data.privileges);
     } catch (err) {
       console.error('Error fetching privileges:', err);
+    }
+  };
+
+  const fetchCvesForEscalation = async (escalationId: string) => {
+    if (escalationCves[escalationId]) {
+      return; // Already fetched
+    }
+
+    try {
+      setLoadingCves(prev => ({ ...prev, [escalationId]: true }));
+      const response = await fetch(`/api/escalations/${escalationId}/cves`);
+      if (!response.ok) throw new Error('Failed to fetch CVEs');
+      const data = await response.json();
+      setEscalationCves(prev => ({ ...prev, [escalationId]: data.cves || [] }));
+    } catch (err) {
+      console.error('Error fetching CVEs:', err);
+      setEscalationCves(prev => ({ ...prev, [escalationId]: [] }));
+    } finally {
+      setLoadingCves(prev => ({ ...prev, [escalationId]: false }));
+    }
+  };
+
+  const getCvssColor = (severity: string) => {
+    switch (severity?.toUpperCase()) {
+      case 'CRITICAL': return 'text-red-400 bg-red-500/20 border-red-500/30';
+      case 'HIGH': return 'text-orange-400 bg-orange-500/20 border-orange-500/30';
+      case 'MEDIUM': return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30';
+      case 'LOW': return 'text-green-400 bg-green-500/20 border-green-500/30';
+      default: return 'text-gray-400 bg-gray-500/20 border-gray-500/30';
     }
   };
 
@@ -186,8 +227,9 @@ export default function TargetComponentsPage() {
 
       await fetchComponents();
       setDeleteConfirmId(null);
+      showToast('Target component deleted successfully', 'success', 2000);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete target component');
+      showToast(err instanceof Error ? err.message : 'Failed to delete target component', 'error');
     } finally {
       setDeletingId(null);
     }
@@ -219,6 +261,22 @@ export default function TargetComponentsPage() {
   }
 
   const getColorClasses = (color: keyof typeof colorClasses) => colorClasses[color] || colorClasses.gray;
+
+  const handleComponentSelect = async (component: TargetComponent) => {
+    const isSelected = selectedComponent?.id === component.id;
+
+    if (isSelected) {
+      setSelectedComponent(null);
+    } else {
+      setSelectedComponent(component);
+      // Fetch CVEs for all escalations when component is expanded
+      if (component.escalations) {
+        component.escalations.forEach(escalation => {
+          fetchCvesForEscalation(escalation.id);
+        });
+      }
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -253,70 +311,79 @@ export default function TargetComponentsPage() {
                   isSelected ? 'ring-2 ring-offset-2 ring-offset-gray-900 ' + sourceColors.border : ''
                 }`}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <button
-                    onClick={() => setSelectedComponent(isSelected ? null : component)}
-                    className="flex-1 text-left"
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <CubeIcon className={`w-6 h-6 ${sourceColors.text}`} />
-                      <h3 className="text-xl font-bold text-white">{component.name}</h3>
-                    </div>
-                    <p className="text-sm text-gray-400 mb-3">{component.description}</p>
-
-                    {/* Escalations Count */}
-                    {component.escalations && component.escalations.length > 0 && (
-                      <div className="mb-2">
-                        <span className="text-xs text-gray-400">
-                          {component.escalations.length} escalation path{component.escalations.length > 1 ? 's' : ''} defined
-                        </span>
+                <button
+                  onClick={() => handleComponentSelect(component)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <CubeIcon className={`w-6 h-6 ${sourceColors.text}`} />
+                        <h3 className="text-xl font-bold text-white">{component.name}</h3>
                       </div>
-                    )}
-                  </button>
+                      <p className="text-sm text-gray-400 mb-3">{component.description}</p>
 
-                  {/* Actions */}
-                  <div className="flex items-start gap-2 ml-4">
-                    {/* CVE Count Badge */}
-                    {component.cveCount > 0 ? (
-                      <Link
-                        href={`/catalog?component=${encodeURIComponent(component.name)}`}
-                        className={`px-4 py-2 ${sourceColors.bg} ${sourceColors.text} text-sm font-medium rounded-lg border ${sourceColors.border} hover:bg-opacity-80 transition-all flex items-center gap-2`}
-                        onClick={(e) => e.stopPropagation()}
+                      {/* Escalations Count */}
+                      {component.escalations && component.escalations.length > 0 && (
+                        <div className="mb-2">
+                          <span className="text-xs text-gray-400">
+                            {component.escalations.length} escalation path{component.escalations.length > 1 ? 's' : ''} defined
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-start gap-2 ml-4">
+                      {/* CVE Count Badge */}
+                      {component.cveCount > 0 ? (
+                        <Link
+                          href={`/catalog?component=${encodeURIComponent(component.name)}`}
+                          className={`px-4 py-2 ${sourceColors.bg} ${sourceColors.text} text-sm font-medium rounded-lg border ${sourceColors.border} hover:bg-opacity-80 transition-all flex items-center gap-2`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <BugAntIcon className="w-5 h-5" />
+                          <span>{component.cveCount} CVEs</span>
+                        </Link>
+                      ) : (
+                        <span className="px-4 py-2 bg-gray-600/20 text-gray-500 text-sm rounded-lg border border-gray-600/30">
+                          No CVEs
+                        </span>
+                      )}
+
+                      {/* Edit Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(component);
+                        }}
+                        className="p-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-all"
+                        title="Edit component"
                       >
-                        <BugAntIcon className="w-5 h-5" />
-                        <span>{component.cveCount} CVEs</span>
-                      </Link>
-                    ) : (
-                      <span className="px-4 py-2 bg-gray-600/20 text-gray-500 text-sm rounded-lg border border-gray-600/30">
-                        No CVEs
-                      </span>
-                    )}
+                        <PencilIcon className="w-4 h-4" />
+                      </button>
 
-                    {/* Edit Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(component);
-                      }}
-                      className="p-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-all"
-                      title="Edit component"
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                    </button>
-
-                    {/* Delete Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteConfirmId(component.id);
-                      }}
-                      className="p-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-all"
-                      title="Delete component"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
+                      {/* Delete Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirmId(component.id);
+                        }}
+                        className="p-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-all"
+                        title="Delete component"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
+
+                  {/* Click hint */}
+                  {!isSelected && !deleteConfirmId && (
+                    <p className={`text-xs ${sourceColors.text} font-medium mt-2`}>
+                      Click to view details
+                    </p>
+                  )}
+                </button>
 
                 {/* Expanded details */}
                 {isSelected && (
@@ -344,39 +411,62 @@ export default function TargetComponentsPage() {
                                 </div>
 
                                 {/* Technique Used */}
-                                <div className="flex items-center justify-between text-sm">
-                                  <div className="flex items-center gap-2">
+                                <div className="mb-3">
+                                  <div className="flex items-center gap-2 text-sm">
                                     <BoltIcon className="w-4 h-4 text-purple-400" />
                                     <span className="text-gray-300">{escalation.technique.name}</span>
                                   </div>
+                                </div>
 
-                                  <div className="flex items-center gap-2">
-                                    {/* CVE count for this escalation */}
-                                    {escalation.cveCount > 0 && (
-                                      <span className="text-xs text-blue-400 px-2 py-1 bg-blue-500/10 rounded border border-blue-500/30">
-                                        {escalation.cveCount} CVE{escalation.cveCount !== 1 ? 's' : ''}
-                                      </span>
-                                    )}
-
-                                    {/* Manage CVEs Button */}
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setManagingCvesForEscalation({
-                                          id: escalation.id,
-                                          sourceLevel: escalation.sourcePrivilege.level,
-                                          targetLevel: escalation.targetPrivilege.level,
-                                          techniqueName: escalation.technique.name,
-                                          componentName: component.name,
-                                        });
-                                      }}
-                                      className="px-2 py-1 text-xs bg-blue-500/20 text-blue-300 rounded hover:bg-blue-500/30 transition-colors flex items-center gap-1"
-                                      title="Manage CVEs for this escalation"
-                                    >
-                                      <BugAntIcon className="w-3 h-3" />
-                                      Manage CVEs
-                                    </button>
+                                {/* Inline CVE List */}
+                                <div className="mt-4 pt-3 border-t border-gray-600/30">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <BugAntIcon className="w-4 h-4 text-blue-400" />
+                                    <h5 className="text-xs font-semibold text-white">
+                                      CVEs ({escalation.cveCount || 0})
+                                    </h5>
                                   </div>
+
+                                  {loadingCves[escalation.id] ? (
+                                    <div className="text-center py-2">
+                                      <span className="text-xs text-gray-500">Loading CVEs...</span>
+                                    </div>
+                                  ) : escalationCves[escalation.id]?.length > 0 ? (
+                                    <div className="space-y-2">
+                                      {escalationCves[escalation.id].map((cve) => {
+                                        const description = cve.descriptions.find(d => d.lang === 'en')?.description || 'No description';
+                                        const metric = cve.metrics[0];
+                                        const cvssScore = metric?.cvssV3?.baseScore;
+                                        const severity = metric?.cvssV3?.baseSeverity;
+
+                                        return (
+                                          <div
+                                            key={cve.cveId}
+                                            className="flex items-start justify-between p-3 bg-gray-700/50 rounded border border-gray-600/30"
+                                          >
+                                            <div className="flex-1">
+                                              <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-xs font-semibold text-white">{cve.cveId}</span>
+                                                {cvssScore && severity && (
+                                                  <span className={`px-2 py-0.5 text-xs font-medium rounded border ${getCvssColor(severity)}`}>
+                                                    {severity} {cvssScore}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <p className="text-xs text-gray-400 line-clamp-2">{description}</p>
+                                              <p className="text-xs text-gray-500 mt-1">
+                                                Published: {new Date(cve.datePublished).toLocaleDateString()}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <div className="text-center py-2 bg-gray-700/30 rounded border border-gray-600/30">
+                                      <p className="text-xs text-gray-500">No CVEs linked to this escalation</p>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             );
@@ -418,13 +508,6 @@ export default function TargetComponentsPage() {
                     </div>
                   </div>
                 )}
-
-                {/* Click hint */}
-                {!isSelected && !deleteConfirmId && (
-                  <p className={`text-xs ${sourceColors.text} font-medium mt-2`}>
-                    Click to view details
-                  </p>
-                )}
               </div>
             );
           })}
@@ -440,24 +523,6 @@ export default function TargetComponentsPage() {
           </div>
         )}
       </div>
-
-      {/* CVE Manager Dialog */}
-      {managingCvesForEscalation && (
-        <EscalationCveManagerDialog
-          isOpen={true}
-          onClose={() => {
-            setManagingCvesForEscalation(null);
-            fetchComponents(); // Refresh to update CVE counts
-          }}
-          escalationId={managingCvesForEscalation.id}
-          escalationPath={{
-            sourceLevel: managingCvesForEscalation.sourceLevel,
-            targetLevel: managingCvesForEscalation.targetLevel,
-            techniqueName: managingCvesForEscalation.techniqueName,
-            componentName: managingCvesForEscalation.componentName,
-          }}
-        />
-      )}
 
       {/* Create/Edit Dialog */}
       <TargetComponentDialog

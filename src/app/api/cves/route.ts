@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `CVE ${cveId} created successfully`,
+      message: `${cveId} created successfully`,
       cve: createdCVE,
     }, { status: 201 });
 

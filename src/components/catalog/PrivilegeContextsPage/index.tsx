@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ShieldCheckIcon, LockClosedIcon, CommandLineIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import PrivilegeContextDialog, { PrivilegeContextFormData } from './PrivilegeContextDialog';
+import { useToast } from '@/context/ToastContext';
 
 interface PrivilegeContext {
   id: string;
@@ -55,6 +56,7 @@ const colorClasses = {
 };
 
 export default function PrivilegeContextsPage() {
+  const { showToast } = useToast();
   const [privileges, setPrivileges] = useState<PrivilegeContext[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,8 +136,9 @@ export default function PrivilegeContextsPage() {
 
       await fetchPrivileges();
       setDeleteConfirmId(null);
+      showToast('Privilege context deleted successfully', 'success', 2000);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete privilege context');
+      showToast(err instanceof Error ? err.message : 'Failed to delete privilege context', 'error');
     }
   };
 
@@ -198,53 +201,57 @@ export default function PrivilegeContextsPage() {
                   isSelected ? 'ring-2 ring-offset-2 ring-offset-gray-900 ' + colors.border : ''
                 }`}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <button
-                    onClick={() => setSelectedPrivilege(isSelected ? null : privilege)}
-                    className="flex-1 text-left"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className={`text-xl font-bold ${colors.text}`}>{privilege.level}</h3>
-                        <p className="text-sm text-gray-400 mt-1">
-                          {privilege.description || 'Security boundary in browser sandbox escape chain'}
-                        </p>
-                      </div>
-                      <div className="flex gap-3">
-                        <span className={`px-3 py-1 ${colors.bg} ${colors.text} text-xs font-medium rounded-full border ${colors.border}`}>
-                          {privilege.capabilities.length} Capabilities
-                        </span>
-                        <span className={`px-3 py-1 ${colors.bg} ${colors.text} text-xs font-medium rounded-full border ${colors.border}`}>
-                          {privilege.restrictions.length} Restrictions
-                        </span>
-                      </div>
+                <button
+                  onClick={() => setSelectedPrivilege(isSelected ? null : privilege)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className={`text-xl font-bold ${colors.text}`}>{privilege.level}</h3>
+                      <p className="text-sm text-gray-400 mt-1">
+                        {privilege.description || 'Security boundary in browser sandbox escape chain'}
+                      </p>
                     </div>
-                  </button>
+                    <div className="flex gap-3 ml-4">
+                      <span className={`px-3 py-1 ${colors.bg} ${colors.text} text-xs font-medium rounded-full border ${colors.border}`}>
+                        {privilege.capabilities.length} Capabilities
+                      </span>
+                      <span className={`px-3 py-1 ${colors.bg} ${colors.text} text-xs font-medium rounded-full border ${colors.border}`}>
+                        {privilege.restrictions.length} Restrictions
+                      </span>
+                    </div>
 
-                  {/* Action buttons */}
-                  <div className="flex gap-2 ml-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(privilege);
-                      }}
-                      className="p-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-all"
-                      title="Edit privilege context"
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteConfirmId(privilege.id);
-                      }}
-                      className="p-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-all"
-                      title="Delete privilege context"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
+                    {/* Action buttons */}
+                    <div className="flex gap-2 ml-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(privilege);
+                        }}
+                        className="p-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-all"
+                        title="Edit privilege context"
+                      >
+                        <PencilIcon className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirmId(privilege.id);
+                        }}
+                        className="p-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-all"
+                        title="Delete privilege context"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
+
+                  {!isSelected && !deleteConfirmId && (
+                    <p className={`text-xs ${colors.text} font-medium mt-2`}>
+                      Click to view details
+                    </p>
+                  )}
+                </button>
 
                 {isSelected && (
                   <div className="mt-6 pt-6 border-t border-gray-600/50 space-y-6">
@@ -323,12 +330,6 @@ export default function PrivilegeContextsPage() {
                       </button>
                     </div>
                   </div>
-                )}
-
-                {!isSelected && !deleteConfirmId && (
-                  <p className={`text-xs ${colors.text} font-medium mt-2`}>
-                    Click to view details
-                  </p>
                 )}
               </div>
             );

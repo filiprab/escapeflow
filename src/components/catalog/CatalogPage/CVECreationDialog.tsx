@@ -6,6 +6,7 @@ import Dialog, { DialogFooter } from '@/components/ui/Dialog';
 import { fetchFromNVD } from '@/lib/api/external-cve';
 import type { ExternalCVEData } from '@/types/cve';
 import { detectTargetComponent } from '@/lib/utils/component-mapping';
+import { useToast } from '@/context/ToastContext';
 
 // Import our new components
 import FetchStep from '@/components/catalog/CVEDetail/FetchStep';
@@ -34,6 +35,7 @@ interface CVEFormData {
 
 export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECreationDialogProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [step, setStep] = useState<CreationStep>('fetch');
   const [cveId, setCveId] = useState('');
   const [formData, setFormData] = useState<CVEFormData>({
@@ -42,11 +44,10 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
     labels: { operatingSystems: [], targetComponent: null },
     proofOfConcepts: [],
   });
-  
+
   const [prefetchLoading, setPrefetchLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [prefetched, setPrefetched] = useState(false);
 
   const allowedOS = ['Android', 'iOS', 'Windows', 'Linux', 'macOS'];
@@ -63,7 +64,6 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
     setPrefetchLoading(false);
     setLoading(false);
     setError(null);
-    setSuccess(null);
     setPrefetched(false);
     onClose();
   };
@@ -105,7 +105,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
 
     } catch (error: unknown) {
       console.error('Failed to fetch CVE data:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch CVE data from NVD');
+      showToast(error instanceof Error ? error.message : 'Failed to fetch CVE data from NVD', 'error');
     } finally {
       setPrefetchLoading(false);
     }
@@ -178,7 +178,6 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
 
     setLoading(true);
     setError(null);
-    setSuccess(null);
 
     try {
       const requestBody: Record<string, unknown> = {
@@ -205,9 +204,9 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
         throw new Error(result.error || 'Failed to create CVE');
       }
 
-      setSuccess(`CVE ${cveId.trim().toUpperCase()} created successfully!`);
+      showToast(`${cveId.trim().toUpperCase()} created successfully!`, 'success', 2000);
       onSuccess();
-      
+
       // Redirect to the new CVE after a short delay
       setTimeout(() => {
         handleClose();
@@ -215,7 +214,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
       }, 2000);
 
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Failed to create CVE');
+      showToast(error instanceof Error ? error.message : 'Failed to create CVE', 'error');
     } finally {
       setLoading(false);
     }
@@ -281,57 +280,31 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
       title="Add New CVE"
       maxHeight="90vh"
       footer={
-        <DialogFooter>
-          {step === 'fetch' ? (
-            <>
-              <button
-                onClick={handleClose}
-                className="px-6 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 border border-gray-600/50 rounded-lg hover:bg-gray-600/50 hover:border-gray-500/50 transition-all duration-200"
-                disabled={prefetchLoading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePrefetch}
-                disabled={prefetchLoading || !cveId.trim()}
-                className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 border border-transparent rounded-lg hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
-              >
-                {prefetchLoading ? (
-                  <>
-                    <div className="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Fetching...
-                  </>
-                ) : (
-                  'Fetch CVE Data'
-                )}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={handleStartOver}
-                className="px-6 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 border border-gray-600/50 rounded-lg hover:bg-gray-600/50 hover:border-gray-500/50 transition-all duration-200"
-                disabled={loading}
-              >
-                Start Over
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !cveId.trim() || !formData.descriptions[0]?.description.trim()}
-                className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 border border-transparent rounded-lg hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
-              >
-                {loading ? (
-                  <>
-                    <div className="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Create CVE'
-                )}
-              </button>
-            </>
-          )}
-        </DialogFooter>
+        step === 'edit' ? (
+          <DialogFooter>
+            <button
+              onClick={handleStartOver}
+              className="px-6 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 border border-gray-600/50 rounded-lg hover:bg-gray-600/50 hover:border-gray-500/50 transition-all duration-200"
+              disabled={loading}
+            >
+              Start Over
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !cveId.trim() || !formData.descriptions[0]?.description.trim()}
+              className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 border border-transparent rounded-lg hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
+            >
+              {loading ? (
+                <>
+                  <div className="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create CVE'
+              )}
+            </button>
+          </DialogFooter>
+        ) : undefined
       }
     >
       <div className="p-6 space-y-6">
@@ -366,7 +339,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
           />
         )}
 
-        <ErrorSuccessMessages error={error} success={success} />
+        {error && <ErrorSuccessMessages error={error} success={null} />}
       </div>
     </Dialog>
   );
