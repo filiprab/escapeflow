@@ -102,21 +102,21 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // Check if any target components reference this privilege context
-    const componentsUsingAsSource = await prisma.targetComponent.count({
+    // Check if any escalations reference this privilege context
+    const escalationsUsingAsSource = await prisma.privilegeEscalation.count({
       where: { sourcePrivilegeId: id },
     });
 
-    const componentsUsingAsTarget = await prisma.targetComponent.count({
+    const escalationsUsingAsTarget = await prisma.privilegeEscalation.count({
       where: { targetPrivilegeId: id },
     });
 
-    const totalUsage = componentsUsingAsSource + componentsUsingAsTarget;
+    const totalUsage = escalationsUsingAsSource + escalationsUsingAsTarget;
 
     if (totalUsage > 0) {
       return NextResponse.json(
         {
-          error: `Cannot delete privilege context: ${totalUsage} target component(s) are using it`,
+          error: `Cannot delete privilege context: ${totalUsage} escalation(s) are using it`,
           usageCount: totalUsage,
         },
         { status: 409 }

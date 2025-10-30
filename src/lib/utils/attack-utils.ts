@@ -8,6 +8,12 @@ export const createAttackVector = (
   component: TargetComponent,
   technique: ExploitationTechnique
 ): AttackVector => {
+  // Find the matching escalation from the component's escalations
+  // Match by componentId and techniqueId - there should be only one match per component+technique pair
+  const matchingEscalation = component.escalations?.find(
+    (esc) => esc.componentId === component.id && esc.technique.id === technique.id
+  );
+
   return {
     id: `${component.id}-${technique.id}`,
     name: `${component.name}: ${technique.name}`,
@@ -22,5 +28,6 @@ export const createAttackVector = (
     contextSpecificImpact: technique.contextSpecificImpact,
     componentId: component.id,
     techniqueId: technique.id,
+    escalationId: matchingEscalation?.id,
   };
 };

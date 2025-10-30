@@ -196,6 +196,36 @@ function transformEscalationsToComponents(
       sourcePrivilegeInfo,
       targetPrivilegeInfo,
       techniques,
+      escalations: entry.escalations.map(esc => ({
+        id: esc.id,
+        sourcePrivilege: esc.sourcePrivilege.level,
+        targetPrivilege: esc.targetPrivilege.level,
+        sourcePrivilegeInfo: {
+          level: esc.sourcePrivilege.level,
+          capabilities: esc.sourcePrivilege.capabilities,
+          restrictions: esc.sourcePrivilege.restrictions,
+          examples: esc.sourcePrivilege.examples,
+        },
+        targetPrivilegeInfo: {
+          level: esc.targetPrivilege.level,
+          capabilities: esc.targetPrivilege.capabilities,
+          restrictions: esc.targetPrivilege.restrictions,
+          examples: esc.targetPrivilege.examples,
+        },
+        technique: {
+          id: esc.technique.id,
+          name: esc.technique.name,
+          description: esc.technique.description,
+          detailedDescription: esc.technique.detailedDescription,
+          cves: [],
+          pocs: [],
+          mitigations: esc.technique.mitigations,
+          references: esc.technique.references,
+          contextSpecificImpact: esc.technique.contextSpecificImpact,
+        },
+        componentId: esc.targetComponent.id,
+        componentName: esc.targetComponent.name,
+      })),
     });
   }
 

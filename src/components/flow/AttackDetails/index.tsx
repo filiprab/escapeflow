@@ -33,7 +33,7 @@ export default function AttackDetails({ attack }: AttackDetailsProps) {
         impacts={contextSpecificImpact}
       />
 
-      <CVESection cves={attack.cves || []} />
+      <CVESection escalationId={attack.escalationId} />
 
       <PoCSection pocs={attack.pocs || []} />
 

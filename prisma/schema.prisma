@@ -136,11 +136,6 @@ model PrivilegeContext {
   createdAt    DateTime          @default(now()) @map("created_at")
   updatedAt    DateTime          @updatedAt @map("updated_at")
 
-  // Relations - components that use this as source privilege
-  sourceComponents TargetComponent[] @relation("SourcePrivilege")
-  // Relations - components that use this as target privilege
-  targetComponents TargetComponent[] @relation("TargetPrivilege")
-
   // Relations - escalations that use this as source/target
   sourceEscalations PrivilegeEscalation[] @relation("EscalationSource")
   targetEscalations PrivilegeEscalation[] @relation("EscalationTarget")
@@ -150,21 +145,15 @@ model PrivilegeContext {
 }
 
 model TargetComponent {
-  id                String                  @id @default(cuid())
-  name              String
-  description       String
-  sourcePrivilegeId String?                 @map("source_privilege_id")
-  targetPrivilegeId String?                 @map("target_privilege_id")
-  createdAt         DateTime                @default(now()) @map("created_at")
-  updatedAt         DateTime                @updatedAt @map("updated_at")
+  id          String                @id @default(cuid())
+  name        String
+  description String
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
 
   // Relations
-  sourcePrivilege   PrivilegeContext?       @relation("SourcePrivilege", fields: [sourcePrivilegeId], references: [id])
-  targetPrivilege   PrivilegeContext?       @relation("TargetPrivilege", fields: [targetPrivilegeId], references: [id])
-  escalations       PrivilegeEscalation[]
+  escalations PrivilegeEscalation[]
 
-  @@index([sourcePrivilegeId])
-  @@index([targetPrivilegeId])
   @@map("target_components")
 }
 

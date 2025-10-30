@@ -339,55 +339,27 @@ async function main() {
   const targetComponents: Array<{
     name: string;
     description: string;
-    sourcePrivilegeLevel: string;
-    targetPrivilegeLevel: string;
   }> = JSON.parse(targetComponentsRaw);
 
   // First, clear existing target components to avoid duplicates on re-seed
   await prisma.targetComponent.deleteMany({});
 
   for (const component of targetComponents) {
-    // Find the privilege context IDs by level
-    const sourcePrivilege = await prisma.privilegeContext.findUnique({
-      where: { level: component.sourcePrivilegeLevel },
-    });
-    const targetPrivilege = await prisma.privilegeContext.findUnique({
-      where: { level: component.targetPrivilegeLevel },
-    });
-
-    if (!sourcePrivilege || !targetPrivilege) {
-      console.warn(`⚠️  Warning: Could not find privileges for component "${component.name}"`);
-      console.warn(`   Source: ${component.sourcePrivilegeLevel}, Target: ${component.targetPrivilegeLevel}`);
-      continue;
-    }
-
     await prisma.targetComponent.create({
       data: {
         name: component.name,
         description: component.description,
-        sourcePrivilegeId: sourcePrivilege.id,
-        targetPrivilegeId: targetPrivilege.id,
       },
     });
   }
 
   console.log(`Successfully seeded ${targetComponents.length} target components!`);
 
-  // Print summary of components by privilege context
+  // Print summary of components
   console.log('\nTarget Components Summary:');
-  const componentsByPrivilege = new Map<string, string[]>();
-  for (const component of targetComponents) {
-    const key = `${component.sourcePrivilegeLevel} → ${component.targetPrivilegeLevel}`;
-    if (!componentsByPrivilege.has(key)) {
-      componentsByPrivilege.set(key, []);
-    }
-    componentsByPrivilege.get(key)!.push(component.name);
-  }
-
-  for (const [escalation, components] of componentsByPrivilege.entries()) {
-    console.log(`  ${escalation}:`);
-    components.forEach(name => console.log(`    - ${name}`));
-  }
+  targetComponents.forEach(component => {
+    console.log(`  - ${component.name}: ${component.description}`);
+  });
 
   // Seed exploitation techniques
   console.log('\nSeeding exploitation techniques...');
@@ -482,140 +454,72 @@ async function main() {
     console.log(`⚠️  Skipped ${cveLinksSkipped} CVE links (CVEs not found in database)`);
   }
 
-  // Seed privilege escalations
-  console.log('\nSeeding privilege escalations...');
+  // Seed privilege escalations and link CVEs
+  console.log('\nSeeding privilege escalations from escalation-cve-links...');
 
-  const escalationsPath = join(process.cwd(), 'prisma', 'privilege-escalations-seed.json');
-  const escalationsRaw = readFileSync(escalationsPath, 'utf8');
-  const escalationsData: Array<{
-    sourcePrivilegeLevel: string;
-    targetPrivilegeLevel: string;
+  const escalationCveLinksPath = join(process.cwd(), 'prisma', 'escalation-cve-links-seed.json');
+  const escalationCveLinksRaw = readFileSync(escalationCveLinksPath, 'utf8');
+  const escalationCveLinksData: Array<{
     componentName: string;
     techniqueName: string;
-    visibleInVisualization?: boolean;
-  }> = JSON.parse(escalationsRaw);
+    sourceLevel: string;
+    targetLevel: string;
+    visibleInVisualization: boolean;
+    cveIds: string[];
+  }> = JSON.parse(escalationCveLinksRaw);
 
   // Clear existing escalations to avoid duplicates on re-seed
   await prisma.privilegeEscalation.deleteMany({});
 
   let escalationsCreated = 0;
-  for (const escalation of escalationsData) {
+  let escalationCveLinksCreated = 0;
+  let escalationCveLinksSkipped = 0;
+
+  for (const link of escalationCveLinksData) {
     // Find the IDs we need
     const sourcePrivilege = await prisma.privilegeContext.findFirst({
-      where: { level: escalation.sourcePrivilegeLevel },
+      where: { level: link.sourceLevel },
     });
     const targetPrivilege = await prisma.privilegeContext.findFirst({
-      where: { level: escalation.targetPrivilegeLevel },
+      where: { level: link.targetLevel },
     });
     const component = await prisma.targetComponent.findFirst({
-      where: { name: escalation.componentName },
+      where: { name: link.componentName },
     });
     const technique = await prisma.exploitationTechnique.findFirst({
-      where: { name: escalation.techniqueName },
+      where: { name: link.techniqueName },
     });
 
     if (!sourcePrivilege) {
-      console.warn(`⚠️  Skipping escalation: source privilege "${escalation.sourcePrivilegeLevel}" not found`);
+      console.warn(`⚠️  Skipping escalation: source privilege "${link.sourceLevel}" not found`);
       continue;
     }
     if (!targetPrivilege) {
-      console.warn(`⚠️  Skipping escalation: target privilege "${escalation.targetPrivilegeLevel}" not found`);
+      console.warn(`⚠️  Skipping escalation: target privilege "${link.targetLevel}" not found`);
       continue;
     }
     if (!component) {
-      console.warn(`⚠️  Skipping escalation: component "${escalation.componentName}" not found`);
+      console.warn(`⚠️  Skipping escalation: component "${link.componentName}" not found`);
       continue;
     }
     if (!technique) {
-      console.warn(`⚠️  Skipping escalation: technique "${escalation.techniqueName}" not found`);
+      console.warn(`⚠️  Skipping escalation: technique "${link.techniqueName}" not found`);
       continue;
     }
 
-    await prisma.privilegeEscalation.create({
+    // Create the privilege escalation
+    const escalation = await prisma.privilegeEscalation.create({
       data: {
         sourcePrivilegeId: sourcePrivilege.id,
         targetPrivilegeId: targetPrivilege.id,
         techniqueId: technique.id,
         targetComponentId: component.id,
-        visibleInVisualization: escalation.visibleInVisualization ?? true,
+        visibleInVisualization: link.visibleInVisualization,
       },
     });
     escalationsCreated++;
-  }
 
-  console.log(`Successfully seeded ${escalationsCreated} privilege escalations!`);
-
-  // Print escalation summary
-  console.log('\nPrivilege Escalations Summary:');
-  const escalationsByPath = new Map<string, Array<{ component: string; technique: string }>>();
-
-  for (const escalation of escalationsData) {
-    const key = `${escalation.sourcePrivilegeLevel} → ${escalation.targetPrivilegeLevel}`;
-    if (!escalationsByPath.has(key)) {
-      escalationsByPath.set(key, []);
-    }
-    escalationsByPath.get(key)!.push({
-      component: escalation.componentName,
-      technique: escalation.techniqueName,
-    });
-  }
-
-  for (const [path, escalations] of escalationsByPath.entries()) {
-    console.log(`  ${path}:`);
-    escalations.forEach(({ component, technique }) =>
-      console.log(`    - ${component} via ${technique}`)
-    );
-  }
-
-  // Link CVEs to specific escalations
-  console.log('\nLinking CVEs to privilege escalations...');
-
-  const escalationCveLinksPath = join(process.cwd(), 'prisma', 'escalation-cve-links-seed.json');
-  let escalationCveLinksData: Array<{
-    componentName: string;
-    techniqueName: string;
-    sourceLevel: string;
-    targetLevel: string;
-    cveIds: string[];
-  }> = [];
-
-  try {
-    const escalationCveLinksRaw = readFileSync(escalationCveLinksPath, 'utf8');
-    escalationCveLinksData = JSON.parse(escalationCveLinksRaw);
-  } catch (error) {
-    console.warn('⚠️  escalation-cve-links-seed.json not found, skipping escalation CVE links');
-  }
-
-  let escalationCveLinksCreated = 0;
-  let escalationCveLinksSkipped = 0;
-
-  for (const link of escalationCveLinksData) {
-    // Find the specific escalation
-    const escalation = await prisma.privilegeEscalation.findFirst({
-      where: {
-        targetComponent: {
-          name: link.componentName,
-        },
-        technique: {
-          name: link.techniqueName,
-        },
-        sourcePrivilege: {
-          level: link.sourceLevel,
-        },
-        targetPrivilege: {
-          level: link.targetLevel,
-        },
-      },
-    });
-
-    if (!escalation) {
-      console.warn(
-        `⚠️  Escalation not found: ${link.componentName} (${link.sourceLevel} → ${link.targetLevel}) via ${link.techniqueName}`
-      );
-      continue;
-    }
-
-    // Link each CVE to the escalation
+    // Link CVEs to this escalation
     if (link.cveIds && link.cveIds.length > 0) {
       for (const cveId of link.cveIds) {
         try {
@@ -656,9 +560,33 @@ async function main() {
     }
   }
 
+  console.log(`Successfully seeded ${escalationsCreated} privilege escalations!`);
   console.log(`Successfully linked ${escalationCveLinksCreated} CVEs to privilege escalations!`);
   if (escalationCveLinksSkipped > 0) {
     console.log(`⚠️  Skipped ${escalationCveLinksSkipped} escalation CVE links (CVEs not found in database)`);
+  }
+
+  // Print escalation summary
+  console.log('\nPrivilege Escalations Summary:');
+  const escalationsByPath = new Map<string, Array<{ component: string; technique: string; cveCount: number }>>();
+
+  for (const link of escalationCveLinksData) {
+    const key = `${link.sourceLevel} → ${link.targetLevel}`;
+    if (!escalationsByPath.has(key)) {
+      escalationsByPath.set(key, []);
+    }
+    escalationsByPath.get(key)!.push({
+      component: link.componentName,
+      technique: link.techniqueName,
+      cveCount: link.cveIds.length,
+    });
+  }
+
+  for (const [path, escalations] of escalationsByPath.entries()) {
+    console.log(`  ${path}:`);
+    escalations.forEach(({ component, technique, cveCount }) =>
+      console.log(`    - ${component} via ${technique} (${cveCount} CVEs)`)
+    );
   }
 
   // Seed system metadata

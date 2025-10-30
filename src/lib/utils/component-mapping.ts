@@ -25,7 +25,7 @@ export const TARGET_COMPONENTS = [
   'Media/Codecs',
   'PDFium',
   'Network Stack',
-  'Browser UI',
+  'Browser Services',
   'Sandbox/Kernel',
 ] as const;
 
@@ -161,11 +161,12 @@ const COMPONENT_KEYWORDS: ComponentKeywords[] = [
     description: 'Network protocols, fetch APIs, CORS handling',
   },
   {
-    component: 'Browser UI',
+    component: 'Browser Services',
     priority: 2,
     keywords: [
       'DevTools',
       'Browser UI',
+      'Browser Services',
       'Tab Strip',
       'Tab Groups',
       'Omnibox',
@@ -177,8 +178,12 @@ const COMPONENT_KEYWORDS: ComponentKeywords[] = [
       'UI spoofing',
       'specific UI gestures',
       'Fullscreen',
+      'Profiler',
+      'in Metrics',
+      'extensions',
+      'file handlers',
     ],
-    description: 'Browser UI components, user-facing interfaces',
+    description: 'Browser services (Profiler, extensions, file handlers)',
   },
 
   // Priority 3: Attack Pattern Keywords (Lowest Confidence)
@@ -292,7 +297,7 @@ export function getComponentsByCategory() {
     ],
     'Browser Process': [
       'Network Stack',
-      'Browser UI',
+      'Browser Services',
     ],
     'Cross-Process': [
       'IPC/Mojo',

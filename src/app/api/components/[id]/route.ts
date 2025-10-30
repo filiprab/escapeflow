@@ -10,10 +10,6 @@ export async function GET(
     const { id } = await params;
     const component = await prisma.targetComponent.findUnique({
       where: { id },
-      include: {
-        sourcePrivilege: true,
-        targetPrivilege: true,
-      },
     });
 
     if (!component) {
@@ -41,12 +37,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const {
-      name,
-      description,
-      sourcePrivilegeId,
-      targetPrivilegeId,
-    } = body;
+    const { name, description } = body;
 
     // Validate required fields
     if (!name || !description) {
@@ -56,50 +47,12 @@ export async function PUT(
       );
     }
 
-    // Optional: Validate privileges if provided
-    if (sourcePrivilegeId && targetPrivilegeId) {
-      // Validate that source and target are different
-      if (sourcePrivilegeId === targetPrivilegeId) {
-        return NextResponse.json(
-          { error: 'Source and target privileges must be different' },
-          { status: 400 }
-        );
-      }
-
-      // Fetch privileges to validate order
-      const [sourcePriv, targetPriv] = await Promise.all([
-        prisma.privilegeContext.findUnique({ where: { id: sourcePrivilegeId } }),
-        prisma.privilegeContext.findUnique({ where: { id: targetPrivilegeId } }),
-      ]);
-
-      if (!sourcePriv || !targetPriv) {
-        return NextResponse.json(
-          { error: 'Source or target privilege context not found' },
-          { status: 404 }
-        );
-      }
-
-      // Validate escalation direction (source must come before target)
-      if (sourcePriv.order >= targetPriv.order) {
-        return NextResponse.json(
-          { error: `Invalid escalation direction: ${sourcePriv.level} (order ${sourcePriv.order}) must come before ${targetPriv.level} (order ${targetPriv.order}) in the escalation chain` },
-          { status: 400 }
-        );
-      }
-    }
-
     // Update the target component
     const updated = await prisma.targetComponent.update({
       where: { id },
       data: {
         name,
         description,
-        ...(sourcePrivilegeId && { sourcePrivilegeId }),
-        ...(targetPrivilegeId && { targetPrivilegeId }),
-      },
-      include: {
-        sourcePrivilege: true,
-        targetPrivilege: true,
       },
     });
 

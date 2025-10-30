@@ -1,68 +1,46 @@
 [
   {
     "name": "V8 JavaScript Engine",
-    "description": "JavaScript engine, JIT compiler, WebAssembly runtime",
-    "sourcePrivilegeLevel": "V8 Heap Sandbox",
-    "targetPrivilegeLevel": "Renderer Process"
+    "description": "JavaScript engine, JIT compiler, WebAssembly runtime"
   },
   {
     "name": "Blink Rendering Engine",
-    "description": "HTML/CSS rendering engine, DOM implementation",
-    "sourcePrivilegeLevel": "V8 Heap Sandbox",
-    "targetPrivilegeLevel": "Renderer Process"
+    "description": "HTML/CSS rendering engine, DOM implementation"
   },
   {
     "name": "WebRTC",
-    "description": "Real-time communication APIs",
-    "sourcePrivilegeLevel": "V8 Heap Sandbox",
-    "targetPrivilegeLevel": "Renderer Process"
+    "description": "Real-time communication APIs"
   },
   {
     "name": "Media/Codecs",
-    "description": "Audio/video processing, media codecs",
-    "sourcePrivilegeLevel": "V8 Heap Sandbox",
-    "targetPrivilegeLevel": "Renderer Process"
+    "description": "Audio/video processing, media codecs"
   },
   {
     "name": "PDFium",
-    "description": "PDF rendering engine",
-    "sourcePrivilegeLevel": "V8 Heap Sandbox",
-    "targetPrivilegeLevel": "Renderer Process"
+    "description": "PDF rendering engine"
   },
   {
     "name": "WebGL/ANGLE",
-    "description": "Graphics API layer, GPU process",
-    "sourcePrivilegeLevel": "Renderer Process",
-    "targetPrivilegeLevel": "GPU Process"
+    "description": "Graphics API layer, GPU process"
   },
   {
     "name": "Skia Graphics",
-    "description": "2D graphics library used for rendering",
-    "sourcePrivilegeLevel": "Renderer Process",
-    "targetPrivilegeLevel": "GPU Process"
+    "description": "2D graphics library used for rendering"
   },
   {
     "name": "Network Stack",
-    "description": "Network protocols, fetch APIs, CORS handling",
-    "sourcePrivilegeLevel": "Renderer Process",
-    "targetPrivilegeLevel": "Browser Process"
+    "description": "Network protocols, fetch APIs, CORS handling"
   },
   {
-    "name": "Browser UI",
-    "description": "Browser UI components, user-facing interfaces",
-    "sourcePrivilegeLevel": "Renderer Process",
-    "targetPrivilegeLevel": "Browser Process"
+    "name": "Browser Services",
+    "description": "Browser services (Profiler, extensions, file handlers)"
   },
   {
     "name": "IPC/Mojo",
-    "description": "Inter-process communication layer",
-    "sourcePrivilegeLevel": "Renderer Process",
-    "targetPrivilegeLevel": "Browser Process"
+    "description": "Inter-process communication layer"
   },
   {
     "name": "Sandbox/Kernel",
-    "description": "Sandbox escape, privilege escalation, kernel-level exploits",
-    "sourcePrivilegeLevel": "Browser Process",
-    "targetPrivilegeLevel": "System/Root"
+    "description": "Sandbox escape, privilege escalation, kernel-level exploits"
   }
 ]
