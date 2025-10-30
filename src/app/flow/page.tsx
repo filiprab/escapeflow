@@ -23,7 +23,7 @@ export default function FlowPage() {
   } = useAppContext();
 
   return (
-    <div className="relative h-[calc(100vh-88px)]">
+    <div className="relative h-[calc(100vh-88px)] overflow-hidden">
       {/* Attack Chain Panel */}
       <AttackChainPanel
         attackChain={attackChain}
@@ -45,7 +45,7 @@ export default function FlowPage() {
       />
 
       {/* Main Content */}
-      <div 
+      <div
         className={`flex transition-all duration-300 ${
           showChainPanel ? 'ml-80' : 'ml-0'
         } ${
