@@ -1,6 +1,40 @@
 import { toPng } from 'html-to-image';
 import type { AttackVector } from '@/types/attack';
 
+// Types for CVE API response
+interface CVEProofOfConcept {
+  url: string;
+}
+
+interface CVEData {
+  cveId: string;
+  proofOfConcepts?: CVEProofOfConcept[];
+}
+
+interface CVEAPIResponse {
+  cves?: CVEData[];
+}
+
+// Helper function to fetch CVEs for an escalation (same pattern as attack detail panel)
+async function fetchCVEsForEscalation(escalationId: string): Promise<{cveIds: string[], pocUrls: string[]}> {
+  try {
+    const response = await fetch(`/api/escalations/${escalationId}/cves`);
+    if (!response.ok) {
+      console.error(`Failed to fetch CVEs for escalation ${escalationId}`);
+      return { cveIds: [], pocUrls: [] };
+    }
+    const data = await response.json() as CVEAPIResponse;
+    const cveIds = data.cves?.map((cve) => cve.cveId) || [];
+    const pocUrls = data.cves?.flatMap((cve) =>
+      cve.proofOfConcepts?.map((poc) => poc.url).filter(Boolean) || []
+    ) || [];
+    return { cveIds, pocUrls };
+  } catch (error) {
+    console.error(`Error fetching CVEs for escalation ${escalationId}:`, error);
+    return { cveIds: [], pocUrls: [] };
+  }
+}
+
 // Export to PNG
 export const downloadImage = () => {
   const element = document.getElementById('attack-chain-panel-content');
@@ -19,19 +53,47 @@ export const downloadImage = () => {
 };
 
 // Export to JSON
-export const downloadJSON = (attackChain: AttackVector[]) => {
+export const downloadJSON = async (attackChain: AttackVector[]) => {
+  // Fetch CVEs for all attacks using the same pattern as attack detail panel
+  const attacksWithCVEs = await Promise.all(
+    attackChain.map(async (attack) => {
+      if (attack.escalationId) {
+        const { cveIds, pocUrls } = await fetchCVEsForEscalation(attack.escalationId);
+        return { ...attack, cves: cveIds, pocs: pocUrls };
+      }
+      return attack;
+    })
+  );
+
   const data = {
-    attackChain: attackChain.map((attack, index) => ({
-      step: index + 1,
-      name: attack.name,
-      source: attack.sourcePrivilege,
-      target: attack.targetPrivilege,
-      technique: attack.name.split(': ')[1] || attack.name,
-    })),
-    metadata: {
-      totalSteps: attackChain.length,
+    exportMetadata: {
+      version: '2.0',
       exportDate: new Date().toISOString(),
+      application: 'EscapeFlow',
+      format: 'Attack Chain Analysis',
     },
+    attackChainSummary: {
+      totalSteps: attacksWithCVEs.length,
+      sourcePrivilege: attacksWithCVEs.length > 0 ? attacksWithCVEs[0].sourcePrivilege : null,
+      targetPrivilege: attacksWithCVEs.length > 0 ? attacksWithCVEs[attacksWithCVEs.length - 1].targetPrivilege : null,
+    },
+    attackChain: attacksWithCVEs.map((attack, index) => ({
+      step: index + 1,
+      id: attack.id,
+      name: attack.name,
+      description: attack.description,
+      detailedDescription: attack.detailedDescription,
+      sourcePrivilege: attack.sourcePrivilege,
+      targetPrivilege: attack.targetPrivilege,
+      componentId: attack.componentId,
+      techniqueId: attack.techniqueId,
+      escalationId: attack.escalationId || null,
+      cves: attack.cves,
+      pocs: attack.pocs,
+      mitigations: attack.mitigations,
+      references: attack.references,
+      contextSpecificImpact: attack.contextSpecificImpact || [],
+    })),
   };
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -46,7 +108,7 @@ export const downloadJSON = (attackChain: AttackVector[]) => {
 // Export to PlantUML
 export const downloadPlantUML = (attackChain: AttackVector[]) => {
   const lines = ['@startuml', 'title Attack Chain Visualization', ''];
-  
+
   // Add nodes as activities
   const allPrivileges: string[] = [];
   if (attackChain[0]) {
@@ -70,9 +132,9 @@ export const downloadPlantUML = (attackChain: AttackVector[]) => {
     }
   });
   lines.push('stop');
-  
+
   lines.push('', '@enduml');
-  
+
   const content = lines.join('\n');
   const blob = new Blob([content], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
@@ -86,7 +148,7 @@ export const downloadPlantUML = (attackChain: AttackVector[]) => {
 // Export to Mermaid
 export const downloadMermaid = (attackChain: AttackVector[]) => {
   const lines = ['graph TD'];
-  
+
   // Generate node IDs and labels
   const allPrivileges: string[] = [];
   if (attackChain[0]) {
@@ -123,7 +185,19 @@ export const downloadMermaid = (attackChain: AttackVector[]) => {
 };
 
 // Export to LaTeX
-export const downloadLaTeX = (attackChain: AttackVector[]) => {
+export const downloadLaTeX = async (attackChain: AttackVector[]) => {
+  // Fetch CVEs for all attacks using the same pattern as attack detail panel
+  const attacksWithCVEs = await Promise.all(
+    attackChain.map(async (attack) => {
+      if (attack.escalationId) {
+        const { cveIds, pocUrls } = await fetchCVEsForEscalation(attack.escalationId);
+        return { ...attack, cves: cveIds, pocs: pocUrls };
+      }
+      return attack;
+    })
+  );
+
+
   const lines = [
     '\\documentclass{article}',
     '\\usepackage[utf8]{inputenc}',
@@ -142,25 +216,25 @@ export const downloadLaTeX = (attackChain: AttackVector[]) => {
     '\\maketitle',
     '',
     '\\section{Attack Chain Overview}',
-    `This document describes a ${attackChain.length}-step attack chain demonstrating browser sandbox escape techniques.`,
+    `This document describes a ${attacksWithCVEs.length}-step attack chain demonstrating browser sandbox escape techniques.`,
     '',
   ];
 
   // Add attack chain summary
-  if (attackChain.length > 0) {
-    const startPrivilege = attackChain[0].sourcePrivilege.replace(/[&%$#_{}~^\\]/g, (match) => `\\${match}`);
-    const endPrivilege = attackChain[attackChain.length - 1].targetPrivilege.replace(/[&%$#_{}~^\\]/g, (match) => `\\${match}`);
-    lines.push(`\\textbf{Source:} ${startPrivilege} \\\\`);
+  if (attacksWithCVEs.length > 0) {
+    const startPrivilege = attacksWithCVEs[0].sourcePrivilege.replace(/[&%$#_{}~^\\]/g, (match) => `\\${match}`);
+    const endPrivilege = attacksWithCVEs[attacksWithCVEs.length - 1].targetPrivilege.replace(/[&%$#_{}~^\\]/g, (match) => `\\${match}`);
+    lines.push(`\\\\\\\\\\textbf{Source:} ${startPrivilege} \\\\`);
     lines.push(`\\textbf{Target:} ${endPrivilege} \\\\`);
-    lines.push(`\\textbf{Steps:} ${attackChain.length}`);
+    lines.push(`\\textbf{Steps:} ${attacksWithCVEs.length}`);
     lines.push('');
   }
 
   // Add detailed steps
   lines.push('\\section{Attack Steps}');
   lines.push('\\begin{enumerate}');
-  
-  attackChain.forEach((attack) => {
+
+  attacksWithCVEs.forEach((attack) => {
     const technique = (attack.name.split(': ')[1] || attack.name).replace(/[&%$#_{}~^\\]/g, (match) => `\\${match}`);
     const sourcePrivilege = attack.sourcePrivilege.replace(/[&%$#_{}~^\\]/g, (match) => `\\${match}`);
     const targetPrivilege = attack.targetPrivilege.replace(/[&%$#_{}~^\\]/g, (match) => `\\${match}`);
@@ -173,6 +247,10 @@ export const downloadLaTeX = (attackChain: AttackVector[]) => {
     if (attack.cves.length > 0) {
       const escapedCves = attack.cves.map(cve => cve.replace(/[&%$#_{}~^\\]/g, (match) => `\\${match}`));
       lines.push(`      \\item \\textbf{CVEs:} ${escapedCves.join(', ')}`);
+    }
+    if (attack.pocs.length > 0) {
+      const escapedPocs = attack.pocs.map(poc => poc.replace(/[&%$#_{}~^\\]/g, (match) => `\\${match}`));
+      lines.push(`      \\item \\textbf{PoC URLs:} ${escapedPocs.join(', ')}`);
     }
     lines.push(`    \\end{itemize}`);
   });
@@ -192,10 +270,10 @@ export const downloadLaTeX = (attackChain: AttackVector[]) => {
 
   // Generate TikZ nodes
   const allPrivileges: string[] = [];
-  if (attackChain[0]) {
-    allPrivileges.push(attackChain[0].sourcePrivilege);
+  if (attacksWithCVEs[0]) {
+    allPrivileges.push(attacksWithCVEs[0].sourcePrivilege);
   }
-  attackChain.forEach(attack => {
+  attacksWithCVEs.forEach(attack => {
     if (!allPrivileges.includes(attack.targetPrivilege)) {
       allPrivileges.push(attack.targetPrivilege);
     }
@@ -209,7 +287,7 @@ export const downloadLaTeX = (attackChain: AttackVector[]) => {
   });
 
   // Generate TikZ arrows with labels
-  attackChain.forEach((attack, index) => {
+  attacksWithCVEs.forEach((attack, index) => {
     const sourceId = `node${index}`;
     const targetId = `node${index + 1}`;
     const technique = (attack.name.split(': ')[1] || attack.name).replace(/[&%$#_{}~^\\]/g, (match) => `\\${match}`);

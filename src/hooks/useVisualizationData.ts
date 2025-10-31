@@ -19,6 +19,14 @@ interface EscalationTechnique {
   mitigations: string[];
   references: string[];
   contextSpecificImpact: string[];
+  cveLinks: Array<{
+    cve: {
+      cveId: string;
+      proofOfConcepts: Array<{
+        url: string | null;
+      }>;
+    };
+  }>;
 }
 
 interface PrivilegeEscalation {
@@ -156,17 +164,27 @@ function transformEscalationsToComponents(
   for (const [componentId, entry] of componentMap.entries()) {
     // Get unique techniques for this component
     const techniques = entry.escalations
-      .map(esc => ({
-        id: esc.technique.id,
-        name: esc.technique.name,
-        description: esc.technique.description,
-        detailedDescription: esc.technique.detailedDescription,
-        cves: [], // Will be populated from CVE links when needed
-        pocs: [], // Will be populated from CVE links when needed
-        mitigations: esc.technique.mitigations,
-        references: esc.technique.references,
-        contextSpecificImpact: esc.technique.contextSpecificImpact,
-      }))
+      .map(esc => {
+        // Extract CVE IDs from cveLinks
+        const cves = esc.technique.cveLinks.map(link => link.cve.cveId);
+
+        // Extract PoC URLs from all CVEs (flatten the array)
+        const pocs = esc.technique.cveLinks
+          .flatMap(link => link.cve.proofOfConcepts.map(poc => poc.url))
+          .filter((url): url is string => url !== null);
+
+        return {
+          id: esc.technique.id,
+          name: esc.technique.name,
+          description: esc.technique.description,
+          detailedDescription: esc.technique.detailedDescription,
+          cves,
+          pocs,
+          mitigations: esc.technique.mitigations,
+          references: esc.technique.references,
+          contextSpecificImpact: esc.technique.contextSpecificImpact,
+        };
+      })
       .filter((tech, index, self) =>
         // Remove duplicates by technique ID
         index === self.findIndex(t => t.id === tech.id)
@@ -196,36 +214,46 @@ function transformEscalationsToComponents(
       sourcePrivilegeInfo,
       targetPrivilegeInfo,
       techniques,
-      escalations: entry.escalations.map(esc => ({
-        id: esc.id,
-        sourcePrivilege: esc.sourcePrivilege.level,
-        targetPrivilege: esc.targetPrivilege.level,
-        sourcePrivilegeInfo: {
-          level: esc.sourcePrivilege.level,
-          capabilities: esc.sourcePrivilege.capabilities,
-          restrictions: esc.sourcePrivilege.restrictions,
-          examples: esc.sourcePrivilege.examples,
-        },
-        targetPrivilegeInfo: {
-          level: esc.targetPrivilege.level,
-          capabilities: esc.targetPrivilege.capabilities,
-          restrictions: esc.targetPrivilege.restrictions,
-          examples: esc.targetPrivilege.examples,
-        },
-        technique: {
-          id: esc.technique.id,
-          name: esc.technique.name,
-          description: esc.technique.description,
-          detailedDescription: esc.technique.detailedDescription,
-          cves: [],
-          pocs: [],
-          mitigations: esc.technique.mitigations,
-          references: esc.technique.references,
-          contextSpecificImpact: esc.technique.contextSpecificImpact,
-        },
-        componentId: esc.targetComponent.id,
-        componentName: esc.targetComponent.name,
-      })),
+      escalations: entry.escalations.map(esc => {
+        // Extract CVE IDs from cveLinks
+        const cves = esc.technique.cveLinks.map(link => link.cve.cveId);
+
+        // Extract PoC URLs from all CVEs (flatten the array)
+        const pocs = esc.technique.cveLinks
+          .flatMap(link => link.cve.proofOfConcepts.map(poc => poc.url))
+          .filter((url): url is string => url !== null);
+
+        return {
+          id: esc.id,
+          sourcePrivilege: esc.sourcePrivilege.level,
+          targetPrivilege: esc.targetPrivilege.level,
+          sourcePrivilegeInfo: {
+            level: esc.sourcePrivilege.level,
+            capabilities: esc.sourcePrivilege.capabilities,
+            restrictions: esc.sourcePrivilege.restrictions,
+            examples: esc.sourcePrivilege.examples,
+          },
+          targetPrivilegeInfo: {
+            level: esc.targetPrivilege.level,
+            capabilities: esc.targetPrivilege.capabilities,
+            restrictions: esc.targetPrivilege.restrictions,
+            examples: esc.targetPrivilege.examples,
+          },
+          technique: {
+            id: esc.technique.id,
+            name: esc.technique.name,
+            description: esc.technique.description,
+            detailedDescription: esc.technique.detailedDescription,
+            cves,
+            pocs,
+            mitigations: esc.technique.mitigations,
+            references: esc.technique.references,
+            contextSpecificImpact: esc.technique.contextSpecificImpact,
+          },
+          componentId: esc.targetComponent.id,
+          componentName: esc.targetComponent.name,
+        };
+      }),
     });
   }
 

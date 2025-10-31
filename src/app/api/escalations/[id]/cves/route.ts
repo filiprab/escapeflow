@@ -40,6 +40,7 @@ export async function GET(
             descriptions: true,
             metrics: true,
             labels: true,
+            proofOfConcepts: true,
           },
         },
       },

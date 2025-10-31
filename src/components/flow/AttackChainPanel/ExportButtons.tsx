@@ -22,7 +22,7 @@ export function ExportButtons({ attackChain }: ExportButtonsProps) {
           <span>PNG</span>
         </button>
         <button
-          onClick={() => downloadJSON(attackChain)}
+          onClick={() => void downloadJSON(attackChain)}
           className="flex items-center justify-center space-x-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium transition-colors"
           title="Export as JSON data"
         >
@@ -46,7 +46,7 @@ export function ExportButtons({ attackChain }: ExportButtonsProps) {
           <span>Mermaid</span>
         </button>
         <button
-          onClick={() => downloadLaTeX(attackChain)}
+          onClick={() => void downloadLaTeX(attackChain)}
           className="flex items-center justify-center space-x-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors"
           title="Export as LaTeX document"
         >

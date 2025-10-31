@@ -33,24 +33,28 @@ export default function AttackChainPanel({ attackChain, isOpen, onToggle }: Atta
 
       {/* Panel */}
       <div
-        className={`absolute left-0 top-0 h-full w-80 bg-gray-900 border-r border-gray-700 transform transition-transform duration-300 ease-in-out z-10 ${
+        className={`absolute left-0 top-0 h-full w-80 bg-gray-900/95 backdrop-blur-xl border-r border-gray-700/50 transform transition-transform duration-300 ease-in-out z-10 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-4 border-b border-gray-700">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-bold text-white">Attack Chain</h2>
-              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                {attackChain.length} step{attackChain.length !== 1 ? 's' : ''}
-              </span>
+          <div className="p-4 border-b border-gray-700/50 bg-gradient-to-b from-gray-800/50 to-transparent">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center border border-blue-400/30">
+                  <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h2 className="text-base font-bold text-white">Attack Chain</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs px-2.5 py-1 rounded-full font-medium shadow-lg shadow-blue-500/30 border border-blue-400/50">
+                  {attackChain.length} {attackChain.length !== 1 ? 'steps' : 'step'}
+                </span>
+              </div>
             </div>
-            {attackChain.length > 0 && (
-              <p className="text-gray-400 text-sm">
-                Target: {attackChain[attackChain.length - 1]?.targetPrivilege}
-              </p>
-            )}
           </div>
 
           {/* Content */}

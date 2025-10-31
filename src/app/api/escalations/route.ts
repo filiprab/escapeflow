@@ -96,6 +96,20 @@ export async function GET(request: Request) {
             mitigations: true,
             references: true,
             contextSpecificImpact: true,
+            cveLinks: {
+              select: {
+                cve: {
+                  select: {
+                    cveId: true,
+                    proofOfConcepts: {
+                      select: {
+                        url: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
         targetComponent: {
