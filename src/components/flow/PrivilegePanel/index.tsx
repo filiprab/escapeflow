@@ -93,12 +93,12 @@ export default function PrivilegePanel({ currentPrivilege, isOpen, onToggle, att
           {/* Left Section - Header and Current Level */}
           <div className="flex-shrink-0 w-80 p-4 border-r border-gray-700">
             <div className="flex items-center gap-3 mb-3">
-              <h2 className="text-lg font-bold text-white">Privilege Context</h2>
+              <h2 className="text-base font-bold text-white">Privilege Context</h2>
             </div>
-            <p className="text-sm text-gray-400 mb-4">
+            <p className="text-xs text-gray-400 mb-4">
               Current attacker capabilities and restrictions
             </p>
-            
+
             {/* Current Privilege Level */}
             <div className="bg-blue-600/20 border border-blue-500/30 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
@@ -107,49 +107,52 @@ export default function PrivilegePanel({ currentPrivilege, isOpen, onToggle, att
                   Current Level
                 </span>
               </div>
-              <div className="text-white font-semibold">{currentPrivilege}</div>
+              <div className="text-sm text-white font-semibold">{currentPrivilege}</div>
             </div>
           </div>
 
           {/* Right Section - Content Grid */}
           <div className="flex-1 p-4 overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
-              {/* Capabilities */}
-              <div>
-                <h3 className="text-sm font-semibold text-green-400 uppercase tracking-wide mb-3">
-                  Capabilities
-                </h3>
-                <ul className="space-y-2">
-                  {privInfo.capabilities.map((cap, idx) => (
-                    <li key={idx} className="flex items-start text-sm">
-                      <span className="text-green-400 mr-3 mt-1 text-xs">✓</span>
-                      <span className="text-gray-300">{cap}</span>
-                    </li>
-                  ))}
-                </ul>
+            <div className="flex flex-col gap-4 h-full">
+              {/* Top Row - Capabilities and Restrictions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Capabilities */}
+                <div>
+                  <h3 className="text-xs font-semibold text-green-400 uppercase tracking-wide mb-3">
+                    Capabilities
+                  </h3>
+                  <ul className="space-y-2">
+                    {privInfo.capabilities.map((cap, idx) => (
+                      <li key={idx} className="flex items-start text-xs">
+                        <span className="text-green-400 mr-3 mt-1 text-xs">✓</span>
+                        <span className="text-gray-300">{cap}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Restrictions */}
+                <div>
+                  <h3 className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-3">
+                    Restrictions
+                  </h3>
+                  <ul className="space-y-2">
+                    {privInfo.restrictions.map((rest, idx) => (
+                      <li key={idx} className="flex items-start text-xs">
+                        <span className="text-red-400 mr-3 mt-1 text-xs">✗</span>
+                        <span className="text-gray-300">{rest}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
 
-              {/* Restrictions */}
+              {/* Bottom Row - Command Examples */}
               <div>
-                <h3 className="text-sm font-semibold text-red-400 uppercase tracking-wide mb-3">
-                  Restrictions
-                </h3>
-                <ul className="space-y-2">
-                  {privInfo.restrictions.map((rest, idx) => (
-                    <li key={idx} className="flex items-start text-sm">
-                      <span className="text-red-400 mr-3 mt-1 text-xs">✗</span>
-                      <span className="text-gray-300">{rest}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Command Examples */}
-              <div>
-                <h3 className="text-sm font-semibold text-blue-400 uppercase tracking-wide mb-3">
+                <h3 className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-3">
                   Command Examples
                 </h3>
-                <div className="bg-gray-900/60 rounded-lg p-3 font-mono text-sm space-y-2">
+                <div className="bg-gray-900/60 rounded-lg p-3 font-mono text-xs space-y-2">
                   {privInfo.examples.map((example, idx) => (
                     <div key={idx} className="text-gray-300 truncate">
                       <span className="text-blue-400">$</span> {example}
