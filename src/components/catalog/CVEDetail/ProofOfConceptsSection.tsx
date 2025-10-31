@@ -15,6 +15,7 @@ export default function ProofOfConceptsSection({ cve, onRefresh }: ProofOfConcep
   const [editingPoC, setEditingPoC] = useState<CVEProofOfConcept | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -22,7 +23,7 @@ export default function ProofOfConceptsSection({ cve, onRefresh }: ProofOfConcep
     description: '',
     author: '',
     code: '',
-    language: 'javascript',
+    language: '',
   });
 
   const resetForm = () => {
@@ -32,7 +33,7 @@ export default function ProofOfConceptsSection({ cve, onRefresh }: ProofOfConcep
       description: '',
       author: '',
       code: '',
-      language: 'javascript',
+      language: '',
     });
   };
 
@@ -49,7 +50,7 @@ export default function ProofOfConceptsSection({ cve, onRefresh }: ProofOfConcep
       description: poc.description || '',
       author: poc.author || '',
       code: poc.code || '',
-      language: poc.language || 'javascript',
+      language: poc.language || '',
     });
     setEditingPoC(poc);
     setShowAddDialog(true);
@@ -58,16 +59,21 @@ export default function ProofOfConceptsSection({ cve, onRefresh }: ProofOfConcep
   const handleClose = () => {
     setShowAddDialog(false);
     setEditingPoC(null);
+    setValidationError(null);
     resetForm();
   };
 
   const handleSubmit = async () => {
+    setValidationError(null);
+
     if (!formData.title) {
+      setValidationError('Title is required');
       return;
     }
 
     // Must have either URL or code
     if (!formData.url && !formData.code) {
+      setValidationError('Either URL or code must be provided');
       return;
     }
 
@@ -245,6 +251,15 @@ export default function ProofOfConceptsSection({ cve, onRefresh }: ProofOfConcep
         }
       >
         <DialogContent className="space-y-4">
+          {validationError && (
+            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 flex items-center gap-2">
+              <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span className="text-sm text-red-400">{validationError}</span>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Title <span className="text-red-400">*</span>
@@ -285,14 +300,17 @@ export default function ProofOfConceptsSection({ cve, onRefresh }: ProofOfConcep
           </div>
 
           <div className="border-t border-gray-600/30 pt-4">
-            <p className="text-sm text-gray-400 mb-3">
-              Provide either a URL to the exploit or paste the code directly below:
+            <p className="text-sm text-amber-400 mb-3 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              Required: Provide either a URL or paste the code directly below
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              URL
+              URL <span className="text-gray-500 text-xs">(either URL or code required)</span>
             </label>
             <input
               type="url"
@@ -312,22 +330,31 @@ export default function ProofOfConceptsSection({ cve, onRefresh }: ProofOfConcep
               onChange={(e) => setFormData({ ...formData, language: e.target.value })}
               className="select-input w-full"
             >
-              <option value="javascript">JavaScript</option>
-              <option value="python">Python</option>
-              <option value="c">C</option>
-              <option value="cpp">C++</option>
-              <option value="rust">Rust</option>
-              <option value="go">Go</option>
-              <option value="java">Java</option>
-              <option value="shell">Shell</option>
-              <option value="assembly">Assembly</option>
-              <option value="other">Other</option>
+              <option value="">Select language...</option>
+              <option value="JavaScript">JavaScript</option>
+              <option value="TypeScript">TypeScript</option>
+              <option value="Python">Python</option>
+              <option value="Java">Java</option>
+              <option value="C">C</option>
+              <option value="C++">C++</option>
+              <option value="C#">C#</option>
+              <option value="Go">Go</option>
+              <option value="Rust">Rust</option>
+              <option value="Ruby">Ruby</option>
+              <option value="PHP">PHP</option>
+              <option value="Bash">Bash</option>
+              <option value="Shell">Shell</option>
+              <option value="PowerShell">PowerShell</option>
+              <option value="SQL">SQL</option>
+              <option value="HTML">HTML</option>
+              <option value="Assembly">Assembly</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Code
+              Code <span className="text-gray-500 text-xs">(either URL or code required)</span>
             </label>
             <textarea
               value={formData.code}

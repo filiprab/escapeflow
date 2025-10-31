@@ -297,8 +297,63 @@ async function main() {
 
   console.log(`Successfully seeded ${processedCount} CVEs!`);
 
+  // Seed PoCs
+  console.log('\nSeeding PoCs...');
+
+  const pocDataPath = join(process.cwd(), 'prisma', 'poc-seed.json');
+  const pocDataRaw = readFileSync(pocDataPath, 'utf8');
+  const pocData: Array<{
+    cveId: string;
+    title: string;
+    url: string | null;
+    description: string | null;
+    author: string | null;
+    code: string | null;
+    language: string | null;
+  }> = JSON.parse(pocDataRaw);
+
+  let pocsCreated = 0;
+  let pocsSkipped = 0;
+
+  for (const poc of pocData) {
+    try {
+      // Check if the CVE exists
+      const cveExists = await prisma.cve.findUnique({
+        where: { cveId: poc.cveId },
+      });
+
+      if (!cveExists) {
+        console.warn(`⚠️  CVE ${poc.cveId} not found in database, skipping PoC`);
+        pocsSkipped++;
+        continue;
+      }
+
+      // Create the PoC
+      await prisma.cveProofOfConcept.create({
+        data: {
+          cveId: poc.cveId,
+          title: poc.title,
+          url: poc.url,
+          description: poc.description,
+          author: poc.author,
+          code: poc.code,
+          language: poc.language,
+        },
+      });
+
+      pocsCreated++;
+    } catch (error) {
+      console.error(`Error creating PoC for CVE ${poc.cveId}:`, error);
+    }
+  }
+
+  console.log(`Successfully seeded ${pocsCreated} PoCs!`);
+  if (pocsSkipped > 0) {
+    console.log(`⚠️  Skipped ${pocsSkipped} PoCs (CVEs not found in database)`);
+  }
+
   // Seed privilege contexts
-  console.log('Seeding privilege contexts...');
+  console.log('\nSeeding privilege contexts...');
 
   const privilegeContextsPath = join(process.cwd(), 'prisma', 'privilege-contexts-seed.json');
   const privilegeContextsRaw = readFileSync(privilegeContextsPath, 'utf8');
