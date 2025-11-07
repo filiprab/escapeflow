@@ -14,7 +14,8 @@ function buildCveWhereClause({
   components = [],
   severityLevels = [],
   search = '',
-}: Pick<CVESearchParams, 'operatingSystems' | 'components' | 'severityLevels' | 'search'>): Prisma.CveWhereInput {
+  hasPoC = null,
+}: Pick<CVESearchParams, 'operatingSystems' | 'components' | 'severityLevels' | 'search' | 'hasPoC'>): Prisma.CveWhereInput {
   const where: Prisma.CveWhereInput = {};
 
   if (search) {
@@ -81,6 +82,18 @@ function buildCveWhereClause({
     }
   }
 
+  // Filter by PoC availability
+  if (hasPoC === true) {
+    where.proofOfConcepts = {
+      some: {}, // Has at least one PoC
+    };
+  } else if (hasPoC === false) {
+    where.proofOfConcepts = {
+      none: {}, // Has no PoCs
+    };
+  }
+  // If hasPoC is null/undefined, don't filter by PoC
+
   return where;
 }
 
@@ -100,6 +113,7 @@ export async function getCVEs(params: CVESearchParams) {
     components = [],
     severityLevels = [],
     search = '',
+    hasPoC = null,
     page = 1,
     limit = 20,
     sortBy = 'datePublished',
@@ -107,8 +121,8 @@ export async function getCVEs(params: CVESearchParams) {
   } = params;
 
   const skip = (page - 1) * limit;
-  
-  const where = buildCveWhereClause({ operatingSystems, components, severityLevels, search });
+
+  const where = buildCveWhereClause({ operatingSystems, components, severityLevels, search, hasPoC });
 
   // Build orderBy clause
   let orderBy: Prisma.CveOrderByWithRelationInput = {};

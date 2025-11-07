@@ -38,6 +38,7 @@ Currently focused on Chromium with a database of 2,366+ CVEs, with plans to expa
 
 - Node.js 18+ 
 - npm or yarn package manager
+- Docker (Podman should work as well)
 
 ### Local Development
 
@@ -47,47 +48,36 @@ Currently focused on Chromium with a database of 2,366+ CVEs, with plans to expa
    cd escapeflow
    ```
 
-2. **Install dependencies:**
+2. **Copy environment template:**
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Update environment variables:**
+   ```
+   # Database credentials
+   POSTGRES_PASSWORD=your_secure_password
+   ``` 
+   ```
+   # Optional: NVD API key for higher rate-limits
+   NVD_API_KEY=your_nvd_api_key
+   ```
+3. **Install dependencies:**
    ```bash
    npm install
-   # or
-   yarn install
    ```
-
-3. **Run the development server:**
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
-
-4. **Open your browser:**
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-### Build
-
-```bash
-npm run build
-npm start
-```
 
 ## Docker Deployment
 
 ### Build and Run with Docker
 
-1. **Build the Docker image:**
+1. **Build and run the Docker image:**
    ```bash
-   docker build -t escapeflow .
+   docker-compose up -d --build
    ```
 
-2. **Run the container:**
-   ```bash
-   docker run -p 3000:3000 escapeflow
-   ```
-
-3. **Access the application:**
+2. **Access the application:**
    Open [http://localhost:3000](http://localhost:3000)
-
 
 ## Usage Guide
 

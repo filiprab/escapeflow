@@ -22,11 +22,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Parse query parameters
+    const hasPoCParam = searchParams.get('hasPoC');
+    const hasPoC = hasPoCParam === 'true' ? true : hasPoCParam === 'false' ? false : null;
+
     const params = {
       search: searchParams.get('search') || '',
       operatingSystems: searchParams.getAll('os'),
       components: searchParams.getAll('component'),
       severityLevels: searchParams.getAll('severity'),
+      hasPoC,
       page: parseInt(searchParams.get('page') || '1'),
       limit: parseInt(searchParams.get('limit') || '20'),
       sortBy: (searchParams.get('sortBy') as 'datePublished' | 'dateUpdated' | 'baseScore' | 'cveId' | 'severity') || 'datePublished',

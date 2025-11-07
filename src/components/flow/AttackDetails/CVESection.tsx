@@ -11,6 +11,7 @@ interface CVEData {
   cveId: string;
   descriptions: Array<{ description: string }>;
   metrics: Array<{ baseScore?: number; baseSeverity?: string }>;
+  proofOfConcepts?: Array<{ id: string }>;
 }
 
 export function CVESection({ escalationId }: CVESectionProps) {
@@ -70,8 +71,13 @@ export function CVESection({ escalationId }: CVESectionProps) {
               className="block"
             >
               <div className="group relative bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 hover:border-red-500/50 hover:bg-gray-800/70 transition-all duration-200 cursor-pointer">
-                <h4 className="text-white font-semibold group-hover:text-red-400 transition-colors mb-2">
+                <h4 className="text-white font-semibold group-hover:text-red-400 transition-colors mb-2 flex items-center gap-2">
                   {cve.cveId}
+                  {cve.proofOfConcepts && cve.proofOfConcepts.length > 0 && (
+                    <span className="inline-block px-2 py-0.5 bg-green-500/20 text-green-300 border border-green-500/30 rounded text-xs font-medium">
+                      PoC
+                    </span>
+                  )}
                 </h4>
                 <p className="text-gray-400 text-sm line-clamp-2">{description}</p>
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">

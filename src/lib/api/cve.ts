@@ -43,17 +43,20 @@ async function fetchApi(url: string) {
 
 export async function getCVEs(params: CVESearchParams): Promise<CVEApiResponse> {
   const searchParams = new URLSearchParams();
-  
+
   if (params.search) searchParams.set('search', params.search);
   if (params.page) searchParams.set('page', params.page.toString());
   if (params.limit) searchParams.set('limit', params.limit.toString());
   if (params.sortBy) searchParams.set('sortBy', params.sortBy);
   if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
-  
+  if (params.hasPoC !== null && params.hasPoC !== undefined) {
+    searchParams.set('hasPoC', params.hasPoC.toString());
+  }
+
   params.operatingSystems?.forEach(os => searchParams.append('os', os));
   params.components?.forEach(component => searchParams.append('component', component));
   params.severityLevels?.forEach(severity => searchParams.append('severity', severity));
-  
+
   const url = `/api/cves?${searchParams.toString()}`;
   return fetchApi(url);
 }

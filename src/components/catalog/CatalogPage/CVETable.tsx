@@ -24,6 +24,7 @@ type CVEColumnKey =
   | SortableColumnKey
   | 'platforms'
   | 'components'
+  | 'poc'
   | 'description'
   | 'actions';
 
@@ -119,6 +120,7 @@ export default function CVETable({
     { key: 'datePublished', label: 'Published' },
     { key: 'platforms', label: 'Platforms', sortable: false },
     { key: 'components', label: 'Targeted Component', sortable: false },
+    { key: 'poc', label: 'PoC', sortable: false, className: 'w-20 text-center' },
     { key: 'description', label: 'Description', sortable: false },
     { key: 'actions', label: 'Actions', sortable: false }
   ];
@@ -137,7 +139,7 @@ export default function CVETable({
         </div>
       </td>
       <td className="px-6 py-5 whitespace-nowrap">
-        <Link 
+        <Link
           href={`/catalog/${cve.cveId}`}
           className="text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-300 hover:underline decoration-blue-400/30"
         >
@@ -174,7 +176,17 @@ export default function CVETable({
           <span className="text-gray-500 text-sm italic">Unlabeled</span>
         )}
       </td>
-      
+
+      <td className="px-6 py-5 whitespace-nowrap text-center">
+        {cve.proofOfConcepts && cve.proofOfConcepts.length > 0 ? (
+          <span className="inline-block px-2 py-0.5 bg-green-500/20 text-green-300 border border-green-500/30 rounded text-xs font-medium">
+            PoC
+          </span>
+        ) : (
+          <span className="text-gray-500 text-sm">-</span>
+        )}
+      </td>
+
       <td className="px-6 py-5">
         <div className="max-w-md">
           <p 

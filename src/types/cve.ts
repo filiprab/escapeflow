@@ -123,6 +123,7 @@ export interface CVEFilter {
   components: string[];
   severityLevels: string[];
   search: string;
+  hasPoC?: boolean | null; // null = all, true = with PoC, false = without PoC
 }
 
 // =============================================================================

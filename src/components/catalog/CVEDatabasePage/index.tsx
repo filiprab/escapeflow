@@ -34,7 +34,8 @@ export default function CVEDatabasePage() {
     operatingSystems: [],
     components: [],
     severityLevels: [],
-    search: ''
+    search: '',
+    hasPoC: null
   });
   const [cveData, setCveData] = useState<CVEApiResponse | null>(null);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({ operatingSystems: [], components: [], severityLevels: [] });
@@ -79,8 +80,9 @@ export default function CVEDatabasePage() {
     operatingSystems: filter.operatingSystems,
     components: filter.components,
     severityLevels: filter.severityLevels,
-    search: debouncedSearchTerm
-  }), [filter.operatingSystems, filter.components, filter.severityLevels, debouncedSearchTerm]);
+    search: debouncedSearchTerm,
+    hasPoC: filter.hasPoC
+  }), [filter.operatingSystems, filter.components, filter.severityLevels, debouncedSearchTerm, filter.hasPoC]);
 
   // Fetch CVE data
   const fetchCVEData = useCallback(async (isInitial = false) => {

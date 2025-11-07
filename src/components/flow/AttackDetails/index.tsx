@@ -6,7 +6,6 @@ import { AttackHeader } from './AttackHeader';
 import { PrivilegeEscalationSection } from './PrivilegeEscalationSection';
 import { ImpactSection } from './ImpactSection';
 import { CVESection } from './CVESection';
-import { PoCSection } from './PoCSection';
 import { MitigationsSection } from './MitigationsSection';
 import { ReferencesSection } from './ReferencesSection';
 
@@ -34,8 +33,6 @@ export default function AttackDetails({ attack }: AttackDetailsProps) {
       />
 
       <CVESection escalationId={attack.escalationId} />
-
-      <PoCSection pocs={attack.pocs || []} />
 
       <MitigationsSection mitigations={attack.mitigations || []} />
 
