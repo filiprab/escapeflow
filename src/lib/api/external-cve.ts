@@ -80,7 +80,7 @@ async function fetchExternalApi(url: string, source: string): Promise<unknown> {
 export async function fetchFromNVD(cveId: string): Promise<ExternalCVEData> {
   // Validate CVE ID format
   if (!validateCVEId(cveId)) {
-    throw new CVEApiError(`Invalid CVE ID format: ${cveId}. Expected format: CVE-YYYY-NNNN`);
+    throw new CVEApiError(`Invalid CVE ID format: ${cveId}.`);
   }
   
   const url = `https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=${encodeURIComponent(cveId)}`;

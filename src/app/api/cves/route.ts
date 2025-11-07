@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     // Validate CVE ID format
     if (!validateCVEId(cveId)) {
       return NextResponse.json(
-        { error: `Invalid CVE ID format: ${cveId}. Expected format: CVE-YYYY-NNNN` },
+        { error: `Invalid CVE ID format: ${cveId}.` },
         { status: 400 }
       );
     }

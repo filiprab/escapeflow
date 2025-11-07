@@ -7,6 +7,7 @@ import { fetchFromNVD } from '@/lib/api/external-cve';
 import type { ExternalCVEData } from '@/types/cve';
 import { detectTargetComponent } from '@/lib/utils/component-mapping';
 import { useToast } from '@/context/ToastContext';
+import { validateCVEId } from '@/lib/api/external-cve';
 
 // Import our new components
 import FetchStep from '@/components/catalog/CVEDetail/FetchStep';
@@ -68,16 +69,6 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
     onClose();
   };
 
-  const validateCVEId = (id: string): boolean => {
-    const cveRegex = /^CVE-(\d{4})-(\d{4,})$/;
-    const match = id.match(cveRegex);
-    if (!match) return false;
-    
-    const year = parseInt(match[1], 10);
-    const number = parseInt(match[2], 10);
-    return year >= 1999 && number >= 1;
-  };
-
   const handlePrefetch = async () => {
     if (!cveId.trim()) {
       setError('CVE ID is required');
@@ -85,7 +76,7 @@ export default function CVECreationDialog({ isOpen, onClose, onSuccess }: CVECre
     }
 
     if (!validateCVEId(cveId.trim())) {
-      setError('Invalid CVE ID format. Expected: CVE-YYYY-NNNN');
+      setError('Invalid CVE ID format.');
       return;
     }
 
