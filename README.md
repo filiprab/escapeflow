@@ -5,7 +5,7 @@
 
 **This web application was created as part of my Bachelor thesis about browser sandbox escapes. It is an interactive web application designed for security researchers that visualizes attack surfaces and privilege escalation paths in modern browsers. This tool demonstrates various exploitation techniques across different privilege levels, from browser engine sandbox escapes to kernel-level privilege escalation.**
 
-Currently focused on Chromium with a database of 2,366+ CVEs, with plans to expand to multi-platform browser security research.
+Currently focused on Chromium with a database of 6,000+ CVEs, with plans to expand to multi-platform browser security research.
 
 ## Features
 
@@ -18,7 +18,7 @@ Currently focused on Chromium with a database of 2,366+ CVEs, with plans to expa
 - **Multiple Export Formats**: Export attack chains as PNG, JSON, PlantUML, and Mermaid diagrams
 
 ### CVE Database & Catalog
-- **Comprehensive CVE Database**: Browse and manage 2,366+ Chromium CVEs with PostgreSQL backend
+- **Comprehensive CVE Database**: Browse and manage 6,000+ Chromium and Android CVEs with PostgreSQL backend
 - **Advanced Filtering**: Filter by severity, OS, target components, date ranges, and search by CVE ID
 - **CVSS Scoring**: Detailed CVSS v3.x metrics and severity ratings with visual indicators
 - **CVE Management**: Create, edit, delete, and bulk operations on CVE entries
