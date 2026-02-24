@@ -12,11 +12,11 @@ done
 
 # Always run migrations first (safe to run on existing databases)
 echo "Running database migrations..."
-npx prisma migrate deploy
+bunx prisma migrate deploy
 
 # Generate Prisma client
 echo "Generating Prisma client..."
-npx prisma generate
+bunx prisma generate
 
 # Check if seeding is needed
 echo "Checking if seeding is needed..."
@@ -26,7 +26,7 @@ if [ "$CVE_COUNT" -gt 0 ]; then
   echo "Database already has $CVE_COUNT CVEs. Skipping seeding."
 else
   echo "No CVE data found. Running seeding..."
-  npm run db:seed
+  bun run db:seed
 fi
 
 echo "[+] Database initialization completed successfully!"

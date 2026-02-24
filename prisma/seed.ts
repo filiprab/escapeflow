@@ -3,8 +3,6 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import type {
   CVEDatabase,
-  CVEDescriptionRaw as CVEDescription,
-  CVEReferenceRaw as CVEReference,
   CVEVersionRaw as CVEVersion,
   CVEProblemTypeDescriptionRaw as CVEProblemTypeDescription,
   MetricToProcess
@@ -189,13 +187,13 @@ async function main() {
           }
         }
       }
-      
+
       // Process metrics - support CVSS v3.0, v3.1 and v4.0
       for (const metric of metricsToProcess) {
         if (metric.cvssV3_0) {
           // Parse individual components from vector string if not provided
           const parsedMetrics = parseCVSSVector(metric.cvssV3_0.vectorString);
-          
+
           await prisma.cveMetric.create({
             data: {
               cveId: cve.cveId,
@@ -218,7 +216,7 @@ async function main() {
         } else if (metric.cvssV3_1) {
           // Parse individual components from vector string if not provided
           const parsedMetrics = parseCVSSVector(metric.cvssV3_1.vectorString);
-          
+
           await prisma.cveMetric.create({
             data: {
               cveId: cve.cveId,
@@ -323,7 +321,7 @@ async function main() {
       });
 
       if (!cveExists) {
-        console.warn(`⚠️  CVE ${poc.cveId} not found in database, skipping PoC`);
+        console.warn(`CVE ${poc.cveId} not found in database, skipping PoC`);
         pocsSkipped++;
         continue;
       }
@@ -349,7 +347,7 @@ async function main() {
 
   console.log(`Successfully seeded ${pocsCreated} PoCs!`);
   if (pocsSkipped > 0) {
-    console.log(`⚠️  Skipped ${pocsSkipped} PoCs (CVEs not found in database)`);
+    console.log(`Skipped ${pocsSkipped} PoCs (CVEs not found in database)`);
   }
 
   // Seed privilege contexts
@@ -466,7 +464,7 @@ async function main() {
     });
 
     if (!techniqueRecord) {
-      console.warn(`⚠️  Could not find technique "${technique.name}" in database`);
+      console.warn(`Could not find technique "${technique.name}" in database`);
       continue;
     }
 
@@ -479,7 +477,7 @@ async function main() {
         });
 
         if (!cveExists) {
-          console.warn(`⚠️  CVE ${cveId} not found in database, skipping link for technique "${technique.name}"`);
+          console.warn(`CVE ${cveId} not found in database, skipping link for technique "${technique.name}"`);
           cveLinksSkipped++;
           continue;
         }
@@ -506,7 +504,7 @@ async function main() {
 
   console.log(`Successfully linked ${cveLinksCreated} CVEs to exploitation techniques!`);
   if (cveLinksSkipped > 0) {
-    console.log(`⚠️  Skipped ${cveLinksSkipped} CVE links (CVEs not found in database)`);
+    console.log(`Skipped ${cveLinksSkipped} CVE links (CVEs not found in database)`);
   }
 
   // Seed privilege escalations and link CVEs
@@ -546,19 +544,19 @@ async function main() {
     });
 
     if (!sourcePrivilege) {
-      console.warn(`⚠️  Skipping escalation: source privilege "${link.sourceLevel}" not found`);
+      console.warn(`Skipping escalation: source privilege "${link.sourceLevel}" not found`);
       continue;
     }
     if (!targetPrivilege) {
-      console.warn(`⚠️  Skipping escalation: target privilege "${link.targetLevel}" not found`);
+      console.warn(`Skipping escalation: target privilege "${link.targetLevel}" not found`);
       continue;
     }
     if (!component) {
-      console.warn(`⚠️  Skipping escalation: component "${link.componentName}" not found`);
+      console.warn(`Skipping escalation: component "${link.componentName}" not found`);
       continue;
     }
     if (!technique) {
-      console.warn(`⚠️  Skipping escalation: technique "${link.techniqueName}" not found`);
+      console.warn(`Skipping escalation: technique "${link.techniqueName}" not found`);
       continue;
     }
 
@@ -585,7 +583,7 @@ async function main() {
 
           if (!cveExists) {
             console.warn(
-              `⚠️  CVE ${cveId} not found in database, skipping link for escalation ${link.componentName}`
+              `CVE ${cveId} not found in database, skipping link for escalation ${link.componentName}`
             );
             escalationCveLinksSkipped++;
             continue;
@@ -618,7 +616,7 @@ async function main() {
   console.log(`Successfully seeded ${escalationsCreated} privilege escalations!`);
   console.log(`Successfully linked ${escalationCveLinksCreated} CVEs to privilege escalations!`);
   if (escalationCveLinksSkipped > 0) {
-    console.log(`⚠️  Skipped ${escalationCveLinksSkipped} escalation CVE links (CVEs not found in database)`);
+    console.log(`Skipped ${escalationCveLinksSkipped} escalation CVE links (CVEs not found in database)`);
   }
 
   // Print escalation summary

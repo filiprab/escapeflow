@@ -1,21 +1,20 @@
-# Use the official Node.js runtime as the base image
-FROM node:22-alpine AS base
+# Build stages use Bun for faster installs and TypeScript execution
+FROM oven/bun:1-alpine AS base
 
-# Install dependencies for development
+# Install dependencies
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json* ./
+COPY package.json bun.lock ./
 COPY prisma ./prisma/
 
-# Install dependencies (including dev dependencies for seeding)
-RUN npm ci
+# Install dependencies
+RUN bun install --frozen-lockfile
 
 # Generate Prisma client
-RUN npx prisma generate
-
+RUN bunx prisma generate
 
 # Production builder stage
 FROM base AS builder
@@ -28,8 +27,8 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Generate Prisma client and build
-RUN npx prisma generate
-RUN npm run build
+RUN bunx prisma generate
+RUN bun run build
 
 # Database initialization stage
 FROM base AS init
@@ -59,8 +58,8 @@ USER dbuser
 # Default init command
 CMD ["sh", "/app/scripts/init-db.sh"]
 
-# Production runner stage
-FROM base AS runner
+# Production runner stage — uses Node since Next.js standalone outputs a Node server
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -89,4 +88,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"] 
+CMD ["node", "server.js"]

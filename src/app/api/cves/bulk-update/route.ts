@@ -86,9 +86,6 @@ export async function POST() {
           const windowEnd = new Date(windowStart);
           windowEnd.setDate(windowEnd.getDate() + CONFIG.WINDOW_DAYS);
 
-          console.log(windowStart);
-          console.log(windowEnd);
-
           if (windowEnd > overallEndDate) {
             windowEnd.setTime(overallEndDate.getTime());
           }
@@ -213,23 +210,23 @@ export async function POST() {
                 },
                 metrics: nvdData.cvssScore && nvdData.cvssSeverity && nvdData.cvssVector
                   ? (() => {
-                      // Parse CVSS vector for detailed fields
-                      const parsedComponents = parseCVSSVector(nvdData.cvssVector);
-                      return [{
-                        baseScore: nvdData.cvssScore,
-                        baseSeverity: nvdData.cvssSeverity,
-                        vectorString: nvdData.cvssVector,
-                        cvssVersion: nvdData.cvssVersion || '3.1',
-                        attackVector: parsedComponents?.attackVector || 'NETWORK',
-                        attackComplexity: parsedComponents?.attackComplexity || 'LOW',
-                        privilegesRequired: parsedComponents?.privilegesRequired || 'NONE',
-                        userInteraction: parsedComponents?.userInteraction || 'NONE',
-                        scope: parsedComponents?.scope || 'UNCHANGED',
-                        confidentialityImpact: parsedComponents?.confidentialityImpact || 'NONE',
-                        integrityImpact: parsedComponents?.integrityImpact || 'NONE',
-                        availabilityImpact: parsedComponents?.availabilityImpact || 'NONE',
-                      }];
-                    })()
+                    // Parse CVSS vector for detailed fields
+                    const parsedComponents = parseCVSSVector(nvdData.cvssVector);
+                    return [{
+                      baseScore: nvdData.cvssScore,
+                      baseSeverity: nvdData.cvssSeverity,
+                      vectorString: nvdData.cvssVector,
+                      cvssVersion: nvdData.cvssVersion || '3.1',
+                      attackVector: parsedComponents?.attackVector || 'NETWORK',
+                      attackComplexity: parsedComponents?.attackComplexity || 'LOW',
+                      privilegesRequired: parsedComponents?.privilegesRequired || 'NONE',
+                      userInteraction: parsedComponents?.userInteraction || 'NONE',
+                      scope: parsedComponents?.scope || 'UNCHANGED',
+                      confidentialityImpact: parsedComponents?.confidentialityImpact || 'NONE',
+                      integrityImpact: parsedComponents?.integrityImpact || 'NONE',
+                      availabilityImpact: parsedComponents?.availabilityImpact || 'NONE',
+                    }];
+                  })()
                   : undefined,
                 problemTypes: nvdData.problemTypes,
                 affectedProducts: nvdData.affectedProducts,
