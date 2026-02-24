@@ -37,9 +37,9 @@ Currently focused on Chromium with a database of 6,000+ CVEs, with plans to expa
 ### Prerequisites
 
 - [Bun](https://bun.sh/) (v1.x or later)
-- Docker and Docker Compose (Podman should work as well)
+- Docker
 
-### Local Development
+### Build and Run with Docker
 
 1. **Clone the repository:**
    ```bash
@@ -58,21 +58,17 @@ Currently focused on Chromium with a database of 6,000+ CVEs, with plans to expa
    POSTGRES_PASSWORD=your_secure_password
    ``` 
    ```
-   # Optional: NVD API key for higher rate-limits during bulk CVE imports
+   # Optional: NVD API key for higher rate-limits
    NVD_API_KEY=your_nvd_api_key
    ```
 
-## Docker Deployment
-
-### Build and Run with Docker
-
-1. **Build and run the Docker image:**
+4. **Build and run the Docker image:**
    ```bash
    docker compose up -d --build
    ```
    The first run may take a minute or two while it builds the image, runs database migrations, and seeds the CVE data.
 
-2. **Access the application:**
+5. **Access the application:**
    Open [http://localhost:3000](http://localhost:3000)
 
 ## Usage Guide
